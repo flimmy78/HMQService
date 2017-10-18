@@ -49,6 +49,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\Log.cs" />
+    <Compile Include="Common\TCPServer.cs" />
+    <Compile Include="Common\TCPSocketListener.cs" />
     <Compile Include="Common\UDPServer.cs" />
     <Compile Include="HMQService.cs">
       <SubType>Component</SubType>

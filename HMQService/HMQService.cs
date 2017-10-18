@@ -9,7 +9,7 @@ namespace HMQService
     class HMQService : ServiceBase
     {
         private System.ComponentModel.Container components = null;
-        private UDPServer udpServer = null;
+        private TCPServer tcpServer = null;
 
         /// <summary>
         /// Public Constructor for WindowsService.
@@ -199,14 +199,14 @@ namespace HMQService
 
         private void StartService()
         {
-            udpServer = new UDPServer();
-            udpServer.StartServer();
+            tcpServer = new TCPServer();
+            tcpServer.StartServer();
         }
 
         private void StopService()
         {
-            udpServer.StopServer();
-            udpServer = null;
+            tcpServer.StopServer();
+            tcpServer = null;
         }
     }
 }
