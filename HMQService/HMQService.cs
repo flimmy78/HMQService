@@ -1,11 +1,16 @@
 ﻿using System;
 using System.Diagnostics;
 using System.ServiceProcess;
+using HMQService.Common;
+using System.Net;
 
 namespace HMQService
 {
     class HMQService : ServiceBase
     {
+        private System.ComponentModel.Container components = null;
+        private TCPServer tcpServer = null;
+
         /// <summary>
         /// Public Constructor for WindowsService.
         /// - Put all of your Initialization code here.
@@ -20,6 +25,37 @@ namespace HMQService
 
             Log.GetLogger().InfoFormat("HMQService Constructor");
 
+            InitializeComponent();
+        }
+
+        /// <summary>
+        /// The Main Thread: This is where your Service is Run.
+        /// </summary>
+        static void Main()
+        {
+            Log.GetLogger().InfoFormat("HMQService Main");
+
+            System.ServiceProcess.ServiceBase[] ServicesToRun;
+
+            // More than one user Service may run within the same process. To add
+            // another service to this process, change the following line to
+            // create a second service object. For example,
+            //
+            //   ServicesToRun = new System.ServiceProcess.ServiceBase[] {new TCPService(), new MySecondUserService()};
+            //
+            ServicesToRun = new System.ServiceProcess.ServiceBase[] { new HMQService() };
+
+            System.ServiceProcess.ServiceBase.Run(ServicesToRun);
+        }
+
+        /// <summary> 
+		/// Required method for Designer support - do not modify 
+		/// the contents of this method with the code editor.
+		/// </summary>
+		private void InitializeComponent()
+        {
+            components = new System.ComponentModel.Container();
+
             this.ServiceName = "HMQ Service";
             this.EventLog.Log = "Application";
 
@@ -33,16 +69,6 @@ namespace HMQService
         }
 
         /// <summary>
-        /// The Main Thread: This is where your Service is Run.
-        /// </summary>
-        static void Main()
-        {
-            Log.GetLogger().InfoFormat("HMQService Main");
-
-            ServiceBase.Run(new HMQService());
-        }
-
-        /// <summary>
         /// Dispose of objects that need it here.
         /// </summary>
         /// <param name="disposing">Whether
@@ -51,6 +77,13 @@ namespace HMQService
         {
             Log.GetLogger().InfoFormat("HMQService Dispose");
 
+            if (disposing)
+            {
+                if (components != null)
+                {
+                    components.Dispose();
+                }
+            }
             base.Dispose(disposing);
         }
 
@@ -63,6 +96,8 @@ namespace HMQService
         {
             Log.GetLogger().InfoFormat("HMQService OnStart");
 
+            StartService();
+
             base.OnStart(args);
         }
 
@@ -73,6 +108,8 @@ namespace HMQService
         protected override void OnStop()
         {
             Log.GetLogger().InfoFormat("HMQService OnStop");
+
+            StopService();
 
             base.OnStop();
         }
@@ -158,6 +195,18 @@ namespace HMQService
             Log.GetLogger().InfoFormat("HMQService OnSessionChange");
 
             base.OnSessionChange(changeDescription);
+        }
+
+        private void StartService()
+        {
+            tcpServer = new TCPServer();
+            tcpServer.StartServer();
+        }
+
+        private void StopService()
+        {
+            tcpServer.StopServer();
+            tcpServer = null;
         }
     }
 }
