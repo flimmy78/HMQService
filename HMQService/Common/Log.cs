@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using log4net;
 
-namespace HMQService
+namespace HMQService.Common
 {
     public class Log
     {

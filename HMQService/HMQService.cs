@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.ServiceProcess;
+using HMQService.Common;
 
 namespace HMQService
 {
