@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.ServiceProcess;
 using HMQService.Common;
 using HMQService.Server;
+using HMQService.Decode;
 using System.Net;
 
 namespace HMQService
