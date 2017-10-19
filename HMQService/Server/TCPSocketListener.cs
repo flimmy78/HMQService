@@ -3,8 +3,9 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Text;
 using System.IO;
+using HMQService.Common;
 
-namespace HMQService.Common
+namespace HMQService.Server
 {
 	/// <summary>
 	/// Summary description for TCPSocketListener.
@@ -72,21 +73,31 @@ namespace HMQService.Common
 		{
 			int size=0;
 			Byte [] byteBuffer = new Byte[1024];
+            DataHandler dataHandler = null;
 
-			m_lastReceiveDateTime = DateTime.Now;
-			m_currentReceiveDateTime = DateTime.Now;
+            //m_lastReceiveDateTime = DateTime.Now;
+            //m_currentReceiveDateTime = DateTime.Now;
 
-			Timer t= new Timer(new TimerCallback(CheckClientCommInterval),
-				null,15000,15000);
+            //Timer t= new Timer(new TimerCallback(CheckClientCommInterval),
+            //	null,15000,15000);
 
-			while (!m_stopClient)
+            while (!m_stopClient)
 			{
 				try
 				{
+                    //接收车载信息
 					size = m_clientSocket.Receive(byteBuffer);
 					m_currentReceiveDateTime=DateTime.Now;
-					ParseReceiveBuffer(byteBuffer, size);
-				}
+
+                    //数据处理
+                    dataHandler = new DataHandler(byteBuffer, size);
+                    dataHandler.StartHandle();
+
+                    //发送确认信息给车载
+                    m_clientSocket.Send(byteBuffer);
+
+                    Log.GetLogger().InfoFormat("发送确认信息给车载完成");
+                }
 				catch (Exception e)
 				{
                     Log.GetLogger().ErrorFormat("SocketListenerThreadStart catch an error : {0}", e.Message);
@@ -95,8 +106,8 @@ namespace HMQService.Common
 					m_markedForDeletion=true;
 				}
 			}
-			t.Change(Timeout.Infinite, Timeout.Infinite);
-			t=null;
+			//t.Change(Timeout.Infinite, Timeout.Infinite);
+			//t=null;
 		}
 
 		/// <summary>

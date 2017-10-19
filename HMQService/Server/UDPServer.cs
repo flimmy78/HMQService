@@ -5,8 +5,9 @@ using System.Text;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using HMQService.Common;
 
-namespace HMQService.Common
+namespace HMQService.Server
 {
     public class UDPServer
     {
