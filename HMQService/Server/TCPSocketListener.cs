@@ -73,6 +73,7 @@ namespace HMQService.Server
 		{
 			int size=0;
 			Byte [] byteBuffer = new Byte[1024];
+            DataHandler dataHandler = null;
 
             //m_lastReceiveDateTime = DateTime.Now;
             //m_currentReceiveDateTime = DateTime.Now;
@@ -88,14 +89,14 @@ namespace HMQService.Server
 					size = m_clientSocket.Receive(byteBuffer);
 					m_currentReceiveDateTime=DateTime.Now;
 
-                    Log.GetLogger().InfoFormat("接收车载信息");
+                    //数据处理
+                    dataHandler = new DataHandler(byteBuffer, size);
+                    dataHandler.StartHandle();
 
                     //发送确认信息给车载
                     m_clientSocket.Send(byteBuffer);
 
-                    Log.GetLogger().InfoFormat("发送确认信息给车载");
-
-                    ParseReceiveBuffer(byteBuffer, size);
+                    Log.GetLogger().InfoFormat("发送确认信息给车载完成");
                 }
 				catch (Exception e)
 				{
