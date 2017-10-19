@@ -50,8 +50,10 @@
   <ItemGroup>
     <Compile Include="Common\BaseDefine.cs" />
     <Compile Include="Common\BaseMethod.cs" />
+    <Compile Include="Common\INIOperator.cs" />
     <Compile Include="Common\Log.cs" />
     <Compile Include="Server\DataHandler.cs" />
+    <Compile Include="Server\HMQManager.cs" />
     <Compile Include="Server\TCPServer.cs" />
     <Compile Include="Server\TCPSocketListener.cs" />
     <Compile Include="Server\UDPServer.cs" />
