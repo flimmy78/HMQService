@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.ServiceProcess;
 using HMQService.Common;
+using HMQService.Server;
 using System.Net;
 
 namespace HMQService

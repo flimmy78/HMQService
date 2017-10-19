@@ -4,8 +4,9 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Collections;
 using System.IO;
+using HMQService.Common;
 
-namespace HMQService.Common
+namespace HMQService.Server
 {
 	/// <summary>
 	/// TCPServer is the Server class. When "StartServer" method is called
@@ -20,10 +21,9 @@ namespace HMQService.Common
 		/// <summary>
 		/// Default Constants.
 		/// </summary>
-		public static IPAddress DEFAULT_SERVER = IPAddress.Parse("127.0.0.1"); 
-		public static int DEFAULT_PORT=6708;
+		public static IPAddress DEFAULT_SERVER = IPAddress.Parse("0.0.0.0"); 
 		public static IPEndPoint DEFAULT_IP_END_POINT = 
-			new IPEndPoint(DEFAULT_SERVER, DEFAULT_PORT);
+			new IPEndPoint(DEFAULT_SERVER, BaseDefine.HMQ_SERVICE_DEFAULT_PORT);
 
 		/// <summary>
 		/// Local Variables Declaration.
@@ -43,7 +43,7 @@ namespace HMQService.Common
 		}
 		public TCPServer(IPAddress serverIP)
 		{
-			Init(new IPEndPoint(serverIP, DEFAULT_PORT));
+			Init(new IPEndPoint(serverIP, BaseDefine.HMQ_SERVICE_DEFAULT_PORT));
 		}
 
 		public TCPServer(int port)
@@ -184,12 +184,14 @@ namespace HMQService.Common
 			{
 				try
 				{
-					// Wait for any client requests and if there is any 
-					// request from any client accept it (Wait indefinitely).
-					clientSocket = m_server.AcceptSocket();
+                    // Wait for any client requests and if there is any 
+                    // request from any client accept it (Wait indefinitely).
+                    clientSocket = m_server.AcceptSocket();
 
-					// Create a SocketListener object for the client.
-					socketListener = new TCPSocketListener(clientSocket);
+                    Log.GetLogger().Info("AcceptSocket tcp client");
+
+                    // Create a SocketListener object for the client.
+                    socketListener = new TCPSocketListener(clientSocket);
 
 					// Add the socket listener to an array list in a thread 
 					// safe fashon.
