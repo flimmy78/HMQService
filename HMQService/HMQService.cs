@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.ServiceProcess;
 using HMQService.Common;
 using HMQService.Server;
+using HMQService.Decode;
 using System.Net;
 
 namespace HMQService
@@ -11,6 +12,7 @@ namespace HMQService
     {
         private System.ComponentModel.Container components = null;
         private TCPServer tcpServer = null;
+        private HMQManager hmqManager = null;
 
         /// <summary>
         /// Public Constructor for WindowsService.
@@ -200,6 +202,9 @@ namespace HMQService
 
         private void StartService()
         {
+            hmqManager = new HMQManager();
+            hmqManager.StartWork();
+
             tcpServer = new TCPServer();
             tcpServer.StartServer();
         }
@@ -208,6 +213,9 @@ namespace HMQService
         {
             tcpServer.StopServer();
             tcpServer = null;
+
+            hmqManager.StopWork();
+            hmqManager = null;
         }
     }
 }
