@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using HMQService.Common;
+using HMQService.Database;
 using System.Runtime.InteropServices;
+using System.Data;
 
 namespace HMQService.Decode
 {
@@ -60,6 +62,32 @@ namespace HMQService.Decode
         private void HMQManagerThreadProc()
         {
             Log.GetLogger().InfoFormat("HMQManagerThreadProc begin.");
+
+            //测试查询数据库
+            try
+            {
+                string connectString = @"Data Source=192.168.0.62;Initial Catalog=2ndDrivingTestSystem;User Id=sa;Password=ustbzy;";
+                IDataProvider sqlDataProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.SqlDataProvider, connectString);
+                string sql = "select * from TBKVideoPB;";
+                DataSet ds = sqlDataProvider.RetriveDataSet(sql);
+                if (null == ds)
+                {
+                    Log.GetLogger().ErrorFormat("DataSet is null");
+                }
+                for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
+                {
+                    for (int j = 0; j < ds.Tables[0].Columns.Count; j++)
+                    {
+                        Log.GetLogger().InfoFormat("第 {0} 行，第 {1} 列，数据 : {2}", i, j, ds.Tables[0].Rows[i][j].ToString());
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("database catch an error");
+            }
+
+
 
             //获取 SDK Build
             if (!GetSDKBuildVersion())

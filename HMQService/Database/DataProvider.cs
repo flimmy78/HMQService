@@ -26,7 +26,7 @@ namespace HMQService.Database
         /// </summary>
         /// <param name="DataProviderType">数据库枚举类型</param>
         /// <returns></returns>
-        public static IDataProvider CreateDataProvider(DataProviderType dataProviderType)
+        public static IDataProvider CreateDataProvider(DataProviderType dataProviderType, string connectionString)
         {
             switch (dataProviderType)
             {
@@ -37,9 +37,9 @@ namespace HMQService.Database
                     //return new OleDbDataProvider();
                     return null;
                 case DataProviderType.OracleDataProvider:
-                    return new OracleDataProvider();
+                    return new OracleDataProvider(connectionString);
                 case DataProviderType.SqlDataProvider:
-                    return new SqlDataProvider();
+                    return new SqlDataProvider(connectionString);
                 default:
                     return null;
             }
