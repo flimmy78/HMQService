@@ -58,6 +58,7 @@
     <Reference Include="System" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Data.OracleClient" />
     <Reference Include="System.ServiceProcess" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
@@ -68,9 +69,15 @@
   <ItemGroup>
     <Compile Include="Common\BaseDefine.cs" />
     <Compile Include="Common\BaseMethod.cs" />
+    <Compile Include="Model\CameraConf.cs" />
     <Compile Include="Common\INIOperator.cs" />
     <Compile Include="Common\Log.cs" />
+    <Compile Include="Database\DataProvider.cs" />
+    <Compile Include="Database\IDataProvider.cs" />
+    <Compile Include="Database\OracleDataProvider.cs" />
+    <Compile Include="Database\SqlDataProvider.cs" />
     <Compile Include="Decode\CHCNetSDK.cs" />
+    <Compile Include="Model\JudgementRule.cs" />
     <Compile Include="Server\DataHandler.cs" />
     <Compile Include="Decode\HMQManager.cs" />
     <Compile Include="Server\TCPServer.cs" />
