@@ -31,6 +31,7 @@ namespace HMQService.Common
         public static readonly char SPLIT_CHAR_AMPERSAND = '&';
         public static readonly char SPLIT_CHAR_HASH_SIGN = '#';
         public static readonly char SPLIT_CHAR_SPACE = ' ';
+        public static readonly char SPLIT_CHAR_COMMA = ',';
         public static readonly int INTERFACE_FIELD_COUNT_KM2 = 9;   //接口字段数量（科目二），如果后续接口调整，这里需要修改
         public static readonly int INTERFACE_FIELD_COUNT_KM3 = 10;  //接口字段数量（科目三），如果后续接口调整，这里需要修改
 
@@ -49,6 +50,9 @@ namespace HMQService.Common
         public static readonly string CONFIG_KEY_ServerPZ = "ServerPZ";
         public static readonly string CONFIG_KEY_N = "N";
         public static readonly string CONFIG_KEY_BNC = "BNC";
+        public static readonly string CONFIG_KEY_NUM = "NUM";
+        public static readonly string CONFIG_KEY_EVEN= "EVEN";
+        public static readonly string CONFIG_KEY_WND2 = "WND2";
 
         //数据库
         public static readonly string DB_TABLE_TBKVIDEO = "TBKVideo";

@@ -35,5 +35,23 @@ namespace HMQService.Common
 
             return retArray;
         }
+
+        public static int INIGetIntValue(string iniFile, string section, string key, int defaultValue)
+        {
+            int nRet = defaultValue;
+
+            try
+            {
+                string retStr = INIOperator.INIGetStringValue(iniFile, section, key, string.Empty);
+
+                nRet = string.IsNullOrEmpty(retStr) ? defaultValue : int.Parse(retStr);
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}，inifile = {1}, section = {2}, key = {3}", e.Message, iniFile, section, key);
+            }
+
+            return nRet;
+        }
     }
 }
