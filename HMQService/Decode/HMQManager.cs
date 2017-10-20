@@ -18,7 +18,8 @@ namespace HMQService.Decode
         private int m_userId = -1;
         private uint m_iErrorCode = 0;
         private IDataProvider sqlDataProvider = null;
-        private Dictionary<string, CameraConf> dicCameras = new Dictionary<string, CameraConf>();
+        private Dictionary<string, CameraConf> dicCameras = new Dictionary<string, CameraConf>();   //摄像头信息
+        private Dictionary<string, JudgementRule> dicJudgementRule = new Dictionary<string, JudgementRule>();   //扣分规则
 
         private CHCNetSDK.NET_DVR_DEC_STREAM_DEV_EX m_struStreamDev = new CHCNetSDK.NET_DVR_DEC_STREAM_DEV_EX();
 
@@ -79,6 +80,12 @@ namespace HMQService.Decode
 
             //获取摄像头配置信息
             if (!GetCameraConf())
+            {
+                return;
+            }
+
+            //获取扣分规则
+            if (!GetJudgementRule())
             {
                 return;
             }
@@ -324,8 +331,6 @@ namespace HMQService.Decode
                 BaseDefine.DB_TABLE_TBKVIDEO,
                 BaseDefine.DB_FIELD_BH);
 
-            Log.GetLogger().InfoFormat(sql);
-
             try
             {
                 DataSet ds = sqlDataProvider.RetriveDataSet(sql);
@@ -370,6 +375,58 @@ namespace HMQService.Decode
             }
 
             Log.GetLogger().InfoFormat("初始化摄像头信息成功");
+            return true;
+        }
+
+        /// <summary>
+        /// 获取扣分规则
+        /// </summary>
+        /// <returns></returns>
+        private bool GetJudgementRule()
+        {
+            dicJudgementRule.Clear();
+
+            string sql = string.Format("select {0},{1},{2} from {3}",
+                BaseDefine.DB_FIELD_CWBH,
+                BaseDefine.DB_FIELD_KFLX,
+                BaseDefine.DB_FIELD_KCFS,
+                BaseDefine.DB_TABLE_ERRORDATA);
+
+            try
+            {
+                DataSet ds = sqlDataProvider.RetriveDataSet(sql);
+                if (null != ds)
+                {
+                    for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
+                    {
+                        string cwbh = (null == ds.Tables[0].Rows[i][0]) ? string.Empty : ds.Tables[0].Rows[i][0].ToString();
+                        string kflx = (null == ds.Tables[0].Rows[i][1]) ? string.Empty : ds.Tables[0].Rows[i][1].ToString();
+                        string kcfs = (null == ds.Tables[0].Rows[i][2]) ? string.Empty : ds.Tables[0].Rows[i][2].ToString();
+
+                        int iKcfs = string.IsNullOrEmpty(kcfs) ? -1 : int.Parse(kcfs); //扣除分数
+
+                        JudgementRule jRule = new JudgementRule(kflx, iKcfs);
+
+                        if (!string.IsNullOrEmpty(cwbh) && !dicJudgementRule.ContainsKey(cwbh))
+                        {
+                            dicJudgementRule.Add(cwbh, jRule);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+                return false;
+            }
+
+            if (0 == dicJudgementRule.Count)
+            {
+                Log.GetLogger().ErrorFormat("初始化扣分规则信息失败，数据库扣分规则表解析结果为空");
+                return false;
+            }
+
+            Log.GetLogger().InfoFormat("初始化扣分规则信息成功");
             return true;
         }
     }

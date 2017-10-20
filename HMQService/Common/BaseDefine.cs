@@ -52,6 +52,7 @@ namespace HMQService.Common
 
         //数据库
         public static readonly string DB_TABLE_TBKVIDEO = "TBKVideo";
+        public static readonly string DB_TABLE_ERRORDATA = "ErrorData";
         public static readonly string DB_FIELD_BH = "编号";
         public static readonly string DB_FIELD_SBIP = "设备IP";
         public static readonly string DB_FIELD_YHM = "用户名";
@@ -61,5 +62,8 @@ namespace HMQService.Common
         public static readonly string DB_FIELD_TRANSMODE = "TransMode";
         public static readonly string DB_FIELD_MEDIAIP = "MediaIP";
         public static readonly string DB_FIELD_NID = "Nid";
+        public static readonly string DB_FIELD_CWBH = "错误编号";
+        public static readonly string DB_FIELD_KFLX = "扣分类型";
+        public static readonly string DB_FIELD_KCFS = "扣除分数";
     }
 }
