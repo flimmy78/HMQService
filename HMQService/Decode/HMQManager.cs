@@ -16,6 +16,7 @@ namespace HMQService.Decode
         private bool m_bInitSDK = false;
         private int m_userId = -1;
         private uint m_iErrorCode = 0;
+        private IDataProvider sqlDataProvider = null;
 
         private CHCNetSDK.NET_DVR_DEC_STREAM_DEV_EX m_struStreamDev = new CHCNetSDK.NET_DVR_DEC_STREAM_DEV_EX();
 
@@ -57,37 +58,22 @@ namespace HMQService.Decode
                 m_HMQManagerThread.Abort();
             }
             m_HMQManagerThread = null;
+
+            if (null != sqlDataProvider)
+            {
+                sqlDataProvider.Dispose();
+            }
         }
 
         private void HMQManagerThreadProc()
         {
             Log.GetLogger().InfoFormat("HMQManagerThreadProc begin.");
 
-            //测试查询数据库
-            try
+            //初始化数据库
+            if (!InitDatabase())
             {
-                string connectString = @"Data Source=192.168.0.62;Initial Catalog=2ndDrivingTestSystem;User Id=sa;Password=ustbzy;";
-                IDataProvider sqlDataProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.SqlDataProvider, connectString);
-                string sql = "select * from TBKVideoPB;";
-                DataSet ds = sqlDataProvider.RetriveDataSet(sql);
-                if (null == ds)
-                {
-                    Log.GetLogger().ErrorFormat("DataSet is null");
-                }
-                for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
-                {
-                    for (int j = 0; j < ds.Tables[0].Columns.Count; j++)
-                    {
-                        Log.GetLogger().InfoFormat("第 {0} 行，第 {1} 列，数据 : {2}", i, j, ds.Tables[0].Rows[i][j].ToString());
-                    }
-                }
+                return;
             }
-            catch(Exception e)
-            {
-                Log.GetLogger().ErrorFormat("database catch an error");
-            }
-
-
 
             //获取 SDK Build
             if (!GetSDKBuildVersion())
@@ -214,6 +200,81 @@ namespace HMQService.Decode
 
             Log.GetLogger().InfoFormat("NET_DVR_MatrixStopDynamic success");
             return true;
+        }
+
+        private bool InitDatabase()
+        {
+            //从配置文件读取数据库连接串
+            string connectString = GetConnectionString();
+            if (string.IsNullOrEmpty(connectString))
+            {
+                Log.GetLogger().ErrorFormat("从配置文件获取数据库连接串失败");
+                return false;
+            }
+
+            //测试查询数据库
+            try
+            {
+                //string connectString = @"Data Source=192.168.0.62;Initial Catalog=2ndDrivingTestSystem;User Id=sa;Password=ustbzy;";
+                sqlDataProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.SqlDataProvider, connectString);
+                string sql = "select * from TBKVideoPB;";
+                DataSet ds = sqlDataProvider.RetriveDataSet(sql);
+                if (null == ds)
+                {
+                    Log.GetLogger().ErrorFormat("DataSet is null");
+                }
+                for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
+                {
+                    for (int j = 0; j < ds.Tables[0].Columns.Count; j++)
+                    {
+                        Log.GetLogger().InfoFormat("第 {0} 行，第 {1} 列，数据 : {2}", i, j, ds.Tables[0].Rows[i][j].ToString());
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("database catch an error");
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 读取配置文件里的数据库连接字符串
+        /// 配置文件config.ini里的数据库连接字符串加过盐，这里解析时需要将每个字符“-1”后，再进行翻转
+        /// </summary>
+        /// <returns></returns>
+        private string GetConnectionString()
+        {
+            string retConnectionStr = string.Empty;
+
+            try
+            {
+                string configStr = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_SQLLINK,
+                    BaseDefine.CONFIG_KEY_ServerPZ, string.Empty);
+                if (!string.IsNullOrEmpty(configStr))
+                {
+                    foreach (char c in configStr.ToCharArray())
+                    {
+                        int nC = (int)c;
+                        retConnectionStr = (char)(nC - 1) + retConnectionStr;
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+            }
+            Log.GetLogger().InfoFormat("connection string after decode : {0}", retConnectionStr);
+
+            //配置文件里的数据库连接字符串包含"Provider=SQLOLEDB;"，这在C#代码中不适用，这里去除该字段
+            if (0 == retConnectionStr.IndexOf("Provider=SQLOLEDB;"))
+            {
+                retConnectionStr = retConnectionStr.Substring(18);
+            }
+            Log.GetLogger().InfoFormat("connection string after delete : {0}", retConnectionStr);
+
+            return retConnectionStr;
         }
     }
 }
