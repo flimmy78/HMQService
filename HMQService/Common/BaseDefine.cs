@@ -26,6 +26,14 @@ namespace HMQService.Common
         //合码器服务监听端口
         public static readonly int HMQ_SERVICE_DEFAULT_PORT = 6708;
 
+        //接口字符串分隔符
+        public static readonly char SPLIT_CHAR_ASTERISK = '*';
+        public static readonly char SPLIT_CHAR_AMPERSAND = '&';
+        public static readonly char SPLIT_CHAR_HASH_SIGN = '#';
+        public static readonly char SPLIT_CHAR_SPACE = ' ';
+        public static readonly int INTERFACE_FIELD_COUNT_KM2 = 9;   //接口字段数量（科目二），如果后续接口调整，这里需要修改
+        public static readonly int INTERFACE_FIELD_COUNT_KM3 = 10;  //接口字段数量（科目三），如果后续接口调整，这里需要修改
+
         //配置文件
         public static readonly string CONFIG_FILE_PATH = @".\config.ini";
         public static readonly string CONFIG_SECTION_CONFIG = "CONFIG";
@@ -42,12 +50,16 @@ namespace HMQService.Common
         public static readonly string CONFIG_KEY_N = "N";
         public static readonly string CONFIG_KEY_BNC = "BNC";
 
-        //接口字符串分隔符
-        public static readonly char SPLIT_CHAR_ASTERISK = '*';
-        public static readonly char SPLIT_CHAR_AMPERSAND = '&';
-        public static readonly char SPLIT_CHAR_HASH_SIGN = '#';
-        public static readonly char SPLIT_CHAR_SPACE = ' ';
-        public static readonly int INTERFACE_FIELD_COUNT_KM2 = 9;   //接口字段数量（科目二），如果后续接口调整，这里需要修改
-        public static readonly int INTERFACE_FIELD_COUNT_KM3 = 10;  //接口字段数量（科目三），如果后续接口调整，这里需要修改
+        //数据库
+        public static readonly string DB_TABLE_TBKVIDEO = "TBKVideo";
+        public static readonly string DB_FIELD_BH = "编号";
+        public static readonly string DB_FIELD_SBIP = "设备IP";
+        public static readonly string DB_FIELD_YHM = "用户名";
+        public static readonly string DB_FIELD_MM = "密码";
+        public static readonly string DB_FIELD_DKH = "端口号";
+        public static readonly string DB_FIELD_TDH = "通道号";
+        public static readonly string DB_FIELD_TRANSMODE = "TransMode";
+        public static readonly string DB_FIELD_MEDIAIP = "MediaIP";
+        public static readonly string DB_FIELD_NID = "Nid";
     }
 }

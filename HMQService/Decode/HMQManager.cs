@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading;
 using HMQService.Common;
 using HMQService.Database;
+using HMQService.Model;
 using System.Runtime.InteropServices;
 using System.Data;
 
@@ -17,6 +18,7 @@ namespace HMQService.Decode
         private int m_userId = -1;
         private uint m_iErrorCode = 0;
         private IDataProvider sqlDataProvider = null;
+        private Dictionary<string, CameraConf> dicCameras = new Dictionary<string, CameraConf>();
 
         private CHCNetSDK.NET_DVR_DEC_STREAM_DEV_EX m_struStreamDev = new CHCNetSDK.NET_DVR_DEC_STREAM_DEV_EX();
 
@@ -71,6 +73,12 @@ namespace HMQService.Decode
 
             //初始化数据库
             if (!InitDatabase())
+            {
+                return;
+            }
+
+            //获取摄像头配置信息
+            if (!GetCameraConf())
             {
                 return;
             }
@@ -204,7 +212,7 @@ namespace HMQService.Decode
 
         private bool InitDatabase()
         {
-            //从配置文件读取数据库连接串
+            //获取数据库连接串
             string connectString = GetConnectionString();
             if (string.IsNullOrEmpty(connectString))
             {
@@ -212,30 +220,23 @@ namespace HMQService.Decode
                 return false;
             }
 
-            //测试查询数据库
-            try
+            //获取数据库类型，并进行初始化连接
+            int nRet = GetDatabaseType();
+            if (0 == nRet)
             {
-                //string connectString = @"Data Source=192.168.0.62;Initial Catalog=2ndDrivingTestSystem;User Id=sa;Password=ustbzy;";
-                sqlDataProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.SqlDataProvider, connectString);
-                string sql = "select * from TBKVideoPB;";
-                DataSet ds = sqlDataProvider.RetriveDataSet(sql);
-                if (null == ds)
-                {
-                    Log.GetLogger().ErrorFormat("DataSet is null");
-                }
-                for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
-                {
-                    for (int j = 0; j < ds.Tables[0].Columns.Count; j++)
-                    {
-                        Log.GetLogger().InfoFormat("第 {0} 行，第 {1} 列，数据 : {2}", i, j, ds.Tables[0].Rows[i][j].ToString());
-                    }
-                }
+                sqlDataProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.OracleDataProvider, connectString);
             }
-            catch (Exception e)
+            else if (1 == nRet)
             {
-                Log.GetLogger().ErrorFormat("database catch an error");
+                sqlDataProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.SqlDataProvider, connectString);
+            }
+            else
+            {
+                Log.GetLogger().ErrorFormat("数据库类型配置错误，SQLORORACLE = {0}", nRet.ToString());
+                return false;
             }
 
+            Log.GetLogger().InfoFormat("数据库连接成功");
             return true;
         }
 
@@ -275,6 +276,101 @@ namespace HMQService.Decode
             Log.GetLogger().InfoFormat("connection string after delete : {0}", retConnectionStr);
 
             return retConnectionStr;
+        }
+
+        /// <summary>
+        /// 根据配置文件判断数据库类型
+        /// </summary>
+        /// <returns>0--oracle，1--sqlserver</returns>
+        private int GetDatabaseType()
+        {
+            int nRet = -1;
+
+            try
+            {
+                string configStr = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+                    BaseDefine.CONFIG_KEY_SQLORACLE, string.Empty);
+                if (!string.IsNullOrEmpty(configStr))
+                {
+                    nRet = int.Parse(configStr);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+            }
+
+            return nRet;
+        }
+
+        /// <summary>
+        /// 获取摄像头配置
+        /// </summary>
+        /// <returns></returns>
+        private bool GetCameraConf()
+        {
+            dicCameras.Clear();
+
+            string sql = string.Format("select {0},{1},{2},{3},{4},{5},{6},{7},{8} from {9} order by {10}",
+                BaseDefine.DB_FIELD_BH,
+                BaseDefine.DB_FIELD_SBIP,
+                BaseDefine.DB_FIELD_YHM,
+                BaseDefine.DB_FIELD_MM,
+                BaseDefine.DB_FIELD_DKH,
+                BaseDefine.DB_FIELD_TDH,
+                BaseDefine.DB_FIELD_TRANSMODE,
+                BaseDefine.DB_FIELD_MEDIAIP,
+                BaseDefine.DB_FIELD_NID,
+                BaseDefine.DB_TABLE_TBKVIDEO,
+                BaseDefine.DB_FIELD_BH);
+
+            Log.GetLogger().InfoFormat(sql);
+
+            try
+            {
+                DataSet ds = sqlDataProvider.RetriveDataSet(sql);
+                if (null != ds)
+                {
+                    for(int i = 0; i < ds.Tables[0].Rows.Count; i++)
+                    {
+                        string bh = (null == ds.Tables[0].Rows[i][0]) ? string.Empty : ds.Tables[0].Rows[i][0].ToString();
+                        string sbip = (null == ds.Tables[0].Rows[i][1]) ? string.Empty : ds.Tables[0].Rows[i][1].ToString();
+                        string yhm = (null == ds.Tables[0].Rows[i][2]) ? string.Empty : ds.Tables[0].Rows[i][2].ToString();
+                        string mm = (null == ds.Tables[0].Rows[i][3]) ? string.Empty : ds.Tables[0].Rows[i][3].ToString();
+                        string dkh = (null == ds.Tables[0].Rows[i][4]) ? string.Empty : ds.Tables[0].Rows[i][4].ToString();
+                        string tdh = (null == ds.Tables[0].Rows[i][5]) ? string.Empty : ds.Tables[0].Rows[i][5].ToString();
+                        string transmode = (null == ds.Tables[0].Rows[i][6]) ? string.Empty : ds.Tables[0].Rows[i][6].ToString();
+                        string mediaip = (null == ds.Tables[0].Rows[i][7]) ? string.Empty : ds.Tables[0].Rows[i][7].ToString();
+                        string nid = (null == ds.Tables[0].Rows[i][8]) ? string.Empty : ds.Tables[0].Rows[i][8].ToString();
+
+                        int iDkh = string.IsNullOrEmpty(dkh) ? 8000 : int.Parse(dkh);   //端口号
+                        int iTdh = string.IsNullOrEmpty(tdh) ? -1 : int.Parse(tdh); //通道号
+                        int iTransmode = string.IsNullOrEmpty(transmode) ? 1 : int.Parse(transmode);   //码流类型
+
+                        CameraConf camera = new CameraConf(bh, sbip, yhm, mm, mediaip, iDkh, iTdh, iTransmode);
+
+                        string key = bh + "_" + nid;
+                        if (!dicCameras.ContainsKey(key))
+                        {
+                            dicCameras.Add(key, camera);
+                        }
+                    }
+                }
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+                return false;
+            }
+
+            if (0 == dicCameras.Count)
+            {
+                Log.GetLogger().ErrorFormat("初始化摄像头信息失败，数据库摄像头表解析结果为空");
+                return false;
+            }
+
+            Log.GetLogger().InfoFormat("初始化摄像头信息成功");
+            return true;
         }
     }
 }
