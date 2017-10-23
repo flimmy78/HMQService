@@ -11,7 +11,6 @@ namespace HMQService
     class HMQService : ServiceBase
     {
         private System.ComponentModel.Container components = null;
-        private TCPServer tcpServer = null;
         private HMQManager hmqManager = null;
 
         /// <summary>
@@ -204,16 +203,10 @@ namespace HMQService
         {
             hmqManager = new HMQManager();
             hmqManager.StartWork();
-
-            tcpServer = new TCPServer();
-            tcpServer.StartServer();
         }
 
         private void StopService()
         {
-            tcpServer.StopServer();
-            tcpServer = null;
-
             hmqManager.StopWork();
             hmqManager = null;
         }

@@ -116,6 +116,8 @@ namespace HMQService.Decode
                 return false;
             }
 
+            Log.GetLogger().InfoFormat("开启被动解码，考车{0}，通道号{1}，子窗口{2}，passiveHandle={3}", m_kch, m_deChannel[iWnd],
+                iWnd, passiveHanle);
             return true;
         }
 

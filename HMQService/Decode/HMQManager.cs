@@ -6,6 +6,7 @@ using System.Threading;
 using HMQService.Common;
 using HMQService.Database;
 using HMQService.Model;
+using HMQService.Server;
 using System.Runtime.InteropServices;
 using System.Data;
 
@@ -22,6 +23,7 @@ namespace HMQService.Decode
         private Dictionary<string, JudgementRule> dicJudgementRule = new Dictionary<string, JudgementRule>();   //扣分规则
         private Dictionary<int, CarManager> dicCars = new Dictionary<int, CarManager>();    //考车信息
         private int[] m_dispalyShow;
+        private TCPServer tcpServer;
 
         private CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41 m_struDecAbility = new CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41();
 
@@ -76,6 +78,12 @@ namespace HMQService.Decode
 
         public void StopWork()
         {
+            if (null != tcpServer)
+            {
+                tcpServer.StopServer();
+                tcpServer = null;
+            }
+
             m_HMQManagerThread.Join(1000);
 
             if (m_HMQManagerThread.IsAlive)
@@ -118,6 +126,15 @@ namespace HMQService.Decode
                 return;
             }
 
+            //开始运行
+            if (!RunMap())
+            {
+                return;
+            }
+
+            //开始监听车载数据
+            tcpServer = new TCPServer(dicCars);
+            tcpServer.StartServer();
 
             Log.GetLogger().InfoFormat("HMQManagerThreadProc end.");
         }
@@ -381,6 +398,8 @@ namespace HMQService.Decode
 
         private bool InitDevices()
         {
+            dicCars.Clear();
+            
             //获取 SDK Build
             if (!GetSDKBuildVersion())
             {
@@ -626,7 +645,50 @@ namespace HMQService.Decode
         //开始运行
         private bool RunMap()
         {
+            string key = string.Empty;
+            CameraConf cameraConf = new CameraConf();
 
+            foreach (int iKch in dicCars.Keys)
+            {
+                Thread.Sleep(10);
+
+                CarManager carManager = dicCars[iKch];
+
+                //动态解码
+                key = string.Format("考车{0}_1", iKch);
+                if (!dicCameras.ContainsKey(key))
+                {
+                    Log.GetLogger().ErrorFormat("{0} 数据未配置，请检查", key);
+                }
+                else
+                {
+                    cameraConf = dicCameras[key];
+                    carManager.StartDynamicDecode(cameraConf, 0);
+                }
+
+                key = string.Format("考车{0}_2", iKch);
+                if (!dicCameras.ContainsKey(key))
+                {
+                    Log.GetLogger().ErrorFormat("{0} 数据未配置，请检查", key);
+                }
+                else
+                {
+                    cameraConf = dicCameras[key];
+                    carManager.StartDynamicDecode(cameraConf, 1);
+                }
+
+                //被动解码
+                int passiveHandle = -1;
+                if (carManager.StartPassiveDecode(2, ref passiveHandle))
+                {
+                    //TFPassH(passiveHandle, iKch, 3);
+                }
+                if (carManager.StartPassiveDecode(3, ref passiveHandle))
+                {
+                    //TFPassH(passiveHandle, iKch, 4);
+                }
+
+            }
 
             return true;
         }
