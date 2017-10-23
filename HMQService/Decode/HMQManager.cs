@@ -6,6 +6,7 @@ using System.Threading;
 using HMQService.Common;
 using HMQService.Database;
 using HMQService.Model;
+using HMQService.Server;
 using System.Runtime.InteropServices;
 using System.Data;
 
@@ -20,10 +21,29 @@ namespace HMQService.Decode
         private IDataProvider sqlDataProvider = null;
         private Dictionary<string, CameraConf> dicCameras = new Dictionary<string, CameraConf>();   //摄像头信息
         private Dictionary<string, JudgementRule> dicJudgementRule = new Dictionary<string, JudgementRule>();   //扣分规则
+        private Dictionary<int, CarManager> dicCars = new Dictionary<int, CarManager>();    //考车信息
         private int[] m_dispalyShow;
+        private TCPServer tcpServer;
 
-        private CHCNetSDK.NET_DVR_DEC_STREAM_DEV_EX m_struStreamDev = new CHCNetSDK.NET_DVR_DEC_STREAM_DEV_EX();
         private CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41 m_struDecAbility = new CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41();
+
+
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TFInit(int ikch, int str);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TFPassH(int lPassHandle, int ikch, int itf);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TF17C51(int ikch, string zkzm, int idrcs);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TF17C52(int ikch, string zkzm, int ic, string msgz);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TF17C53(int ikch, string timestr, string msgz, int ikcfs);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TF17C54(int ikch, IntPtr msgz);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TF17C55(int ikch, int ic, string msgz);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TF17C56(int ikch, int itype, int ikscj);
 
         public HMQManager()
         {
@@ -58,6 +78,12 @@ namespace HMQService.Decode
 
         public void StopWork()
         {
+            if (null != tcpServer)
+            {
+                tcpServer.StopServer();
+                tcpServer = null;
+            }
+
             m_HMQManagerThread.Join(1000);
 
             if (m_HMQManagerThread.IsAlive)
@@ -94,26 +120,21 @@ namespace HMQService.Decode
                 return;
             }
 
-            //初始化设备和画面信息
+            //初始化设备和通道
             if(!InitDevices())
             {
                 return;
             }
 
-
-            //开始动态解码
-            if (!StartDynamicDecode())
+            //开始运行
+            if (!RunMap())
             {
                 return;
             }
 
-            System.Threading.Thread.Sleep(30000);
-
-            //停止动态解码
-            if (!StopDynamicDecode())
-            {
-                return;
-            }
+            //开始监听车载数据
+            tcpServer = new TCPServer(dicCars);
+            tcpServer.StartServer();
 
             Log.GetLogger().InfoFormat("HMQManagerThreadProc end.");
         }
@@ -159,60 +180,6 @@ namespace HMQService.Decode
                 return false;
             }
 
-            return true;
-        }
-
-        private bool StartDynamicDecode()
-        {
-            CHCNetSDK.NET_DVR_PU_STREAM_CFG_V41 m_struStreamCfgV41 = new CHCNetSDK.NET_DVR_PU_STREAM_CFG_V41();
-            m_struStreamCfgV41.dwSize = (uint)Marshal.SizeOf(m_struStreamCfgV41);
-
-            m_struStreamCfgV41.byStreamMode = 1;    //取流模式
-            m_struStreamDev.struDevChanInfo.byChanType = 0; //通道类型
-            m_struStreamDev.struDevChanInfo.byChannel = 0;
-            m_struStreamDev.struDevChanInfo.byTransProtocol = 0;
-            m_struStreamDev.struDevChanInfo.byFactoryType = 0;
-
-            m_struStreamDev.struDevChanInfo.byAddress = "192.168.0.131";
-            m_struStreamDev.struDevChanInfo.wDVRPort = 8000;
-            m_struStreamDev.struDevChanInfo.dwChannel = 3;  //通道号
-            m_struStreamDev.struDevChanInfo.byTransMode = 0;    //传输码流模式
-            m_struStreamDev.struDevChanInfo.sUserName = "admin";
-            m_struStreamDev.struDevChanInfo.sPassword = "hk12345678";
-
-            m_struStreamDev.struStreamMediaSvrCfg.byValid = 0;
-            //m_struStreamDev.struStreamMediaSvrCfg.byValid = 1;
-            //m_struStreamDev.struStreamMediaSvrCfg.wDevPort = 554;
-            //m_struStreamDev.struStreamMediaSvrCfg.byAddress = "";   //流媒体IP
-            //m_struStreamDev.struStreamMediaSvrCfg.byTransmitType = 0;
-
-            uint dwUnionSize = (uint)Marshal.SizeOf(m_struStreamCfgV41.uDecStreamMode);
-            IntPtr ptrStreamUnion = Marshal.AllocHGlobal((Int32)dwUnionSize);
-            Marshal.StructureToPtr(m_struStreamDev, ptrStreamUnion, false);
-            m_struStreamCfgV41.uDecStreamMode = (CHCNetSDK.NET_DVR_DEC_STREAM_MODE)Marshal.PtrToStructure(ptrStreamUnion, typeof(CHCNetSDK.NET_DVR_DEC_STREAM_MODE));
-            Marshal.FreeHGlobal(ptrStreamUnion);
-
-            if (!CHCNetSDK.NET_DVR_MatrixStartDynamic_V41(m_userId, 2, ref m_struStreamCfgV41))
-            {
-                m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();
-                Log.GetLogger().ErrorFormat("NET_DVR_MatrixStartDynamic_V41 failed, error code = {0}", m_iErrorCode);
-                return false;
-            }
-
-            Log.GetLogger().InfoFormat("NET_DVR_MatrixStartDynamic_V41 success");
-            return true;
-        }
-
-        private bool StopDynamicDecode()
-        {
-            if (!CHCNetSDK.NET_DVR_MatrixStopDynamic(m_userId, 2))
-            {
-                m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();
-                Log.GetLogger().ErrorFormat("NET_DVR_MatrixStopDynamic failed, error code = {0}", m_iErrorCode);
-                return false;
-            }
-
-            Log.GetLogger().InfoFormat("NET_DVR_MatrixStopDynamic success");
             return true;
         }
 
@@ -317,7 +284,7 @@ namespace HMQService.Decode
         {
             dicCameras.Clear();
 
-            string sql = string.Format("select {0},{1},{2},{3},{4},{5},{6},{7},{8} from {9} order by {10}",
+            string sql = string.Format("select {0},{1},{2},{3},{4},{5},{6},{7},{8} from {9} order by {10};",
                 BaseDefine.DB_FIELD_BH,
                 BaseDefine.DB_FIELD_SBIP,
                 BaseDefine.DB_FIELD_YHM,
@@ -431,6 +398,8 @@ namespace HMQService.Decode
 
         private bool InitDevices()
         {
+            dicCars.Clear();
+            
             //获取 SDK Build
             if (!GetSDKBuildVersion())
             {
@@ -508,6 +477,28 @@ namespace HMQService.Decode
                     return false;
                 }
 
+                string sectionJMQ = string.Format("JMQ{0}", i);
+                for (int j  = 0; j < m_struDecAbility.struDviInfo.byChanNums; j++)  //DVI 个数循环
+                {
+                    if ((1 == nEven) && (j % 2 == 1))
+                    {
+                        continue;
+                    }
+
+                    string keyBNC = string.Format("BNC{0}", j + 1); //从 1 开始
+                    int nKch = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, sectionJMQ, keyBNC, 0);
+                    if (0 == nKch)  //没有配置
+                    {
+                        Log.GetLogger().InfoFormat("合码器 JMQ{0} 的 BNC 通道 {1} 处于空闲，可以配置。", i, keyBNC);
+                    }
+
+                    //检查通道配置
+                    if (!CheckBNCChan(nKch, j))
+                    {
+                        Log.GetLogger().ErrorFormat("通道检测及初始化错误，考车号={0}，BNC={1}", nKch, j);
+                    }
+                }
+
             }
 
             return true;
@@ -551,6 +542,152 @@ namespace HMQService.Decode
             {
                 Log.GetLogger().InfoFormat("InitHMQ catch an error : {0}", e.Message);
                 return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 通道检测及初始化
+        /// </summary>
+        /// <param name="kch">考车号</param>
+        /// <param name="bnc">BNC 编号</param>
+        /// <returns></returns>
+        private bool CheckBNCChan(int kch, int bnc)
+        {
+            uint lpdwEnable = 0;
+            uint dwDecChanNum = 0;
+            byte[] byDecChan = new byte[4];
+
+            //解码通道检测
+            for (int i = 0; i < 4; i++)
+            {
+                byDecChan[i] = (byte)(m_struDecAbility.byStartChan + bnc * 4 + i);
+                dwDecChanNum = byDecChan[i];
+                if (CHCNetSDK.NET_DVR_MatrixGetDecChanEnable(m_userId, dwDecChanNum, ref lpdwEnable))
+                {
+                    if (0 == lpdwEnable)    //取出的值为 0 表示关闭。
+                    {
+                        if (!CHCNetSDK.NET_DVR_MatrixSetDecChanEnable(m_userId, dwDecChanNum, 1))    //打开通道
+                        {
+                            m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();
+                            Log.GetLogger().ErrorFormat("NET_DVR_MatrixSetDecChanEnable failed, error code = {0}，打开通道失败", m_iErrorCode);
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            //显示通道检测
+            CHCNetSDK.NET_DVR_MATRIX_VOUTCFG m_DispChanCfg = new CHCNetSDK.NET_DVR_MATRIX_VOUTCFG();
+            uint dwDispChan = (uint)(m_struDecAbility.struDviInfo.byStartChan + bnc);
+            if (!CHCNetSDK.NET_DVR_MatrixGetDisplayCfg_V41(m_userId, dwDispChan, ref m_DispChanCfg))
+            {
+                m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();
+                Log.GetLogger().ErrorFormat("NET_DVR_MatrixGetDisplayCfg_V41 failed, error code = {0}，获取显示通道配置失败", m_iErrorCode);
+                return false;
+            }
+
+            if (m_DispChanCfg.dwWindowMode != 4 
+                || m_DispChanCfg.byJoinDecChan[0] != byDecChan[m_dispalyShow[0]]
+                || m_DispChanCfg.byJoinDecChan[1] != byDecChan[m_dispalyShow[1]]
+                || m_DispChanCfg.byJoinDecChan[2] != byDecChan[m_dispalyShow[2]]
+                || m_DispChanCfg.byJoinDecChan[3] != byDecChan[m_dispalyShow[3]])   //显示通道不是四分割输出
+            {
+                m_DispChanCfg.byJoinDecChan[0] = byDecChan[m_dispalyShow[0]];
+                m_DispChanCfg.byJoinDecChan[1] = byDecChan[m_dispalyShow[1]];
+                m_DispChanCfg.byJoinDecChan[2] = byDecChan[m_dispalyShow[2]];
+                m_DispChanCfg.byJoinDecChan[3] = byDecChan[m_dispalyShow[3]];
+                m_DispChanCfg.byAudio = 1;  //开启音频
+                m_DispChanCfg.byAudioWindowIdx = (byte)m_dispalyShow[4];  //音频子窗口 1
+                m_DispChanCfg.byVedioFormat = 1;    //视频制式，1-NTSC，2-PAL
+                m_DispChanCfg.dwResolution = 67207228;
+                m_DispChanCfg.dwWindowMode = 4;
+                m_DispChanCfg.byScale = 0;  //真实
+
+                //解码器设置显示通道配置
+                if(!CHCNetSDK.NET_DVR_MatrixSetDisplayCfg_V41(m_userId, dwDispChan, ref m_DispChanCfg))
+                {
+                    m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();
+                    if (29 == m_iErrorCode)
+                    {
+                        Log.GetLogger().ErrorFormat("错误29:设备操作失败,请将合码器完全恢复下.设备管理=>恢复默认参数=>完成恢复");
+                    }
+                    Log.GetLogger().ErrorFormat("NET_DVR_MatrixSetDisplayCfg_V41 failed, error code = {0}，设置显示通道配置失败", m_iErrorCode);
+                    return false;
+                }
+            }
+
+            //考车初始化
+            CarManager car = new CarManager();
+            car.InitCar(kch, m_userId, byDecChan);
+            if (!dicCars.ContainsKey(kch))
+            {
+                dicCars.Add(kch, car);
+            }
+
+            if (kch > 0 && kch < 100)
+            {
+                try
+                {
+                    TFInit(kch, BaseDefine.MSG_UM_JGPTDATA);
+                    Log.GetLogger().InfoFormat("TFInit success, kch = {0}", kch);
+                }
+                catch(Exception e)
+                {
+                    Log.GetLogger().ErrorFormat("TFInit catch an error:{0}", e.Message);
+                }
+            }
+
+            return true;
+        }
+
+        //开始运行
+        private bool RunMap()
+        {
+            string key = string.Empty;
+            CameraConf cameraConf = new CameraConf();
+
+            foreach (int iKch in dicCars.Keys)
+            {
+                Thread.Sleep(10);
+
+                CarManager carManager = dicCars[iKch];
+
+                //动态解码
+                key = string.Format("考车{0}_1", iKch);
+                if (!dicCameras.ContainsKey(key))
+                {
+                    Log.GetLogger().ErrorFormat("{0} 数据未配置，请检查", key);
+                }
+                else
+                {
+                    cameraConf = dicCameras[key];
+                    carManager.StartDynamicDecode(cameraConf, 0);
+                }
+
+                key = string.Format("考车{0}_2", iKch);
+                if (!dicCameras.ContainsKey(key))
+                {
+                    Log.GetLogger().ErrorFormat("{0} 数据未配置，请检查", key);
+                }
+                else
+                {
+                    cameraConf = dicCameras[key];
+                    carManager.StartDynamicDecode(cameraConf, 1);
+                }
+
+                //被动解码
+                int passiveHandle = -1;
+                if (carManager.StartPassiveDecode(2, ref passiveHandle))
+                {
+                    //TFPassH(passiveHandle, iKch, 3);
+                }
+                if (carManager.StartPassiveDecode(3, ref passiveHandle))
+                {
+                    //TFPassH(passiveHandle, iKch, 4);
+                }
+
             }
 
             return true;

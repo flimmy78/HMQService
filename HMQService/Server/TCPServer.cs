@@ -5,6 +5,8 @@ using System.Threading;
 using System.Collections;
 using System.IO;
 using HMQService.Common;
+using HMQService.Decode;
+using System.Collections.Generic;
 
 namespace HMQService.Server
 {
@@ -34,31 +36,16 @@ namespace HMQService.Server
 		private Thread m_serverThread = null;
 		private Thread m_purgingThread = null;
 		private ArrayList m_socketListenersList = null;
+        private Dictionary<int, CarManager> m_dicCars = new Dictionary<int, CarManager>();
+
 		/// <summary>
 		/// Constructors.
 		/// </summary>
-		public TCPServer()
+		public TCPServer(Dictionary<int, CarManager> dicCars)
 		{
-			Init(DEFAULT_IP_END_POINT);
-		}
-		public TCPServer(IPAddress serverIP)
-		{
-			Init(new IPEndPoint(serverIP, BaseDefine.HMQ_SERVICE_DEFAULT_PORT));
-		}
+            m_dicCars = dicCars;
 
-		public TCPServer(int port)
-		{
-			Init(new IPEndPoint(DEFAULT_SERVER, port));
-		}
-
-		public TCPServer(IPAddress serverIP, int port)
-		{
-			Init(new IPEndPoint(serverIP, port));
-		}
-
-		public TCPServer(IPEndPoint ipNport)
-		{
-			Init(ipNport);
+            Init(DEFAULT_IP_END_POINT);
 		}
 
 		/// <summary>
@@ -191,7 +178,7 @@ namespace HMQService.Server
                     Log.GetLogger().Info("AcceptSocket tcp client");
 
                     // Create a SocketListener object for the client.
-                    socketListener = new TCPSocketListener(clientSocket);
+                    socketListener = new TCPSocketListener(clientSocket, m_dicCars);
 
 					// Add the socket listener to an array list in a thread 
 					// safe fashon.

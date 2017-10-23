@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using HMQService.Common;
 using System.Threading;
+using HMQService.Decode;
 
 namespace HMQService.Server
 {
@@ -11,10 +12,12 @@ namespace HMQService.Server
     {
         private string m_data = string.Empty;
         private Thread m_dataHandlerThread = null;
+        private Dictionary<int, CarManager> m_dicCars = new Dictionary<int, CarManager>();
 
-        public DataHandler(Byte[] data, int nSize)
+        public DataHandler(Byte[] data, int nSize, Dictionary<int, CarManager> dicCars)
         {
             m_data = Encoding.ASCII.GetString(data, 0 ,nSize);
+            m_dicCars = dicCars;
 
             Log.GetLogger().InfoFormat("接收到车载数据：{0}", m_data);
         }
@@ -67,9 +70,34 @@ namespace HMQService.Server
                 goto END;
             }
 
-            foreach(string str in retArray)
+            string strKch = retArray[1];
+            int nKch = string.IsNullOrEmpty(strKch) ? 0 : int.Parse(strKch);    //考车号
+            string strType = retArray[2];
+            int nType = string.IsNullOrEmpty(strType) ? 0 : int.Parse(strType); //类型
+            string strXmbh = retArray[5];   //项目编号
+            string strZkzh = retArray[6];   //准考证号
+            string strTime = retArray[7];   //时间
+            string score = retArray[8]; //得分
+
+            if (!m_dicCars.ContainsKey(nKch))
             {
-                Log.GetLogger().InfoFormat("分割数据 {0}", str);
+                Log.GetLogger().ErrorFormat("找不到考车{0}，请检查配置", nKch);
+                return;
+            }
+            Log.GetLogger().InfoFormat(
+                "接收到车载接口信息，考车号={0}, 类型={1}, 项目编号={2}, 准考证号={3}, 时间={4}, 得分={5}",
+                nKch, nType, strXmbh, strZkzh, strTime, score);
+
+            switch (nType)
+            {
+                case BaseDefine.PACK_TYPE_M17C51:
+                    {
+
+                    }
+                    break;
+                default:
+                    break;
+
             }
 
             END:
