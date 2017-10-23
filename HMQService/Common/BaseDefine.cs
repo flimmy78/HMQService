@@ -69,5 +69,9 @@ namespace HMQService.Common
         public static readonly string DB_FIELD_CWBH = "错误编号";
         public static readonly string DB_FIELD_KFLX = "扣分类型";
         public static readonly string DB_FIELD_KCFS = "扣除分数";
+
+        //windows message
+        public static readonly int MSG_WM_USER = 0x400;
+        public static readonly int MSG_UM_JGPTDATA = MSG_WM_USER + 256;
     }
 }

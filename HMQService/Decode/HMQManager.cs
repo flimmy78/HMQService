@@ -20,10 +20,29 @@ namespace HMQService.Decode
         private IDataProvider sqlDataProvider = null;
         private Dictionary<string, CameraConf> dicCameras = new Dictionary<string, CameraConf>();   //摄像头信息
         private Dictionary<string, JudgementRule> dicJudgementRule = new Dictionary<string, JudgementRule>();   //扣分规则
+        private Dictionary<int, CarManager> dicCars = new Dictionary<int, CarManager>();    //考车信息
         private int[] m_dispalyShow;
 
         private CHCNetSDK.NET_DVR_DEC_STREAM_DEV_EX m_struStreamDev = new CHCNetSDK.NET_DVR_DEC_STREAM_DEV_EX();
         private CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41 m_struDecAbility = new CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41();
+
+
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TFInit(int ikch, int str);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TFPassH(int lPassHandle, int ikch, int itf);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TF17C51(int ikch, string zkzm, int idrcs);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TF17C52(int ikch, string zkzm, int ic, string msgz);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TF17C53(int ikch, string timestr, string msgz, int ikcfs);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TF17C54(int ikch, IntPtr msgz);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TF17C55(int ikch, int ic, string msgz);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        private static extern void TF17C56(int ikch, int itype, int ikscj);
 
         public HMQManager()
         {
@@ -94,7 +113,7 @@ namespace HMQService.Decode
                 return;
             }
 
-            //初始化设备和画面信息
+            //初始化设备和通道
             if(!InitDevices())
             {
                 return;
@@ -317,7 +336,7 @@ namespace HMQService.Decode
         {
             dicCameras.Clear();
 
-            string sql = string.Format("select {0},{1},{2},{3},{4},{5},{6},{7},{8} from {9} order by {10}",
+            string sql = string.Format("select {0},{1},{2},{3},{4},{5},{6},{7},{8} from {9} order by {10};",
                 BaseDefine.DB_FIELD_BH,
                 BaseDefine.DB_FIELD_SBIP,
                 BaseDefine.DB_FIELD_YHM,
@@ -650,7 +669,25 @@ namespace HMQService.Decode
             }
 
             //考车初始化
+            CarManager car = new CarManager();
+            car.InitCar(kch, m_userId, byDecChan);
+            if (!dicCars.ContainsKey(kch))
+            {
+                dicCars.Add(kch, car);
+            }
 
+            if (kch > 0 && kch < 100)
+            {
+                try
+                {
+                    TFInit(kch, BaseDefine.MSG_UM_JGPTDATA);
+                    Log.GetLogger().InfoFormat("TFInit success, kch = {0}", kch);
+                }
+                catch(Exception e)
+                {
+                    Log.GetLogger().ErrorFormat("TFInit catch an error:{0}", e.Message);
+                }
+            }
 
             return true;
         }
