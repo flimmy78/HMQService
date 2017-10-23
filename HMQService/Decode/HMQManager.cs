@@ -23,7 +23,6 @@ namespace HMQService.Decode
         private Dictionary<int, CarManager> dicCars = new Dictionary<int, CarManager>();    //考车信息
         private int[] m_dispalyShow;
 
-        private CHCNetSDK.NET_DVR_DEC_STREAM_DEV_EX m_struStreamDev = new CHCNetSDK.NET_DVR_DEC_STREAM_DEV_EX();
         private CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41 m_struDecAbility = new CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41();
 
 
@@ -120,20 +119,6 @@ namespace HMQService.Decode
             }
 
 
-            //开始动态解码
-            if (!StartDynamicDecode())
-            {
-                return;
-            }
-
-            System.Threading.Thread.Sleep(30000);
-
-            //停止动态解码
-            if (!StopDynamicDecode())
-            {
-                return;
-            }
-
             Log.GetLogger().InfoFormat("HMQManagerThreadProc end.");
         }
 
@@ -178,60 +163,6 @@ namespace HMQService.Decode
                 return false;
             }
 
-            return true;
-        }
-
-        private bool StartDynamicDecode()
-        {
-            CHCNetSDK.NET_DVR_PU_STREAM_CFG_V41 m_struStreamCfgV41 = new CHCNetSDK.NET_DVR_PU_STREAM_CFG_V41();
-            m_struStreamCfgV41.dwSize = (uint)Marshal.SizeOf(m_struStreamCfgV41);
-
-            m_struStreamCfgV41.byStreamMode = 1;    //取流模式
-            m_struStreamDev.struDevChanInfo.byChanType = 0; //通道类型
-            m_struStreamDev.struDevChanInfo.byChannel = 0;
-            m_struStreamDev.struDevChanInfo.byTransProtocol = 0;
-            m_struStreamDev.struDevChanInfo.byFactoryType = 0;
-
-            m_struStreamDev.struDevChanInfo.byAddress = "192.168.0.131";
-            m_struStreamDev.struDevChanInfo.wDVRPort = 8000;
-            m_struStreamDev.struDevChanInfo.dwChannel = 3;  //通道号
-            m_struStreamDev.struDevChanInfo.byTransMode = 0;    //传输码流模式
-            m_struStreamDev.struDevChanInfo.sUserName = "admin";
-            m_struStreamDev.struDevChanInfo.sPassword = "hk12345678";
-
-            m_struStreamDev.struStreamMediaSvrCfg.byValid = 0;
-            //m_struStreamDev.struStreamMediaSvrCfg.byValid = 1;
-            //m_struStreamDev.struStreamMediaSvrCfg.wDevPort = 554;
-            //m_struStreamDev.struStreamMediaSvrCfg.byAddress = "";   //流媒体IP
-            //m_struStreamDev.struStreamMediaSvrCfg.byTransmitType = 0;
-
-            uint dwUnionSize = (uint)Marshal.SizeOf(m_struStreamCfgV41.uDecStreamMode);
-            IntPtr ptrStreamUnion = Marshal.AllocHGlobal((Int32)dwUnionSize);
-            Marshal.StructureToPtr(m_struStreamDev, ptrStreamUnion, false);
-            m_struStreamCfgV41.uDecStreamMode = (CHCNetSDK.NET_DVR_DEC_STREAM_MODE)Marshal.PtrToStructure(ptrStreamUnion, typeof(CHCNetSDK.NET_DVR_DEC_STREAM_MODE));
-            Marshal.FreeHGlobal(ptrStreamUnion);
-
-            if (!CHCNetSDK.NET_DVR_MatrixStartDynamic_V41(m_userId, 2, ref m_struStreamCfgV41))
-            {
-                m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();
-                Log.GetLogger().ErrorFormat("NET_DVR_MatrixStartDynamic_V41 failed, error code = {0}", m_iErrorCode);
-                return false;
-            }
-
-            Log.GetLogger().InfoFormat("NET_DVR_MatrixStartDynamic_V41 success");
-            return true;
-        }
-
-        private bool StopDynamicDecode()
-        {
-            if (!CHCNetSDK.NET_DVR_MatrixStopDynamic(m_userId, 2))
-            {
-                m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();
-                Log.GetLogger().ErrorFormat("NET_DVR_MatrixStopDynamic failed, error code = {0}", m_iErrorCode);
-                return false;
-            }
-
-            Log.GetLogger().InfoFormat("NET_DVR_MatrixStopDynamic success");
             return true;
         }
 
@@ -688,6 +619,14 @@ namespace HMQService.Decode
                     Log.GetLogger().ErrorFormat("TFInit catch an error:{0}", e.Message);
                 }
             }
+
+            return true;
+        }
+
+        //开始运行
+        private bool RunMap()
+        {
+
 
             return true;
         }
