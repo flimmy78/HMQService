@@ -6,6 +6,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using HMQService.Common;
+using HMQService.Model;
+using HMQService.Decode;
 using System.Runtime.InteropServices;
 
 namespace HMQService.Server
@@ -18,12 +20,14 @@ namespace HMQService.Server
         private Socket m_server = null;
         private Thread m_serverThread = null;
         private bool m_stopServer = false;
+        private Dictionary<int, CarManager> m_dicCars = new Dictionary<int, CarManager>();
 
         /// <summary>
         /// Constructors.
         /// </summary>
-        public UDPServer()
+        public UDPServer(Dictionary<int, CarManager> dicCars)
         {
+            m_dicCars = dicCars;
             Init(DEFAULT_IP_END_POINT);
         }
 
@@ -118,6 +122,11 @@ namespace HMQService.Server
                 if (kch <= 0)
                 {
                     Log.GetLogger().ErrorFormat("udp 数据解析得到的考车号为 {0}", kch);
+                    return;
+                }
+                if (!m_dicCars.ContainsKey(kch))
+                {
+                    Log.GetLogger().ErrorFormat("不存在考车 {0}，请检查配置", kch);
                     return;
                 }
 

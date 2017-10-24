@@ -123,7 +123,7 @@ namespace HMQService.Decode
             //开始监听车载数据
             tcpServer = new TCPServer(dicCars, dicCameras, dicJudgementRule, sqlDataProvider);
             tcpServer.StartServer();
-            udpServer = new UDPServer();
+            udpServer = new UDPServer(dicCars);
             udpServer.StartServer(); 
 
             Log.GetLogger().InfoFormat("HMQManagerThreadProc end.");
@@ -668,15 +668,22 @@ namespace HMQService.Decode
                     carManager.StartDynamicDecode(cameraConf, 1);
                 }
 
-                //被动解码
-                int passiveHandle = -1;
-                if (carManager.StartPassiveDecode(2, ref passiveHandle))
+                try
                 {
-                    //TFPassH(passiveHandle, iKch, 3);
+                    //被动解码
+                    int passiveHandle = -1;
+                    if (carManager.StartPassiveDecode(2, ref passiveHandle))
+                    {
+                        BaseMethod.TFPassiveHandle(passiveHandle, iKch, 3);
+                    }
+                    if (carManager.StartPassiveDecode(3, ref passiveHandle))
+                    {
+                        BaseMethod.TFPassiveHandle(passiveHandle, iKch, 4);
+                    }
                 }
-                if (carManager.StartPassiveDecode(3, ref passiveHandle))
+                catch (Exception e)
                 {
-                    //TFPassH(passiveHandle, iKch, 4);
+                    Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
                 }
 
             }
