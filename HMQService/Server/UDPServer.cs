@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using HMQService.Common;
+using System.Runtime.InteropServices;
 
 namespace HMQService.Server
 {
@@ -89,12 +90,10 @@ namespace HMQService.Server
                 try
                 {
                     nRet = m_server.ReceiveFrom(recvData, ref remoteEP);
-
                     Log.GetLogger().DebugFormat("receive data from {0}", remoteEP.ToString());
 
-                    string recvStr = Encoding.ASCII.GetString(recvData);
-
-                    Log.GetLogger().DebugFormat("receive data : {0}", recvStr);
+                    Thread gpsThread = new Thread(new ParameterizedThreadStart(DealGpsDataProc));
+                    gpsThread.Start(recvData);
                 }
                 catch (Exception e)
                 {
@@ -103,6 +102,42 @@ namespace HMQService.Server
                     m_stopServer = true;
                 }
             }
+        }
+
+        private void DealGpsDataProc(object obj)
+        {
+            try
+            {
+                Byte[] data = (Byte[])obj;
+
+                //1-4字节为包类型，默认传的是1，这里没有用到
+                int type = System.BitConverter.ToInt32(data.Skip(0).Take(4).ToArray(), 0);
+
+                //5-8字节为考车号
+                int kch = System.BitConverter.ToInt32(data.Skip(4).Take(4).ToArray(), 0);
+                if (kch <= 0)
+                {
+                    Log.GetLogger().ErrorFormat("udp 数据解析得到的考车号为 {0}", kch);
+                    return;
+                }
+
+                //GPS 数据，转换为 IntPtr 传给 C++ Dll
+                Byte[] gpsData = data.Skip(8).ToArray();
+                IntPtr unmanagedPointer = Marshal.AllocHGlobal(gpsData.Length);
+                Marshal.Copy(gpsData, 0, unmanagedPointer, gpsData.Length);
+
+
+                BaseMethod.TF17C54(kch, unmanagedPointer);
+
+                System.Threading.Thread.Sleep(1000);
+                Marshal.FreeHGlobal(unmanagedPointer);
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+            }
+
+            Log.GetLogger().DebugFormat("DealGpsDataProc end");
         }
 
     }
