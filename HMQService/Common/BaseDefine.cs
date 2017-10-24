@@ -51,6 +51,8 @@ namespace HMQService.Common
         public static readonly string CONFIG_KEY_TIME = "Time";
         public static readonly int CONFIG_VALUE_KSKM_2 = 2;     //考试科目为科目2
         public static readonly int CONFIG_VALUE_KSKM_3 = 3;     //考试科目为科目3
+        public static readonly int CONFIG_VALUE_KSHGFS_2 = 80;  //科目2合格分数
+        public static readonly int CONFIG_VALUE_KSHGFS_3 = 90;  //科目3合格分数
 
         //数据库
         public static readonly string DB_TABLE_TBKVIDEO = "TBKVideo";

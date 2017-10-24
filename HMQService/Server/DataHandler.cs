@@ -127,7 +127,15 @@ namespace HMQService.Server
                     break;
                 case BaseDefine.PACK_TYPE_M17C56:   //考试完成
                     {
+                        string strKscj = retArray[5];  //考试完成时该字段表示考试成绩
+                        int kscj = string.IsNullOrEmpty(strKscj) ? 0 : int.Parse(strKscj);
+                        if (0 == kscj)
+                        {
+                            errorMsg = string.Format("车载接口传的考试成绩为 {0}", strKscj);
+                            goto END;
+                        }
 
+                        HandleM17C56(nKch, kscj);
                     }
                     break;
                 default:
@@ -142,7 +150,7 @@ namespace HMQService.Server
                 }
                 else
                 {
-                    Log.GetLogger().InfoFormat("DataHandlerThreadProc 执行成功");
+                    Log.GetLogger().InfoFormat("DataHandlerThreadProc 执行结束");
                 }
             }
 
@@ -517,6 +525,45 @@ namespace HMQService.Server
                 return false;
             }
 
+            return true;
+        }
+
+        /// <summary>
+        /// 考试完成
+        /// </summary>
+        /// <param name="kch">考车号</param>
+        /// <param name="kscj">考试成绩</param>
+        /// <returns></returns>
+        private bool HandleM17C56(int kch, int kscj)
+        {
+            int kshgfs = 0; //考试合格分数
+
+            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_KSKM, 0); //考试科目
+            if (BaseDefine.CONFIG_VALUE_KSKM_3 == kskm) //科目三
+            {
+                kshgfs = BaseDefine.CONFIG_VALUE_KSHGFS_3;
+            }
+            else  //科目二
+            {
+                kshgfs = BaseDefine.CONFIG_VALUE_KSHGFS_2;
+            }
+
+            try
+            {
+                if (kscj >= kshgfs) //考试合格
+                {
+                    BaseMethod.TF17C56(kch, 1, kscj);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("TF17C56 catch an error : {0}, 考车号={1}, 科目{2}, 考试成绩={3}", e.Message,
+                    kch, kskm, kscj);
+                return false;
+            }
+
+            Log.GetLogger().InfoFormat("TF17C56 end, 考车号={0}, 科目{1}, 考试成绩={2}", kch, kskm, kscj);
             return true;
         }
 
