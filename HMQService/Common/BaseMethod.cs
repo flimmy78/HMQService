@@ -1,12 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace HMQService.Common
 {
     public class BaseMethod
     {
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        public static extern void TFInit(int ikch, int str);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        public static extern void TFPassH(int lPassHandle, int ikch, int itf);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        public static extern void TF17C51(int ikch, string zkzm, int ikscs, int idrcs);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        public static extern void TF17C52(int ikch, string zkzm, int ic, string msgz);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        public static extern void TF17C53(int ikch, string timestr, string msgz, int ikcfs);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        public static extern void TF17C54(int ikch, IntPtr msgz);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        public static extern void TF17C55(int ikch, int ic, string msgz);
+        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
+        public static extern void TF17C56(int ikch, int itype, int ikscj);
+
+        //字符串分割
         public static string[] SplitString(string data, char cOperator, out string errorMsg)
         {
             errorMsg = string.Empty;
@@ -36,6 +56,7 @@ namespace HMQService.Common
             return retArray;
         }
 
+        //从INI配置文件取值，返回int类型
         public static int INIGetIntValue(string iniFile, string section, string key, int defaultValue)
         {
             int nRet = defaultValue;
@@ -52,6 +73,15 @@ namespace HMQService.Common
             }
 
             return nRet;
+        }
+
+        /// <summary>
+        /// 检测指定文件是否存在,如果存在则返回true。
+        /// </summary>
+        /// <param name="filePath">文件的绝对路径</param>        
+        public static bool IsExistFile(string filePath)
+        {
+            return File.Exists(filePath);
         }
     }
 }

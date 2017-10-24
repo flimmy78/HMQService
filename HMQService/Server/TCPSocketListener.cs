@@ -5,6 +5,8 @@ using System.Text;
 using System.IO;
 using HMQService.Common;
 using HMQService.Decode;
+using HMQService.Database;
+using HMQService.Model;
 using System.Collections.Generic;
 
 namespace HMQService.Server
@@ -34,14 +36,22 @@ namespace HMQService.Server
 		private DateTime m_lastReceiveDateTime;
 		private DateTime m_currentReceiveDateTime;
         private Dictionary<int, CarManager> m_dicCars = new Dictionary<int, CarManager>();
+        private Dictionary<string, CameraConf> m_dicCameras = new Dictionary<string, CameraConf>();
+        private Dictionary<string, JudgementRule> m_dicJudgeRules = new Dictionary<string, JudgementRule>();
+        private IDataProvider m_sqlDataProvider = null;
 		
 		/// <summary>
 		/// Client Socket Listener Constructor.
 		/// </summary>
 		/// <param name="clientSocket"></param>
-		public TCPSocketListener(Socket clientSocket, Dictionary<int, CarManager> dicCars)
+		public TCPSocketListener(Socket clientSocket, Dictionary<int, CarManager> dicCars, 
+            Dictionary<string, CameraConf> dicCameras, Dictionary<string, JudgementRule> dicRules, 
+            IDataProvider sqlDataProvider)
 		{
             m_dicCars = dicCars;
+            m_dicCameras = dicCameras;
+            m_dicJudgeRules = dicRules;
+            m_sqlDataProvider = sqlDataProvider;
             m_clientSocket = clientSocket;
 		}
 
@@ -94,7 +104,7 @@ namespace HMQService.Server
 					m_currentReceiveDateTime=DateTime.Now;
 
                     //数据处理
-                    dataHandler = new DataHandler(byteBuffer, size, m_dicCars);
+                    dataHandler = new DataHandler(byteBuffer, size, m_dicCars, m_dicCameras, m_dicJudgeRules, m_sqlDataProvider);
                     dataHandler.StartHandle();
 
                     //发送确认信息给车载
