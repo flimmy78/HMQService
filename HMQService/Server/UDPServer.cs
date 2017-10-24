@@ -11,9 +11,8 @@ namespace HMQService.Server
 {
     public class UDPServer
     {
-        public static IPAddress DEFAULT_SERVER = IPAddress.Parse("0.0.0.0");
-        public static int DEFAULT_PORT = 10086; //监听端口号
-        public static IPEndPoint DEFAULT_IP_END_POINT = new IPEndPoint(DEFAULT_SERVER, DEFAULT_PORT);
+        private static IPAddress DEFAULT_SERVER = IPAddress.Parse(BaseDefine.LISTENING_ADDRESS);
+        private static IPEndPoint DEFAULT_IP_END_POINT = new IPEndPoint(DEFAULT_SERVER, BaseDefine.LISTENING_PORT_UDP);
 
         private Socket m_server = null;
         private Thread m_serverThread = null;
@@ -25,26 +24,6 @@ namespace HMQService.Server
         public UDPServer()
         {
             Init(DEFAULT_IP_END_POINT);
-        }
-
-        public UDPServer(IPAddress serverIP)
-        {
-            Init(new IPEndPoint(serverIP, DEFAULT_PORT));
-        }
-
-        public UDPServer(int port)
-        {
-            Init(new IPEndPoint(DEFAULT_SERVER, port));
-        }
-
-        public UDPServer(IPAddress serverIP, int port)
-        {
-            Init(new IPEndPoint(serverIP, port));
-        }
-
-        public UDPServer(IPEndPoint ipNport)
-        {
-            Init(ipNport);
         }
 
         ~UDPServer()

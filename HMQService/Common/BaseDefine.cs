@@ -7,8 +7,9 @@ namespace HMQService.Common
 {
     public class BaseDefine
     {
-        //TCP服务监听端口
-        public static readonly int HMQ_SERVICE_DEFAULT_PORT = 6708;
+        public static readonly string LISTENING_ADDRESS = "0.0.0.0";    //监听地址
+        public static readonly int LISTENING_PORT_TCP = 6708;   //TCP 监听端口号
+        public static readonly int LISTENING_PORT_UDP = 6709;   //UDP 监听端口号
 
         //数据格式
         public const int  PACK_TYPE_M17C51 = 1;

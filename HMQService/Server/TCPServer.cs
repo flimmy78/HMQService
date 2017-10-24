@@ -25,9 +25,9 @@ namespace HMQService.Server
 		/// <summary>
 		/// Default Constants.
 		/// </summary>
-		public static IPAddress DEFAULT_SERVER = IPAddress.Parse("0.0.0.0"); 
+		public static IPAddress DEFAULT_SERVER = IPAddress.Parse(BaseDefine.LISTENING_ADDRESS); 
 		public static IPEndPoint DEFAULT_IP_END_POINT = 
-			new IPEndPoint(DEFAULT_SERVER, BaseDefine.HMQ_SERVICE_DEFAULT_PORT);
+			new IPEndPoint(DEFAULT_SERVER, BaseDefine.LISTENING_PORT_TCP);
 
 		/// <summary>
 		/// Local Variables Declaration.
