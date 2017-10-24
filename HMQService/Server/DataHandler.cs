@@ -23,7 +23,7 @@ namespace HMQService.Server
         public DataHandler(Byte[] data, int nSize, Dictionary<int, CarManager> dicCars, Dictionary<string, CameraConf> dicCameras,
             Dictionary<string, JudgementRule> dicRules, IDataProvider sqlDataProvider)
         {
-            m_data = Encoding.ASCII.GetString(data, 0 ,nSize);
+            m_data = Encoding.ASCII.GetString(data, 0, nSize);
             m_dicCars = dicCars;
             m_dicCameras = dicCameras;
             m_dicJudgeRules = dicRules;
@@ -73,7 +73,7 @@ namespace HMQService.Server
             }
 
             int nLength = retArray.Length;
-            if (nLength != BaseDefine.INTERFACE_FIELD_COUNT_KM2 
+            if (nLength != BaseDefine.INTERFACE_FIELD_COUNT_KM2
                 && nLength != BaseDefine.INTERFACE_FIELD_COUNT_KM3)
             {
                 errorMsg = string.Format("车载数据格式不正确，{0} 数量不对", BaseDefine.SPLIT_CHAR_ASTERISK);
@@ -100,17 +100,17 @@ namespace HMQService.Server
 
             switch (nType)
             {
-                case BaseDefine.PACK_TYPE_M17C51:
+                case BaseDefine.PACK_TYPE_M17C51:   //考试开始
                     {
                         HandleM17C51(nKch, strZkzh);
                     }
                     break;
-                case BaseDefine.PACK_TYPE_M17C52:
+                case BaseDefine.PACK_TYPE_M17C52:   //项目开始
                     {
                         HandleM17C52(nKch, strZkzh, strXmbh);
                     }
                     break;
-                case BaseDefine.PACK_TYPE_M17C53:
+                case BaseDefine.PACK_TYPE_M17C53:   //扣分
                     {
                         HandleM17C53(nKch, strXmbh, strTime);
                     }
@@ -120,12 +120,12 @@ namespace HMQService.Server
                         //项目抓拍照片，这里不需要处理
                     }
                     break;
-                case BaseDefine.PACK_TYPE_M17C55:
+                case BaseDefine.PACK_TYPE_M17C55:   //项目完成
                     {
-
+                        HandleM17C55(nKch, strZkzh, strXmbh);
                     }
                     break;
-                case BaseDefine.PACK_TYPE_M17C56:
+                case BaseDefine.PACK_TYPE_M17C56:   //考试完成
                     {
 
                     }
@@ -134,7 +134,7 @@ namespace HMQService.Server
                     break;
             }
 
-            END:
+        END:
             {
                 if (!string.IsNullOrEmpty(errorMsg))
                 {
@@ -221,32 +221,8 @@ namespace HMQService.Server
                 }
             }
 
-            //项目编号转换，数据库升级后可以不需要这段代码
-            int xmCodeNew = 0;
-            if (xmCode > BaseDefine.XMBH_300 && xmCode < BaseDefine.XMBH_400)
-            {
-                xmCodeNew = BaseDefine.XMBH_201510;
-            }
-            else if (xmCode > BaseDefine.XMBH_400 && xmCode < BaseDefine.XMBH_500)
-            {
-                xmCodeNew = BaseDefine.XMBH_204510;
-            }
-            else if (xmCode > BaseDefine.XMBH_500 && xmCode < BaseDefine.XMBH_600)
-            {
-                xmCodeNew = BaseDefine.XMBH_203510;
-            }
-            else if (xmCode > BaseDefine.XMBH_600 && xmCode < BaseDefine.XMBH_700)
-            {
-                xmCodeNew = BaseDefine.XMBH_206510;
-            }
-            else if (xmCode > BaseDefine.XMBH_700 && xmCode < BaseDefine.XMBH_800)
-            {
-                xmCodeNew = BaseDefine.XMBH_207510;
-            }
-            else
-            {
-                xmCodeNew = xmCode;
-            }
+            //项目编号转换，科目二专用，数据库升级后可以不需要这段代码
+            int xmCodeNew = GetKM2NewXmBh(xmCode);
 
             //获取扣分类型
             if (!m_dicJudgeRules.ContainsKey(xmbh))
@@ -348,13 +324,13 @@ namespace HMQService.Server
             }
             string kflx = m_dicJudgeRules[strErrrorCode].JudgementType;
             int kcfs = m_dicJudgeRules[strErrrorCode].Points;
-            
+
             try
             {
                 //参数：考车号，项目名称，扣分类型，扣除分数
                 BaseMethod.TF17C53(kch, xmName, kflx, kcfs);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Log.GetLogger().ErrorFormat("TF17C53 catch an error : {0}, kch={1}, xmName={2}, kflx={3}, kcfs={4}", e.Message,
                     kch, xmName, kflx, kcfs);
@@ -436,7 +412,7 @@ namespace HMQService.Server
         {
             string xmName = string.Empty;
 
-            if((xmCode > BaseDefine.XMBH_201509) && (xmCode < BaseDefine.XMBH_201700))
+            if ((xmCode > BaseDefine.XMBH_201509) && (xmCode < BaseDefine.XMBH_201700))
             {
                 xmName = BaseDefine.XMMC_DCRK;  //倒车入库
             }
@@ -470,6 +446,78 @@ namespace HMQService.Server
             }
 
             return xmName;
+        }
+
+        /// <summary>
+        /// 项目完成
+        /// </summary>
+        /// <param name="kch">考车号</param>
+        /// <param name="strZkzmbh">准考证明</param>
+        /// <param name="strXmbh">项目编号</param>
+        /// <returns></returns>
+        private bool HandleM17C55(int kch, string strZkzmbh, string strXmbh)
+        {
+            //项目开始编号与项目完成编号不一样，车载没有把完成编号传过来，这里需要根据开始编号进行转换
+            int xmBeginCode = string.IsNullOrEmpty(strXmbh) ? 0 : int.Parse(strXmbh);
+            int xmEndCode = 0;
+
+            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_KSKM, 0); //考试科目
+            if (BaseDefine.CONFIG_VALUE_KSKM_3 == kskm) //科目三
+            {
+                string key = string.Format("考车{0}_2", kch);
+                if (!m_dicCameras.ContainsKey(key))
+                {
+                    Log.GetLogger().ErrorFormat("找不到 {0} 摄像头配置，请检查配置", key);
+                    //return false;
+                }
+                else
+                {
+                    CameraConf camera = m_dicCameras[key];
+                    m_dicCars[kch].StartDynamicDecode(camera, 1);   //车载视频动态，第二画面车外
+                }
+
+                //科目三的项目完成编号为，开始编号+700
+                //218 --> 918
+                if (xmBeginCode < BaseDefine.XMBH_700)
+                {
+                    xmEndCode = xmBeginCode + BaseDefine.XMBH_700;
+                }
+                else
+                {
+                    xmEndCode = xmBeginCode;
+                }
+            }
+            else  //科目二
+            {
+                //项目编号转换，科目二专用，数据库升级后可以不需要这段代码
+                xmBeginCode = GetKM2NewXmBh(xmBeginCode);
+
+                //e.g. 201500 --> 201990
+                // 201500 先除以 1000，得到 201。再乘以 1000，得到 201000。再加上 990，得到 201990。
+                xmEndCode = (xmBeginCode / 1000) * 1000 + 990;
+            }
+
+            //获取扣分类型
+            if (!m_dicJudgeRules.ContainsKey(xmEndCode.ToString()))
+            {
+                Log.GetLogger().ErrorFormat("ErrorData 表不存在 {0} 记录，请检查配置", xmEndCode);
+                return false;
+            }
+            string kflx = m_dicJudgeRules[xmEndCode.ToString()].JudgementType;
+
+            try
+            {
+                BaseMethod.TF17C55(kch, xmBeginCode, kflx);
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("TF17C55 catch an error : {0}, kch={1}, xmBeginCode={2}, kflx={3}", e.Message,
+                    kch, xmBeginCode, kflx);
+                return false;
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -517,6 +565,39 @@ namespace HMQService.Server
 
             Log.GetLogger().InfoFormat("考生 {0} 的考试考试次数为 {1}，当日次数为 {2}", zkzmbh, kscs, drcs);
             return true;
+        }
+
+        //科目二的项目编号有更新，这里将旧的编号转换为新的编号
+        //如果现场数据库已升级到最新，则不需要调用该函数
+        private int GetKM2NewXmBh(int xmCode)
+        {
+            int xmCodeNew = 0;
+            if (xmCode > BaseDefine.XMBH_300 && xmCode < BaseDefine.XMBH_400)
+            {
+                xmCodeNew = BaseDefine.XMBH_201510;
+            }
+            else if (xmCode > BaseDefine.XMBH_400 && xmCode < BaseDefine.XMBH_500)
+            {
+                xmCodeNew = BaseDefine.XMBH_204510;
+            }
+            else if (xmCode > BaseDefine.XMBH_500 && xmCode < BaseDefine.XMBH_600)
+            {
+                xmCodeNew = BaseDefine.XMBH_203510;
+            }
+            else if (xmCode > BaseDefine.XMBH_600 && xmCode < BaseDefine.XMBH_700)
+            {
+                xmCodeNew = BaseDefine.XMBH_206510;
+            }
+            else if (xmCode > BaseDefine.XMBH_700 && xmCode < BaseDefine.XMBH_800)
+            {
+                xmCodeNew = BaseDefine.XMBH_207510;
+            }
+            else
+            {
+                xmCodeNew = xmCode;
+            }
+
+            return xmCodeNew;
         }
     }
 }
