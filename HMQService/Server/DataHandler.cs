@@ -112,7 +112,7 @@ namespace HMQService.Server
                     break;
                 case BaseDefine.PACK_TYPE_M17C53:
                     {
-
+                        HandleM17C53(nKch, strXmbh, strTime);
                     }
                     break;
                 case BaseDefine.PACK_TYPE_M17C54:
@@ -172,12 +172,12 @@ namespace HMQService.Server
             {
                 Log.GetLogger().ErrorFormat("TF17C51 catch an error : {0}, kch = {1}, zkzmbh = {2}, kscs = {3}, drcs = {4}",
                     e.Message, kch, zkzmbh, kscs, drcs);
-            } 
+                return false;
+            }
 
+            Log.GetLogger().InfoFormat("HandleM17C51 end, kch={0}, zkzmbh={1}, kscs={2}, drcs={3}", kch, zkzmbh, kscs, drcs);
             return true;
         }
-
-
 
         /// <summary>
         /// 项目开始
@@ -264,8 +264,10 @@ namespace HMQService.Server
             {
                 Log.GetLogger().ErrorFormat("TF17C52 catch an error : {0}, kch = {1}, zkzmbh = {2}, xmCodeNew = {3}, kflx = {4}",
                     e.Message, kch, zkzmbh, xmCodeNew, kflx);
+                return false;
             }
 
+            Log.GetLogger().InfoFormat("HandleM17C52 end, kch={0}, zkzmbh={1}", kch, zkzmbh);
             return true;
         }
 
@@ -306,7 +308,169 @@ namespace HMQService.Server
 
         }
 
+        /// <summary>
+        /// 项目扣分
+        /// </summary>
+        /// <param name="kch">考车号</param>
+        /// <param name="xmbh">项目编号，包含项目编号和错误编号，用@分隔</param>
+        /// <param name="time">时间</param>
+        /// <returns></returns>
+        private bool HandleM17C53(int kch, string xmbh, string time)
+        {
+            string errorMsg = string.Empty;
+            string[] strArray = BaseMethod.SplitString(xmbh, BaseDefine.SPLIT_CHAR_AT, out errorMsg);
+            if (!string.IsNullOrEmpty(errorMsg) || strArray.Length != 2)
+            {
+                Log.GetLogger().ErrorFormat("17C53 接口存在错误，{0}", errorMsg);
+                return false;
+            }
+            string strXmCode = strArray[0];
+            string strErrrorCode = strArray[1];
+            int xmCode = string.IsNullOrEmpty(strXmCode) ? 0 : int.Parse(strXmCode);
 
+            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_KSKM, 0); //考试科目
+            string xmName = string.Empty;   //项目名称
+            if (BaseDefine.CONFIG_VALUE_KSKM_3 == kskm) //科目三
+            {
+                xmName = GetKM3Name(xmCode);
+            }
+            else  //科目二
+            {
+                xmName = GetKM2Name(xmCode);
+            }
+
+            //扣分类型、扣除分数
+            if (!m_dicJudgeRules.ContainsKey(strErrrorCode))
+            {
+                Log.GetLogger().ErrorFormat("数据库扣分规则表中不存在错误编号为 {0} 的记录，请检查配置。", strErrrorCode);
+                return false;
+            }
+            string kflx = m_dicJudgeRules[strErrrorCode].JudgementType;
+            int kcfs = m_dicJudgeRules[strErrrorCode].Points;
+            
+            try
+            {
+                //参数：考车号，项目名称，扣分类型，扣除分数
+                BaseMethod.TF17C53(kch, xmName, kflx, kcfs);
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("TF17C53 catch an error : {0}, kch={1}, xmName={2}, kflx={3}, kcfs={4}", e.Message,
+                    kch, xmName, kflx, kcfs);
+                return false;
+            }
+
+            Log.GetLogger().InfoFormat("HandleM17C53 end, kch={0}, xmName={1}, kflx={2}, kcfs={3}", kch, xmName, kflx, kcfs);
+            return true;
+        }
+
+        //根据项目编号，获取科目三项目名称
+        private string GetKM3Name(int xmCode)
+        {
+            string xmName = string.Empty;
+            switch (xmCode)
+            {
+                case BaseDefine.XMBH_201:
+                    xmName = BaseDefine.XMMC_SCZB;  //上车准备
+                    break;
+                case BaseDefine.XMBH_202:
+                    xmName = BaseDefine.XMMC_QB;  //起步
+                    break;
+                case BaseDefine.XMBH_203:
+                    xmName = BaseDefine.XMMC_ZHIXIAN;   //直线
+                    break;
+                case BaseDefine.XMBH_204:
+                    xmName = BaseDefine.XMMC_BG;    //变更
+                    break;
+                case BaseDefine.XMBH_205:
+                    xmName = BaseDefine.XMMC_TGLK;  //通过路口
+                    break;
+                case BaseDefine.XMBH_206:
+                    xmName = BaseDefine.XMMC_RX;    //人行
+                    break;
+                case BaseDefine.XMBH_207:
+                    xmName = BaseDefine.XMMC_XX;    //学校
+                    break;
+                case BaseDefine.XMBH_208:
+                    xmName = BaseDefine.XMMC_CC;    //车站
+                    break;
+                case BaseDefine.XMBH_209:
+                    xmName = BaseDefine.XMMC_HC;    //会车
+                    break;
+                case BaseDefine.XMBH_210:
+                    xmName = BaseDefine.XMMC_CC;    //超车
+                    break;
+                case BaseDefine.XMBH_211:
+                    xmName = BaseDefine.XMMC_KB;    //靠边
+                    break;
+                case BaseDefine.XMBH_212:
+                    xmName = BaseDefine.XMMC_DT;    //掉头
+                    break;
+                case BaseDefine.XMBH_213:
+                    xmName = BaseDefine.XMMC_YJ;    //夜间
+                    break;
+                case BaseDefine.XMBH_214:
+                    xmName = BaseDefine.XMMC_ZZ;    //左转
+                    break;
+                case BaseDefine.XMBH_215:
+                    xmName = BaseDefine.XMMC_YZ;    //右转
+                    break;
+                case BaseDefine.XMBH_216:
+                    xmName = BaseDefine.XMMC_ZHIXING;    //直行
+                    break;
+                case BaseDefine.XMBH_217:
+                    xmName = BaseDefine.XMMC_JJ;    //加减
+                    break;
+                default:
+                    xmName = BaseDefine.XMMC_ZH;    //综合
+                    break;
+            }
+
+
+            return xmName;
+        }
+
+        //根据项目编号，获取科目二项目名称
+        private string GetKM2Name(int xmCode)
+        {
+            string xmName = string.Empty;
+
+            if((xmCode > BaseDefine.XMBH_201509) && (xmCode < BaseDefine.XMBH_201700))
+            {
+                xmName = BaseDefine.XMMC_DCRK;  //倒车入库
+            }
+            else if ((xmCode > BaseDefine.XMBH_204509) && (xmCode < BaseDefine.XMBH_204700))
+            {
+                xmName = BaseDefine.XMMC_CFTC;  //侧方停车
+            }
+            else if ((xmCode > BaseDefine.XMBH_203509) && (xmCode < BaseDefine.XMBH_203700))
+            {
+                xmName = BaseDefine.XMMC_DDPQ;  //定点坡起
+            }
+            else if ((xmCode > BaseDefine.XMBH_206509) && (xmCode < BaseDefine.XMBH_206700))
+            {
+                xmName = BaseDefine.XMMC_QXXS;  //曲线行驶
+            }
+            else if ((xmCode > BaseDefine.XMBH_207509) && (xmCode < BaseDefine.XMBH_207700))
+            {
+                xmName = BaseDefine.XMMC_ZJZW;  //直角转弯
+            }
+            else if (BaseDefine.XMBH_249 == xmCode)
+            {
+                xmName = BaseDefine.XMMC_MNSD;  //模拟遂道
+            }
+            else if (BaseDefine.XMBH_259 == xmCode)
+            {
+                xmName = BaseDefine.XMMC_YWSH;  //雨雾湿滑
+            }
+            else
+            {
+                xmName = BaseDefine.XMMC_ZHPP;  //综合评判
+            }
+
+            return xmName;
+        }
 
         /// <summary>
         /// 从数据库查询考生的考试次数和当日次数
