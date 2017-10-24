@@ -12,7 +12,7 @@ namespace HMQService.Common
         [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
         public static extern void TFInit(int ikch, int str);
         [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        public static extern void TFPassH(int lPassHandle, int ikch, int itf);
+        public static extern void TFPassiveHandle(int lPassHandle, int ikch, int itf);
         [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
         public static extern void TF17C51(int ikch, string zkzm, int ikscs, int idrcs);
         [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]

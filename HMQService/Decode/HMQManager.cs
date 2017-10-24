@@ -24,6 +24,7 @@ namespace HMQService.Decode
         private Dictionary<int, CarManager> dicCars = new Dictionary<int, CarManager>();    //考车信息
         private int[] m_dispalyShow;
         private TCPServer tcpServer;
+        private UDPServer udpServer;
 
         private CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41 m_struDecAbility = new CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41();
 
@@ -64,6 +65,11 @@ namespace HMQService.Decode
             {
                 tcpServer.StopServer();
                 tcpServer = null;
+            }
+            if (null != udpServer)
+            {
+                udpServer.StopServer();
+                udpServer = null;
             }
 
             m_HMQManagerThread.Join(1000);
@@ -117,6 +123,8 @@ namespace HMQService.Decode
             //开始监听车载数据
             tcpServer = new TCPServer(dicCars, dicCameras, dicJudgementRule, sqlDataProvider);
             tcpServer.StartServer();
+            udpServer = new UDPServer(dicCars);
+            udpServer.StartServer(); 
 
             Log.GetLogger().InfoFormat("HMQManagerThreadProc end.");
         }
@@ -468,10 +476,11 @@ namespace HMQService.Decode
                     }
 
                     string keyBNC = string.Format("BNC{0}", j + 1); //从 1 开始
-                    int nKch = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, sectionJMQ, keyBNC, 0);
-                    if (0 == nKch)  //没有配置
+                    int nKch = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, sectionJMQ, keyBNC, -1);
+                    if (-1 == nKch)  //没有配置
                     {
                         Log.GetLogger().InfoFormat("合码器 JMQ{0} 的 BNC 通道 {1} 处于空闲，可以配置。", i, keyBNC);
+                        continue; 
                     }
 
                     //检查通道配置
@@ -640,7 +649,7 @@ namespace HMQService.Decode
                 key = string.Format("考车{0}_1", iKch);
                 if (!dicCameras.ContainsKey(key))
                 {
-                    Log.GetLogger().ErrorFormat("{0} 数据未配置，请检查", key);
+                    Log.GetLogger().ErrorFormat("{0} 摄像头未配置，请检查", key);
                 }
                 else
                 {
@@ -651,7 +660,7 @@ namespace HMQService.Decode
                 key = string.Format("考车{0}_2", iKch);
                 if (!dicCameras.ContainsKey(key))
                 {
-                    Log.GetLogger().ErrorFormat("{0} 数据未配置，请检查", key);
+                    Log.GetLogger().ErrorFormat("{0} 摄像头未配置，请检查", key);
                 }
                 else
                 {
@@ -659,15 +668,22 @@ namespace HMQService.Decode
                     carManager.StartDynamicDecode(cameraConf, 1);
                 }
 
-                //被动解码
-                int passiveHandle = -1;
-                if (carManager.StartPassiveDecode(2, ref passiveHandle))
+                try
                 {
-                    //TFPassH(passiveHandle, iKch, 3);
+                    //被动解码
+                    int passiveHandle = -1;
+                    if (carManager.StartPassiveDecode(2, ref passiveHandle))
+                    {
+                        BaseMethod.TFPassiveHandle(passiveHandle, iKch, 3);
+                    }
+                    if (carManager.StartPassiveDecode(3, ref passiveHandle))
+                    {
+                        BaseMethod.TFPassiveHandle(passiveHandle, iKch, 4);
+                    }
                 }
-                if (carManager.StartPassiveDecode(3, ref passiveHandle))
+                catch (Exception e)
                 {
-                    //TFPassH(passiveHandle, iKch, 4);
+                    Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
                 }
 
             }
