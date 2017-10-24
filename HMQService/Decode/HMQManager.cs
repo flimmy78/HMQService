@@ -27,24 +27,6 @@ namespace HMQService.Decode
 
         private CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41 m_struDecAbility = new CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41();
 
-
-        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        private static extern void TFInit(int ikch, int str);
-        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        private static extern void TFPassH(int lPassHandle, int ikch, int itf);
-        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        private static extern void TF17C51(int ikch, string zkzm, int idrcs);
-        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        private static extern void TF17C52(int ikch, string zkzm, int ic, string msgz);
-        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        private static extern void TF17C53(int ikch, string timestr, string msgz, int ikcfs);
-        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        private static extern void TF17C54(int ikch, IntPtr msgz);
-        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        private static extern void TF17C55(int ikch, int ic, string msgz);
-        [DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        private static extern void TF17C56(int ikch, int itype, int ikscj);
-
         public HMQManager()
         {
             m_dispalyShow = new int[5];
@@ -133,7 +115,7 @@ namespace HMQService.Decode
             }
 
             //开始监听车载数据
-            tcpServer = new TCPServer(dicCars);
+            tcpServer = new TCPServer(dicCars, dicCameras, dicJudgementRule, sqlDataProvider);
             tcpServer.StartServer();
 
             Log.GetLogger().InfoFormat("HMQManagerThreadProc end.");
@@ -630,7 +612,7 @@ namespace HMQService.Decode
             {
                 try
                 {
-                    TFInit(kch, BaseDefine.MSG_UM_JGPTDATA);
+                    BaseMethod.TFInit(kch, BaseDefine.MSG_UM_JGPTDATA);
                     Log.GetLogger().InfoFormat("TFInit success, kch = {0}", kch);
                 }
                 catch(Exception e)

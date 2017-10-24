@@ -6,6 +6,8 @@ using System.Collections;
 using System.IO;
 using HMQService.Common;
 using HMQService.Decode;
+using HMQService.Database;
+using HMQService.Model;
 using System.Collections.Generic;
 
 namespace HMQService.Server
@@ -37,13 +39,20 @@ namespace HMQService.Server
 		private Thread m_purgingThread = null;
 		private ArrayList m_socketListenersList = null;
         private Dictionary<int, CarManager> m_dicCars = new Dictionary<int, CarManager>();
+        private Dictionary<string, CameraConf> m_dicCameras = new Dictionary<string, CameraConf>();
+        private Dictionary<string, JudgementRule> m_dicJudgeRules = new Dictionary<string, JudgementRule>();
+        private IDataProvider m_sqlDataProvider = null;
 
 		/// <summary>
 		/// Constructors.
 		/// </summary>
-		public TCPServer(Dictionary<int, CarManager> dicCars)
+		public TCPServer(Dictionary<int, CarManager> dicCars, Dictionary<string, CameraConf> dicCameras, 
+            Dictionary<string, JudgementRule> dicRules, IDataProvider sqlDataProvider)
 		{
             m_dicCars = dicCars;
+            m_dicCameras = dicCameras;
+            m_dicJudgeRules = dicRules;
+            m_sqlDataProvider = sqlDataProvider;
 
             Init(DEFAULT_IP_END_POINT);
 		}
@@ -178,7 +187,7 @@ namespace HMQService.Server
                     Log.GetLogger().Info("AcceptSocket tcp client");
 
                     // Create a SocketListener object for the client.
-                    socketListener = new TCPSocketListener(clientSocket, m_dicCars);
+                    socketListener = new TCPSocketListener(clientSocket, m_dicCars, m_dicCameras, m_dicJudgeRules, m_sqlDataProvider);
 
 					// Add the socket listener to an array list in a thread 
 					// safe fashon.
