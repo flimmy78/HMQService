@@ -103,12 +103,15 @@ namespace HMQService.Server
 					size = m_clientSocket.Receive(byteBuffer);
 					m_currentReceiveDateTime=DateTime.Now;
 
+                    //发送确认信息给车载
+                    m_clientSocket.Send(byteBuffer);
+
                     //数据处理
                     dataHandler = new DataHandler(byteBuffer, size, m_dicCars, m_dicCameras, m_dicJudgeRules, m_sqlDataProvider);
                     dataHandler.StartHandle();
 
-                    //发送确认信息给车载
-                    m_clientSocket.Send(byteBuffer);
+                    ////发送确认信息给车载
+                    //m_clientSocket.Send(byteBuffer);
 
                     Log.GetLogger().InfoFormat("发送确认信息给车载完成");
                 }

@@ -109,7 +109,7 @@ namespace HMQService.Decode
             }
 
             //初始化设备和通道
-            if(!InitDevices())
+            if (!InitDevices())
             {
                 return;
             }
@@ -124,7 +124,7 @@ namespace HMQService.Decode
             tcpServer = new TCPServer(dicCars, dicCameras, dicJudgementRule, sqlDataProvider);
             tcpServer.StartServer();
             udpServer = new UDPServer(dicCars);
-            udpServer.StartServer(); 
+            udpServer.StartServer();
 
             Log.GetLogger().InfoFormat("HMQManagerThreadProc end.");
         }
