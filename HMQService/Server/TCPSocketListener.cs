@@ -91,9 +91,8 @@ namespace HMQService.Server
 
             //m_lastReceiveDateTime = DateTime.Now;
             //m_currentReceiveDateTime = DateTime.Now;
-
-            //Timer t= new Timer(new TimerCallback(CheckClientCommInterval),
-            //	null,15000,15000);
+            //Timer t = new Timer(new TimerCallback(CheckClientCommInterval),
+            //    null, 45000, 45000);
 
             while (!m_stopClient)
 			{
@@ -102,13 +101,22 @@ namespace HMQService.Server
                     //接收车载信息
 					size = m_clientSocket.Receive(byteBuffer);
 					m_currentReceiveDateTime=DateTime.Now;
+                    if (0 == size)
+                    {
+                        Log.GetLogger().InfoFormat("receive no data, connection exit");
+                        throw new ArgumentException("receive no data, connection exit");
+                    }
+                    m_currentReceiveDateTime = DateTime.Now;
+
+                    //发送确认信息给车载
+                    m_clientSocket.Send(byteBuffer);
 
                     //数据处理
                     dataHandler = new DataHandler(byteBuffer, size, m_dicCars, m_dicCameras, m_dicJudgeRules, m_sqlDataProvider);
                     dataHandler.StartHandle();
 
-                    //发送确认信息给车载
-                    m_clientSocket.Send(byteBuffer);
+                    ////发送确认信息给车载
+                    //m_clientSocket.Send(byteBuffer);
 
                     Log.GetLogger().InfoFormat("发送确认信息给车载完成");
                 }
@@ -120,9 +128,9 @@ namespace HMQService.Server
 					m_markedForDeletion=true;
 				}
 			}
-			//t.Change(Timeout.Infinite, Timeout.Infinite);
-			//t=null;
-		}
+            //t.Change(Timeout.Infinite, Timeout.Infinite);
+            //t = null;
+        }
 
 		/// <summary>
 		/// Method that stops Client SocketListening Thread.
@@ -157,5 +165,23 @@ namespace HMQService.Server
 		{
 			return m_markedForDeletion;
 		}
-	}
+
+        /// <summary>
+		/// Method that checks whether there are any client calls for the
+		/// last 45 seconds or not. If not this client SocketListener will
+		/// be closed.
+		/// </summary>
+		/// <param name="o"></param>
+		private void CheckClientCommInterval(object o)
+        {
+            if (m_lastReceiveDateTime.Equals(m_currentReceiveDateTime))
+            {
+                this.StopSocketListener();
+            }
+            else
+            {
+                m_lastReceiveDateTime = m_currentReceiveDateTime;
+            }
+        }
+    }
 }

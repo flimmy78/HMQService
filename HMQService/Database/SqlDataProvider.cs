@@ -138,7 +138,7 @@ namespace HMQService.Database
         public void Dispose()
         {
             this.connectionString = null;
-            this.sqlCommand.Dispose();
+            //this.sqlCommand.Dispose();
             this.sqlConnection.Dispose();
         }
 
