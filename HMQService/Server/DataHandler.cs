@@ -199,10 +199,12 @@ namespace HMQService.Server
             int xmCode = string.IsNullOrEmpty(xmbh) ? 0 : int.Parse(xmbh);
             int nWnd2 = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_WND2, 0);    //画面二状态
+            Log.GetLogger().DebugFormat("nWnd2 = {0}", nWnd2);
 
             if (nWnd2 != 1)
             {
                 string key = string.Format("{0}_1", xmbh);
+                Log.GetLogger().DebugFormat("camera key = {0}", key);
                 if (!m_dicCameras.ContainsKey(key))
                 {
                     Log.GetLogger().ErrorFormat("摄像头 {0} 未配置，请检查配置文件。", key);
@@ -231,6 +233,7 @@ namespace HMQService.Server
 
             //项目编号转换，科目二专用，数据库升级后可以不需要这段代码
             int xmCodeNew = GetKM2NewXmBh(xmCode);
+            Log.GetLogger().DebugFormat("xmCodeNew = {0}", xmCodeNew);
 
             //获取扣分类型
             if (!m_dicJudgeRules.ContainsKey(xmbh))
@@ -242,6 +245,7 @@ namespace HMQService.Server
 
             try
             {
+                Log.GetLogger().DebugFormat("kch={0}, zkzmbh={1}, xmCode={2}, kflx={3}", kch, zkzmbh, xmCodeNew, kflx);
                 BaseMethod.TF17C52(kch, zkzmbh, xmCodeNew, kflx);
             }
             catch (Exception e)
