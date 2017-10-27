@@ -243,8 +243,19 @@ namespace HMQService.Server
             }
             string kflx = m_dicJudgeRules[xmbh].JudgementType;
 
+            //获取考生照片
+            Byte[] arrayZp = null; //身份证照片
+            Byte[] arrayMjzp = null;   //签到照片
+            if (!GetStudentPhoto(zkzmbh, ref arrayZp, ref arrayMjzp))
+            {
+                return false;
+            }
+
+            
+
             try
             {
+                //使用 C++ dll 进行绘制
                 Log.GetLogger().DebugFormat("kch={0}, zkzmbh={1}, xmCode={2}, kflx={3}", kch, zkzmbh, xmCodeNew, kflx);
                 BaseMethod.TF17C52(kch, zkzmbh, xmCodeNew, kflx);
             }
@@ -649,6 +660,47 @@ namespace HMQService.Server
             }
 
             return xmCodeNew;
+        }
+
+        /// <summary>
+        /// 根据准考证明从数据库获取考生照片和门禁照片(现场抓拍，签到照片)
+        /// </summary>
+        /// <param name="zkzmbh">准考证明</param>
+        /// <param name="arrayZp">身份证照片信息</param>
+        /// <param name="arrayMjzp">签到照片信息</param>
+        /// <returns></returns>
+        private bool GetStudentPhoto(string zkzmbh, ref Byte[] arrayZp, ref Byte[] arrayMjzp)
+        {
+            string sql = string.Format("select {0},{1} from {2} where {3}='{4}';",
+                BaseDefine.DB_FIELD_ZP,
+                BaseDefine.DB_FIELD_MJZP,
+                BaseDefine.DB_TABLE_STUDENTPHOTO,
+                BaseDefine.DB_FIELD_ZKZMBH,
+                zkzmbh);
+
+            try
+            {
+                DataSet ds = m_sqlDataProvider.RetriveDataSet(sql);
+                if (ds != null && ds.Tables[0] != null && ds.Tables[0].Rows != null)
+                {
+                    arrayZp = (Byte[])ds.Tables[0].Rows[0][0];
+                    arrayMjzp = (Byte[])ds.Tables[0].Rows[0][1];
+                }
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}, zkzmbh={1}", e.Message, zkzmbh);
+                return false;
+            }
+
+            if (null==arrayZp || null==arrayMjzp || 0==arrayZp.Length || 0==arrayMjzp.Length)
+            {
+                Log.GetLogger().ErrorFormat("StudentPhoto表查询不到数据，zkzmbh={0}", zkzmbh);
+                return false;
+            }
+
+            Log.GetLogger().DebugFormat("GetStudentPhoto success, zkzmbh={0}", zkzmbh);
+            return true;
         }
     }
 }

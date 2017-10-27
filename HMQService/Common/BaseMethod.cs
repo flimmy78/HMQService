@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Drawing;
+using AviFile;
 
 namespace HMQService.Common
 {
@@ -82,6 +84,38 @@ namespace HMQService.Common
         public static bool IsExistFile(string filePath)
         {
             return File.Exists(filePath);
+        }
+
+        /// <summary>
+        /// 将内存中的BitMap存为avi文件
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <param name="bm"></param>
+        /// <returns></returns>
+        public static bool MakeAviFile(string filePath, Bitmap bm)
+        {
+            try
+            {
+                int frameRate = BaseDefine.VIDEO_FRAME_RATE;
+
+                AviManager aviMgr = new AviManager(filePath, false);
+                VideoStream aviStream = aviMgr.AddVideoStream(false, frameRate * 2, bm);
+
+                for (int i = 1; i < frameRate; i++)
+                {
+                    aviStream.AddFrame(bm);
+                }
+
+                aviMgr.Close();
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+                return false;
+            }
+
+            Log.GetLogger().DebugFormat("MakeAviFile end, filepath = {0}", filePath);
+            return true;
         }
     }
 }
