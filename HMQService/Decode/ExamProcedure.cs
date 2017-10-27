@@ -4,6 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Drawing;
 using HMQService.Common;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices;
 
 namespace HMQService.Decode
 {
@@ -65,18 +68,58 @@ namespace HMQService.Decode
 
 
             //临时
-            SavePngFile();
+            SavePngFile(thirdPH);
 
             return true;
         }
 
-        private bool SavePngFile()
+        private bool SavePngFile(int lh)
         {
             bmThirdPic.Save(@"D:\image\thirdPic.png");
             bmFourthPic.Save(@"D:\image\fourthPic.png");
 
             BaseMethod.MakeAviFile(@"D:\image\third.avi", bmThirdPic);
             BaseMethod.MakeAviFile(@"D:\image\fourth.avi", bmFourthPic);
+
+            //string exePath = @"D:\Users\Hqw\Documents\Work\北科舟宇\project\code\HMQService\HMQService\bin\Debug\mencoder.exe";
+            //string strCmd = string.Format(" -ovc x264 -x264encopts bitrate=256 -vf scale=352:288 \"D:\\image\\third.avi\" -o \"D:\\image\third.yuv\"");
+            //var process = Process.Start(exePath, strCmd);
+            //process.WaitForExit(1000);
+
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.Arguments = string.Format("-ovc x264 -x264encopts bitrate=256 -vf scale=352:288 \"{0}\" -o \"{1}\"",
+                @"D:\image\third.avi",
+                @"D:\image\third.yuv");
+            startInfo.CreateNoWindow = true;
+            startInfo.FileName = @".\mencoder.exe";
+            var process = Process.Start(startInfo);
+            process.WaitForExit(5000);
+
+            //CHCNetSDK.NET_DVR_MatrixSendData()
+
+            try
+            {
+                while(true)
+                {
+                    Byte[] bytes = File.ReadAllBytes(@"D:\image\third.yuv");
+                    int len = bytes.Length;
+                    Log.GetLogger().DebugFormat("len : {0}", len);
+                    //将读取到的文件数据发送给解码器 
+                    IntPtr pBuffer = Marshal.AllocHGlobal((Int32)len);
+                    Marshal.Copy(bytes, 0, pBuffer, len);
+                    if (!CHCNetSDK.NET_DVR_MatrixSendData((int)lh, pBuffer, (uint)len))
+                    {
+                        //发送失败 Failed to send data to the decoder
+                        //数据发送失败，可以循环重新发送，避免数据丢失导致卡顿
+                    }
+                    Marshal.FreeHGlobal(pBuffer);
+                }
+
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+            }
 
             return true;
         }
