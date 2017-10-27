@@ -10,6 +10,9 @@ namespace HMQService.Common
         public static readonly string LISTENING_ADDRESS = "0.0.0.0";    //监听地址
         public static readonly int LISTENING_PORT_TCP = 6708;   //TCP 监听端口号
         public static readonly int LISTENING_PORT_UDP = 6709;   //UDP 监听端口号
+        public static readonly int VIDEO_FRAME_RATE = 1;    // BitMap 转成 视频码流的每秒帧数
+
+        public static readonly string STRING_INIT_CAR = "正在初始化考车 {0} ...";
 
         //数据格式
         public const int  PACK_TYPE_M17C51 = 1;
@@ -59,6 +62,7 @@ namespace HMQService.Common
         public static readonly string DB_TABLE_TBKVIDEO = "TBKVideo";
         public static readonly string DB_TABLE_ERRORDATA = "ErrorData";
         public static readonly string DB_TABLE_STUDENTINFO = "StudentInfo";
+        public static readonly string DB_TABLE_STUDENTPHOTO = "StudentPhoto";
         public static readonly string DB_FIELD_BH = "编号";
         public static readonly string DB_FIELD_SBIP = "设备IP";
         public static readonly string DB_FIELD_YHM = "用户名";
@@ -74,6 +78,15 @@ namespace HMQService.Common
         public static readonly string DB_FIELD_KSCS = "考试次数";
         public static readonly string DB_FIELD_DRCS = "当日次数";
         public static readonly string DB_FIELD_ZKZMBH = "准考证明编号";
+        public static readonly string DB_FIELD_ZP = "照片";
+        public static readonly string DB_FIELD_MJZP = "门禁照片";
+
+        //背景图片
+        public static readonly string IMG_PATH_TBK = @".\tbk.skin";
+        public static readonly string IMG_PATH_HGORBHG = @".\hgorbhg.skin";
+        public static readonly string IMG_PATH_MARK = @".\mark.skin";
+        public static readonly string IMG_PATH_TIME= @".\time.skin";
+        public static readonly string IMG_PATH_XMP = @".\xmp.skin";
 
         //项目编号
         public const int XMBH_201 = 201;

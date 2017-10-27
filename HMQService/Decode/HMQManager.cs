@@ -22,6 +22,7 @@ namespace HMQService.Decode
         private Dictionary<string, CameraConf> dicCameras = new Dictionary<string, CameraConf>();   //摄像头信息
         private Dictionary<string, JudgementRule> dicJudgementRule = new Dictionary<string, JudgementRule>();   //扣分规则
         private Dictionary<int, CarManager> dicCars = new Dictionary<int, CarManager>();    //考车信息
+        private Dictionary<int, ExamProcedure> dicExamProcedures = new Dictionary<int, ExamProcedure>();    //考试过程信息
         private int[] m_dispalyShow;
         private TCPServer tcpServer;
         private UDPServer udpServer;
@@ -617,19 +618,6 @@ namespace HMQService.Decode
                 dicCars.Add(kch, car);
             }
 
-            if (kch > 0 && kch < 100)
-            {
-                try
-                {
-                    BaseMethod.TFInit(kch, BaseDefine.MSG_UM_JGPTDATA);
-                    Log.GetLogger().InfoFormat("TFInit success, kch = {0}", kch);
-                }
-                catch(Exception e)
-                {
-                    Log.GetLogger().ErrorFormat("TFInit catch an error:{0}", e.Message);
-                }
-            }
-
             return true;
         }
 
@@ -671,14 +659,19 @@ namespace HMQService.Decode
                 try
                 {
                     //被动解码
-                    int passiveHandle = -1;
-                    if (carManager.StartPassiveDecode(2, ref passiveHandle))
+                    int thirdPH = -1;
+                    int fourthPH = -1;
+                    if (carManager.StartPassiveDecode(2, ref thirdPH) && carManager.StartPassiveDecode(3, ref fourthPH))
                     {
-                        BaseMethod.TFPassiveHandle(passiveHandle, iKch, 3);
+                        ExamProcedure examProcedure = new ExamProcedure();
+                        if (examProcedure.Init(m_userId, iKch, thirdPH, fourthPH))
+                        {
+                            dicExamProcedures.Add(iKch, examProcedure);
+                        }
                     }
-                    if (carManager.StartPassiveDecode(3, ref passiveHandle))
+                    else
                     {
-                        BaseMethod.TFPassiveHandle(passiveHandle, iKch, 4);
+                        Log.GetLogger().ErrorFormat("被动解码失败，kch={0}", iKch);
                     }
                 }
                 catch (Exception e)
