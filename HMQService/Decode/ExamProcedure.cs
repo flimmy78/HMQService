@@ -7,6 +7,7 @@ using HMQService.Common;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace HMQService.Decode
 {
@@ -30,6 +31,10 @@ namespace HMQService.Decode
         private Image imgHgorbhg;
         private Image imgTime;
         private Image imgXmp;
+        private AutoResetEvent autoEventThird;  //自动重置事件
+        private AutoResetEvent autoEventFourth; //自动重置事件
+        private Thread m_thirdPicThread;
+        private Thread m_fourthPicThread;
 
         public ExamProcedure()
         {
@@ -73,10 +78,61 @@ namespace HMQService.Decode
             //    System.Threading.Thread.Sleep(100);
             //}
 
-            //临时
-            SavePngFile(thirdPH);
+            ////临时
+            //SavePngFile(thirdPH);
+
+            InitThirdPic();
+            InitFourthPic();
+
 
             return true;
+        }
+
+        private bool InitThirdPic()
+        {
+            m_thirdPicThread = new Thread(new ThreadStart(ThirdPicThreadProc));
+            m_thirdPicThread.Start();
+
+            return true;
+        }
+
+        private bool InitFourthPic()
+        {
+            m_fourthPicThread = new Thread(new ThreadStart(FourthPicThreadProc));
+            m_fourthPicThread.Start();
+
+            return true;
+        }
+
+        private void ThirdPicThreadProc()
+        {
+            autoEventThird = new AutoResetEvent(true);  //自动重置事件，默认为已触发
+            while (true)
+            {
+                autoEventThird.WaitOne(Timeout.Infinite);
+
+                SendBitMapToHMQ(bmThirdPic, m_kch, m_thirdPassiveHandle);
+
+                System.Threading.Thread.Sleep(1000);
+
+                autoEventThird.Set();   //触发事件
+            }
+        }
+
+        private void FourthPicThreadProc()
+        {
+            autoEventFourth = new AutoResetEvent(true); //自动重置事件，默认为已触发
+            while (true)
+            {
+                autoEventFourth.WaitOne(Timeout.Infinite);
+
+                SendBitMapToHMQ(bmFourthPic, m_kch, m_fourthPassiveHandle);
+
+                System.Threading.Thread.Sleep(1000);
+
+                autoEventFourth.Set();  //触发事件
+            }
+
         }
 
         private bool SendBitMapToHMQ(Bitmap bm, int kch, int passiveHandle)
