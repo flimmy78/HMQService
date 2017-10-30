@@ -243,15 +243,12 @@ namespace HMQService.Server
             }
             string kflx = m_dicJudgeRules[xmbh].JudgementType;
 
-            //获取考生照片
-            Byte[] arrayZp = null; //身份证照片
-            Byte[] arrayMjzp = null;   //签到照片
-            if (!GetStudentPhoto(zkzmbh, ref arrayZp, ref arrayMjzp))
+            //获取考生信息
+            StudentInfo studentInfo = new StudentInfo();
+            if (!GetStudentInfo(zkzmbh, ref studentInfo))
             {
                 return false;
             }
-
-            
 
             try
             {
@@ -663,21 +660,24 @@ namespace HMQService.Server
         }
 
         /// <summary>
-        /// 根据准考证明从数据库获取考生照片和门禁照片(现场抓拍，签到照片)
+        /// 获取考生信息
         /// </summary>
         /// <param name="zkzmbh">准考证明</param>
         /// <param name="arrayZp">身份证照片信息</param>
         /// <param name="arrayMjzp">签到照片信息</param>
         /// <returns></returns>
-        private bool GetStudentPhoto(string zkzmbh, ref Byte[] arrayZp, ref Byte[] arrayMjzp)
+        private bool GetStudentInfo(string zkzmbh, ref StudentInfo studentInfo)
         {
+            //获取考生照片
+            Byte[] arrayZp = null;  //照片
+            Byte[] arrayMjzp = null;    //门禁照片，现场采集
             string sql = string.Format("select {0},{1} from {2} where {3}='{4}';",
                 BaseDefine.DB_FIELD_ZP,
                 BaseDefine.DB_FIELD_MJZP,
                 BaseDefine.DB_TABLE_STUDENTPHOTO,
                 BaseDefine.DB_FIELD_ZKZMBH,
                 zkzmbh);
-
+            Log.GetLogger().DebugFormat("获取考生照片 sql : {0}", sql);
             try
             {
                 DataSet ds = m_sqlDataProvider.RetriveDataSet(sql);
@@ -685,22 +685,123 @@ namespace HMQService.Server
                 {
                     arrayZp = (Byte[])ds.Tables[0].Rows[0][0];
                     arrayMjzp = (Byte[])ds.Tables[0].Rows[0][1];
+
+                    if (null == arrayZp || null == arrayMjzp || 0==arrayZp.Length || 0==arrayMjzp.Length)
+                    {
+                        Log.GetLogger().ErrorFormat("查询 StudentPhoto 表值为空，sql={0}", sql);
+                        return false;
+                    }
                 }
             }
             catch(Exception e)
             {
-                Log.GetLogger().ErrorFormat("catch an error : {0}, zkzmbh={1}", e.Message, zkzmbh);
+                Log.GetLogger().ErrorFormat("查询 StudentPhoto 表发生异常: {0}, zkzmbh={1}, sql = {2}", e.Message, zkzmbh, sql);
                 return false;
             }
 
-            if (null==arrayZp || null==arrayMjzp || 0==arrayZp.Length || 0==arrayMjzp.Length)
+            //获取考生信息
+            string kch = string.Empty;  //考车号
+            string bz = string.Empty;   //备注（车牌号）
+            string kscx = string.Empty; //考试车型
+            string xingming = string.Empty; //姓名
+            string xb = string.Empty;   //性别
+            string date = string.Empty; //日期
+            string lsh = string.Empty;  //流水号
+            string sfzmbh = string.Empty;   //身份证明编号
+            string jxmc = string.Empty; //驾校名称
+            string ksy1 = string.Empty; //考试员1
+            string ksyyCode = string.Empty; //考试原因编号
+            string ksyyDes = string.Empty;  //考试原因描述
+            sql = string.Format(
+                "select {0},{1}.{2},{3},{4},{5},(Select CONVERT(varchar(100), GETDATE(), 23)) as DATE, {6},{7},{8},{9},{10},{11} from {12} left join {13} on {14}={15} left join {16} on {17}={18} where {19}='{20}';",
+                BaseDefine.DB_FIELD_KCH,
+                BaseDefine.DB_TABLE_SYSCFG,
+                BaseDefine.DB_FIELD_BZ,
+                BaseDefine.DB_FIELD_KSCX,
+                BaseDefine.DB_FIELD_XINGMING,
+                BaseDefine.DB_FIELD_XB,
+                BaseDefine.DB_FIELD_LSH,
+                BaseDefine.DB_FIELD_SFZMBH,
+                BaseDefine.DB_FIELD_JXMC,
+                BaseDefine.DB_FIELD_KSY1,
+                BaseDefine.DB_FIELD_KSYY,
+                BaseDefine.DB_FIELD_ZKZMBH,
+                BaseDefine.DB_TABLE_STUDENTINFO,
+                BaseDefine.DB_TABLE_SCHOOLINFO,
+                BaseDefine.DB_FIELD_DLR,
+                BaseDefine.DB_FIELD_JXBH,
+                BaseDefine.DB_TABLE_SYSCFG,
+                BaseDefine.DB_FIELD_KCH,
+                BaseDefine.DB_FIELD_XIANGMU,
+                BaseDefine.DB_FIELD_ZKZMBH,
+                zkzmbh
+                );
+            Log.GetLogger().DebugFormat("获取考生信息 sql : {0}", sql);
+            try
             {
-                Log.GetLogger().ErrorFormat("StudentPhoto表查询不到数据，zkzmbh={0}", zkzmbh);
+                DataSet ds = m_sqlDataProvider.RetriveDataSet(sql);
+                if (ds != null && ds.Tables[0] != null && ds.Tables[0].Rows != null)
+                {
+                    kch = (null == ds.Tables[0].Rows[0][0]) ? string.Empty : ds.Tables[0].Rows[0][0].ToString();
+                    bz = (null == ds.Tables[0].Rows[0][1]) ? string.Empty : ds.Tables[0].Rows[0][1].ToString();
+                    kscx = (null == ds.Tables[0].Rows[0][2]) ? string.Empty : ds.Tables[0].Rows[0][2].ToString();
+                    xingming = (null == ds.Tables[0].Rows[0][3]) ? string.Empty : ds.Tables[0].Rows[0][3].ToString();
+                    xingming = (null == ds.Tables[0].Rows[0][4]) ? string.Empty : ds.Tables[0].Rows[0][4].ToString();
+                    date = (null == ds.Tables[0].Rows[0][5]) ? string.Empty : ds.Tables[0].Rows[0][5].ToString();
+                    lsh = (null == ds.Tables[0].Rows[0][6]) ? string.Empty : ds.Tables[0].Rows[0][6].ToString();
+                    sfzmbh = (null == ds.Tables[0].Rows[0][7]) ? string.Empty : ds.Tables[0].Rows[0][7].ToString();
+                    jxmc = (null == ds.Tables[0].Rows[0][8]) ? string.Empty : ds.Tables[0].Rows[0][8].ToString();
+                    ksy1 = (null == ds.Tables[0].Rows[0][9]) ? string.Empty : ds.Tables[0].Rows[0][9].ToString();
+                    if (string.IsNullOrEmpty(kch) || string.IsNullOrEmpty(bz) || string.IsNullOrEmpty(kscx) || string.IsNullOrEmpty(xingming)
+                        || string.IsNullOrEmpty(xb) || string.IsNullOrEmpty(date) || string.IsNullOrEmpty(lsh) || string.IsNullOrEmpty(sfzmbh) 
+                        || string.IsNullOrEmpty(jxmc) || string.IsNullOrEmpty(ksy1))
+                    {
+                        Log.GetLogger().ErrorFormat("查询 StudentInfo 表值为空，sql={0}", sql);
+                        return false;
+                    }
+
+                    ksyyCode = (null == ds.Tables[0].Rows[0][8]) ? string.Empty : ds.Tables[0].Rows[0][8].ToString();
+                    ksyyDes = getKsyy(ksyyCode);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("查询 StudentInfo 表发生异常: {0}, zkzmbh={1}", e.Message, zkzmbh);
                 return false;
             }
+
+            studentInfo = new StudentInfo(kch, bz, kscx, xingming, xb, date, lsh, sfzmbh, jxmc, ksy1, ksyyDes, arrayZp, arrayMjzp);
 
             Log.GetLogger().DebugFormat("GetStudentPhoto success, zkzmbh={0}", zkzmbh);
             return true;
+        }
+
+        private string getKsyy(string code)
+        {
+            string retStr = string.Empty;
+
+            if (BaseDefine.DB_VALUE_A == code)
+            {
+                retStr = code + "-" + BaseDefine.DB_VALUE_CK;    //A-初考
+            }
+            else if (BaseDefine.DB_VALUE_B == code)
+            {
+                retStr = code + "-" + BaseDefine.DB_VALUE_ZJ;    //B-增驾
+            }
+            else if (BaseDefine.DB_VALUE_F == code)
+            {
+                retStr = code + "-" + BaseDefine.DB_VALUE_MFXX;    //F-满分学习
+            }
+            else if (BaseDefine.DB_VALUE_D == code)
+            {
+                retStr = code + "-" + BaseDefine.DB_VALUE_BK;    //D-补考
+            }
+            else
+            {
+                retStr = BaseDefine.DB_VALUE_KSYYWZ;    //考试原因:未知
+            }
+
+            return retStr;
         }
     }
 }

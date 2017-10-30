@@ -63,6 +63,8 @@ namespace HMQService.Common
         public static readonly string DB_TABLE_ERRORDATA = "ErrorData";
         public static readonly string DB_TABLE_STUDENTINFO = "StudentInfo";
         public static readonly string DB_TABLE_STUDENTPHOTO = "StudentPhoto";
+        public static readonly string DB_TABLE_SCHOOLINFO = "SchoolInfo";
+        public static readonly string DB_TABLE_SYSCFG = "SysCfg";
         public static readonly string DB_FIELD_BH = "编号";
         public static readonly string DB_FIELD_SBIP = "设备IP";
         public static readonly string DB_FIELD_YHM = "用户名";
@@ -80,6 +82,28 @@ namespace HMQService.Common
         public static readonly string DB_FIELD_ZKZMBH = "准考证明编号";
         public static readonly string DB_FIELD_ZP = "照片";
         public static readonly string DB_FIELD_MJZP = "门禁照片";
+        public static readonly string DB_FIELD_KCH = "考车号";
+        public static readonly string DB_FIELD_BZ = "备注";
+        public static readonly string DB_FIELD_KSCX = "考试车型";
+        public static readonly string DB_FIELD_XINGMING = "姓名";
+        public static readonly string DB_FIELD_XB = "性别";
+        public static readonly string DB_FIELD_LSH = "流水号";
+        public static readonly string DB_FIELD_SFZMBH = "身份证明编号";
+        public static readonly string DB_FIELD_JXMC = "驾校名称";
+        public static readonly string DB_FIELD_KSY1 = "考试员1";
+        public static readonly string DB_FIELD_KSYY = "考试原因";
+        public static readonly string DB_FIELD_DLR = "代理人";
+        public static readonly string DB_FIELD_JXBH = "驾校编号";
+        public static readonly string DB_FIELD_XIANGMU = "项目";
+        public static readonly string DB_VALUE_A= "A";
+        public static readonly string DB_VALUE_B = "B";
+        public static readonly string DB_VALUE_D = "D";
+        public static readonly string DB_VALUE_F = "F";
+        public static readonly string DB_VALUE_CK = "初考";
+        public static readonly string DB_VALUE_ZJ = "增驾";
+        public static readonly string DB_VALUE_MFXX = "满分学习";
+        public static readonly string DB_VALUE_BK = "补考";
+        public static readonly string DB_VALUE_KSYYWZ = "考试原因：未知";
 
         //背景图片
         public static readonly string IMG_PATH_TBK = @".\tbk.skin";
