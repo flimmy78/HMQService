@@ -35,6 +35,10 @@ namespace HMQService.Decode
         private AutoResetEvent autoEventFourth; //自动重置事件
         private Thread m_thirdPicThread;
         private Thread m_fourthPicThread;
+        private Byte[] m_thirdPicVideoBytes;
+        private Byte[] m_fourthPicVideoBytes;
+        private int m_thirdBytesLen;
+        private int m_fourthBytesLen;
 
         public ExamProcedure()
         {
@@ -44,12 +48,18 @@ namespace HMQService.Decode
             m_fourthPassiveHandle = -1;
             font = new Font("宋体", 16, FontStyle.Regular);
             brush = new SolidBrush(Color.FromArgb(255, 255, 255));
+            m_thirdPicVideoBytes = null;
+            m_fourthPicVideoBytes = null;
+            m_thirdBytesLen = 0;
+            m_fourthBytesLen = 0;
 
             imgTbk = Image.FromFile(BaseDefine.IMG_PATH_TBK);
             imgMark = Image.FromFile(BaseDefine.IMG_PATH_MARK);
             imgHgorbhg = Image.FromFile(BaseDefine.IMG_PATH_HGORBHG);
             imgTime = Image.FromFile(BaseDefine.IMG_PATH_TIME);
             imgXmp = Image.FromFile(BaseDefine.IMG_PATH_XMP);
+
+
         }
 
         ~ExamProcedure()
@@ -109,7 +119,9 @@ namespace HMQService.Decode
 
         private bool InitThirdPic()
         {
-            m_thirdPicThread = new Thread(new ThreadStart(ThirdPicThreadProc));
+            SendBitMapToHMQ(bmThirdPic, m_kch, m_thirdPassiveHandle, ref m_thirdPicVideoBytes, ref m_thirdBytesLen);
+
+            m_thirdPicThread = new Thread(new ThreadStart(ThirdPicKeepThread));
             m_thirdPicThread.Start();
 
             return true;
@@ -117,44 +129,72 @@ namespace HMQService.Decode
 
         private bool InitFourthPic()
         {
-            m_fourthPicThread = new Thread(new ThreadStart(FourthPicThreadProc));
+            SendBitMapToHMQ(bmFourthPic, m_kch, m_fourthPassiveHandle, ref m_fourthPicVideoBytes, ref m_fourthBytesLen);
+
+            m_fourthPicThread = new Thread(new ThreadStart(FourthPicKeepThread));
             m_fourthPicThread.Start();
 
             return true;
         }
 
-        private void ThirdPicThreadProc()
+        private void ThirdPicKeepThread()
         {
             autoEventThird = new AutoResetEvent(true);  //自动重置事件，默认为已触发
             while (true)
             {
                 autoEventThird.WaitOne(Timeout.Infinite);
 
-                SendBitMapToHMQ(bmThirdPic, m_kch, m_thirdPassiveHandle);
+                try
+                {
+                    Monitor.Enter(m_thirdPicVideoBytes);
 
+                    MatrixSendData(m_thirdPicVideoBytes, m_thirdBytesLen, m_thirdPassiveHandle);
+                }
+                catch (Exception e)
+                {
+                    Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+                }
+                finally
+                {
+                    Monitor.Exit(m_thirdPicVideoBytes);
+                }
+                
                 System.Threading.Thread.Sleep(1000);
 
                 autoEventThird.Set();   //触发事件
             }
         }
 
-        private void FourthPicThreadProc()
+        private void FourthPicKeepThread()
         {
-            autoEventFourth = new AutoResetEvent(true); //自动重置事件，默认为已触发
+            autoEventFourth = new AutoResetEvent(true);  //自动重置事件，默认为已触发
             while (true)
             {
                 autoEventFourth.WaitOne(Timeout.Infinite);
 
-                SendBitMapToHMQ(bmFourthPic, m_kch, m_fourthPassiveHandle);
+                try
+                {
+                    Monitor.Enter(m_fourthPicVideoBytes);
+
+                    MatrixSendData(m_fourthPicVideoBytes, m_fourthBytesLen, m_fourthPassiveHandle);
+                }
+                catch (Exception e)
+                {
+                    Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+                }
+                finally
+                {
+                    Monitor.Exit(m_fourthPicVideoBytes);
+                }
 
                 System.Threading.Thread.Sleep(1000);
 
-                autoEventFourth.Set();  //触发事件
+                autoEventFourth.Set();   //触发事件
             }
 
         }
 
-        private bool SendBitMapToHMQ(Bitmap bm, int kch, int passiveHandle)
+        private bool SendBitMapToHMQ(Bitmap bm, int kch, int passiveHandle, ref Byte[] videoBytes, ref int bytesLen)
         {
             bool bRet = false;
 
@@ -183,14 +223,14 @@ namespace HMQService.Decode
             }
 
             //AVI 转 264 码流
-            bRet = MakeYuvFile(aviFilePath, yuvFilePath);
+            bRet = MakeYuvFile(aviFilePath, yuvFilePath, ref videoBytes, ref bytesLen);
             if (!bRet)
             {
                 return bRet;
             }
 
             //发送 H264 码流到合码器
-            bRet = MatrixSendData(yuvFilePath, passiveHandle);
+            bRet = MatrixSendData(videoBytes, bytesLen, passiveHandle);
 
             //删除临时文件
             if (BaseMethod.IsExistFile(aviFilePath))
@@ -227,7 +267,7 @@ namespace HMQService.Decode
             return bRet;
         }
 
-        private bool MakeYuvFile(string aviFilePath, string yuvFilePath)
+        private bool MakeYuvFile(string aviFilePath, string yuvFilePath, ref Byte[] videoBytes, ref int len)
         {
             ProcessStartInfo startInfo = new ProcessStartInfo();
             startInfo.Arguments = string.Format("-ovc x264 -x264encopts bitrate=256 -vf scale=352:288 \"{0}\" -o \"{1}\"",
@@ -244,11 +284,20 @@ namespace HMQService.Decode
                 return false;
             }
 
-            Log.GetLogger().DebugFormat("生成yuv格式文件成功，fileName={0}", yuvFilePath);
+            try
+            {
+                videoBytes = File.ReadAllBytes(yuvFilePath);
+                len = videoBytes.Length;
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error :{0}", e.Message);
+            }
+
             return true;
         }
 
-        private bool MatrixSendData(string yuvFilePath, int passiveHandle)
+        private bool MatrixSendData(Byte[] videoBytes, int bytesLen, int passiveHandle)
         {
             bool bRet = false;
 
@@ -256,14 +305,11 @@ namespace HMQService.Decode
             {
                 try
                 {
-                    Byte[] bytes = File.ReadAllBytes(yuvFilePath);
-                    int len = bytes.Length;
-                    Log.GetLogger().DebugFormat("len : {0}", len);
                     //将读取到的文件数据发送给解码器 
-                    IntPtr pBuffer = Marshal.AllocHGlobal((Int32)len);
-                    Marshal.Copy(bytes, 0, pBuffer, len);
+                    IntPtr pBuffer = Marshal.AllocHGlobal((Int32)bytesLen);
+                    Marshal.Copy(videoBytes, 0, pBuffer, bytesLen);
 
-                    bRet = CHCNetSDK.NET_DVR_MatrixSendData((int)passiveHandle, pBuffer, (uint)len);
+                    bRet = CHCNetSDK.NET_DVR_MatrixSendData((int)passiveHandle, pBuffer, (uint)bytesLen);
                     if (bRet)
                     {
                         Marshal.FreeHGlobal(pBuffer);
