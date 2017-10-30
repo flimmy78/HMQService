@@ -61,29 +61,48 @@ namespace HMQService.Decode
             m_kch = kch;
             m_thirdPassiveHandle = thirdPH;
             m_fourthPassiveHandle = fourthPH;
-
             bmThirdPic = new Bitmap(imgTbk);
             bmFourthPic = new Bitmap(imgMark);
-            gThirdPic = Graphics.FromImage(bmThirdPic);
-            gFourthPic = Graphics.FromImage(bmFourthPic);
 
+            //初始化 ThirdPic
             string strInit = string.Format(BaseDefine.STRING_INIT_CAR, m_kch);
-            gThirdPic.DrawString(strInit, font, brush, new Rectangle(0, 6, 350, 34));
+            try
+            {
+                Monitor.Enter(bmThirdPic);
 
-            //for (int i = 0; i < 100; i++)
-            //{
-            //    SendBitMapToHMQ(bmThirdPic, m_kch, thirdPH);
-            //    SendBitMapToHMQ(bmFourthPic, m_kch, fourthPH);
+                gThirdPic = Graphics.FromImage(bmThirdPic);
+                gThirdPic.DrawString(strInit, font, brush, new Rectangle(0, 6, 350, 34));
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+            }
+            finally
+            {
+                Monitor.Exit(bmThirdPic);
+            }
 
-            //    System.Threading.Thread.Sleep(100);
-            //}
+            //初始化 FourthPic
+            try
+            {
+                Monitor.Enter(bmFourthPic);
 
-            ////临时
-            //SavePngFile(thirdPH);
+                gFourthPic = Graphics.FromImage(bmFourthPic);
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+            }
+            finally
+            {
+                Monitor.Exit(bmFourthPic);
+            }
 
-            InitThirdPic();
+            //开启 ThirdPic 刷新线程
+            InitThirdPic(); 
+
+            //开启 FourthPic 刷新线程
             InitFourthPic();
-
 
             return true;
         }
@@ -188,7 +207,24 @@ namespace HMQService.Decode
 
         private bool MakeAviFile(string aviFilePath, Bitmap bm)
         {
-            return BaseMethod.MakeAviFile(aviFilePath, bm);
+            bool bRet = false;
+
+            try
+            {
+                Monitor.Enter(bm);
+
+                bRet = BaseMethod.MakeAviFile(aviFilePath, bm);
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+            }
+            finally
+            {
+                Monitor.Exit(bm);
+            }
+
+            return bRet;
         }
 
         private bool MakeYuvFile(string aviFilePath, string yuvFilePath)
