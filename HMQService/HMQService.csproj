@@ -81,6 +81,7 @@
     <Compile Include="Database\SqlDataProvider.cs" />
     <Compile Include="Decode\CHCNetSDK.cs" />
     <Compile Include="Model\JudgementRule.cs" />
+    <Compile Include="Model\StudentInfo.cs" />
     <Compile Include="Model\XmInfo.cs" />
     <Compile Include="Server\DataHandler.cs" />
     <Compile Include="Decode\HMQManager.cs" />
