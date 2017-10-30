@@ -64,13 +64,131 @@ namespace HMQService.Decode
 
             string strInit = string.Format(BaseDefine.STRING_INIT_CAR, m_kch);
             gThirdPic.DrawString(strInit, font, brush, new Rectangle(0, 6, 350, 34));
-            
 
+            //for (int i = 0; i < 100; i++)
+            //{
+            //    SendBitMapToHMQ(bmThirdPic, m_kch, thirdPH);
+            //    SendBitMapToHMQ(bmFourthPic, m_kch, fourthPH);
+
+            //    System.Threading.Thread.Sleep(100);
+            //}
 
             //临时
             SavePngFile(thirdPH);
 
             return true;
+        }
+
+        private bool SendBitMapToHMQ(Bitmap bm, int kch, int passiveHandle)
+        {
+            bool bRet = false;
+
+            string videoPath = @".\video";
+            if (!Directory.Exists(videoPath))
+            {
+                Directory.CreateDirectory(videoPath);
+            }
+            string aviFilePath = string.Format(@"{0}\{1}_{2}.avi", videoPath, kch, passiveHandle);
+            string yuvFilePath = string.Format(@"{0}\{1}_{2}.yuv", videoPath, kch, passiveHandle);
+
+            if (BaseMethod.IsExistFile(aviFilePath))
+            {
+                BaseMethod.DeleteFile(aviFilePath);
+            }
+            if (BaseMethod.IsExistFile(yuvFilePath))
+            {
+                BaseMethod.DeleteFile(yuvFilePath);
+            }
+
+            //BitMap 转 AVI
+            bRet = MakeAviFile(aviFilePath, bm);
+            if (!bRet)
+            {
+                return bRet;
+            }
+
+            //AVI 转 264 码流
+            bRet = MakeYuvFile(aviFilePath, yuvFilePath);
+            if (!bRet)
+            {
+                return bRet;
+            }
+
+            //发送 H264 码流到合码器
+            bRet = MatrixSendData(yuvFilePath, passiveHandle);
+
+            //删除临时文件
+            if (BaseMethod.IsExistFile(aviFilePath))
+            {
+                BaseMethod.DeleteFile(aviFilePath);
+            }
+            if (BaseMethod.IsExistFile(yuvFilePath))
+            {
+                BaseMethod.DeleteFile(yuvFilePath);
+            }
+
+            return bRet;
+        }
+
+        private bool MakeAviFile(string aviFilePath, Bitmap bm)
+        {
+            return BaseMethod.MakeAviFile(aviFilePath, bm);
+        }
+
+        private bool MakeYuvFile(string aviFilePath, string yuvFilePath)
+        {
+            ProcessStartInfo startInfo = new ProcessStartInfo();
+            startInfo.Arguments = string.Format("-ovc x264 -x264encopts bitrate=256 -vf scale=352:288 \"{0}\" -o \"{1}\"",
+                aviFilePath,
+                yuvFilePath);
+            startInfo.CreateNoWindow = true;
+            startInfo.FileName = @".\mencoder.exe";
+            var process = Process.Start(startInfo);
+            process.WaitForExit(5000);
+
+            if (!BaseMethod.IsExistFile(yuvFilePath))
+            {
+                Log.GetLogger().ErrorFormat("生成yuv格式文件失败，fileName={0}", yuvFilePath);
+                return false;
+            }
+
+            Log.GetLogger().DebugFormat("生成yuv格式文件成功，fileName={0}", yuvFilePath);
+            return true;
+        }
+
+        private bool MatrixSendData(string yuvFilePath, int passiveHandle)
+        {
+            bool bRet = false;
+
+            for (int i = 0; i < 1; i++)
+            {
+                try
+                {
+                    Byte[] bytes = File.ReadAllBytes(yuvFilePath);
+                    int len = bytes.Length;
+                    Log.GetLogger().DebugFormat("len : {0}", len);
+                    //将读取到的文件数据发送给解码器 
+                    IntPtr pBuffer = Marshal.AllocHGlobal((Int32)len);
+                    Marshal.Copy(bytes, 0, pBuffer, len);
+
+                    bRet = CHCNetSDK.NET_DVR_MatrixSendData((int)passiveHandle, pBuffer, (uint)len);
+                    if (bRet)
+                    {
+                        Marshal.FreeHGlobal(pBuffer);
+                        break;
+                    }
+
+                    uint errorCode = CHCNetSDK.NET_DVR_GetLastError();
+                    Log.GetLogger().ErrorFormat("NET_DVR_MatrixSendData failed, errorCode = {0}, 尝试次数 i = {1}", errorCode, i);
+                    Marshal.FreeHGlobal(pBuffer);
+                }
+                catch (Exception e)
+                {
+                    Log.GetLogger().ErrorFormat("SendDataToHMQ catch an error : {0}, 尝试次数 i = {1}", e.Message, i);
+                }
+            }
+
+            return bRet;
         }
 
         private bool SavePngFile(int lh)

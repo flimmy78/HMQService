@@ -87,6 +87,16 @@ namespace HMQService.Common
         }
 
         /// <summary>
+        /// 删除指定文件
+        /// </summary>
+        /// <param name="filePath"></param>
+        /// <returns></returns>
+        public static void DeleteFile(string filePath)
+        {
+            File.Delete(filePath);
+        }
+
+        /// <summary>
         /// 将内存中的BitMap存为avi文件
         /// </summary>
         /// <param name="filePath"></param>
@@ -99,7 +109,7 @@ namespace HMQService.Common
                 int frameRate = BaseDefine.VIDEO_FRAME_RATE;
 
                 AviManager aviMgr = new AviManager(filePath, false);
-                VideoStream aviStream = aviMgr.AddVideoStream(false, frameRate * 2, bm);
+                VideoStream aviStream = aviMgr.AddVideoStream(false, frameRate, bm);
 
                 for (int i = 1; i < frameRate; i++)
                 {
@@ -111,6 +121,12 @@ namespace HMQService.Common
             catch(Exception e)
             {
                 Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+                return false;
+            }
+
+            if (!IsExistFile(filePath))
+            {
+                Log.GetLogger().ErrorFormat("MakeAviFile 没有生成 avi 文件，filepath={0}", filePath);
                 return false;
             }
 
