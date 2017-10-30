@@ -38,6 +38,7 @@ namespace HMQService.Server
         private Dictionary<int, CarManager> m_dicCars = new Dictionary<int, CarManager>();
         private Dictionary<string, CameraConf> m_dicCameras = new Dictionary<string, CameraConf>();
         private Dictionary<string, JudgementRule> m_dicJudgeRules = new Dictionary<string, JudgementRule>();
+        private Dictionary<int, ExamProcedure> m_dicExamProcedures = new Dictionary<int, ExamProcedure>();
         private IDataProvider m_sqlDataProvider = null;
 		
 		/// <summary>
@@ -46,11 +47,12 @@ namespace HMQService.Server
 		/// <param name="clientSocket"></param>
 		public TCPSocketListener(Socket clientSocket, Dictionary<int, CarManager> dicCars, 
             Dictionary<string, CameraConf> dicCameras, Dictionary<string, JudgementRule> dicRules, 
-            IDataProvider sqlDataProvider)
+            Dictionary<int, ExamProcedure> dicEP, IDataProvider sqlDataProvider)
 		{
             m_dicCars = dicCars;
             m_dicCameras = dicCameras;
             m_dicJudgeRules = dicRules;
+            m_dicExamProcedures = dicEP;
             m_sqlDataProvider = sqlDataProvider;
             m_clientSocket = clientSocket;
 		}
@@ -112,7 +114,8 @@ namespace HMQService.Server
                     m_clientSocket.Send(byteBuffer);
 
                     //数据处理
-                    dataHandler = new DataHandler(byteBuffer, size, m_dicCars, m_dicCameras, m_dicJudgeRules, m_sqlDataProvider);
+                    dataHandler = new DataHandler(byteBuffer, size, m_dicCars, m_dicCameras, m_dicJudgeRules, m_dicExamProcedures,
+                        m_sqlDataProvider);
                     dataHandler.StartHandle();
 
                     ////发送确认信息给车载

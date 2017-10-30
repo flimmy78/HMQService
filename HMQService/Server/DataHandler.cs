@@ -18,15 +18,18 @@ namespace HMQService.Server
         private Dictionary<int, CarManager> m_dicCars = new Dictionary<int, CarManager>();
         private Dictionary<string, CameraConf> m_dicCameras = new Dictionary<string, CameraConf>();
         private Dictionary<string, JudgementRule> m_dicJudgeRules = new Dictionary<string, JudgementRule>();
+        private Dictionary<int, ExamProcedure> m_dicExamProcedures = new Dictionary<int, ExamProcedure>();
         private IDataProvider m_sqlDataProvider = null;
 
         public DataHandler(Byte[] data, int nSize, Dictionary<int, CarManager> dicCars, Dictionary<string, CameraConf> dicCameras,
-            Dictionary<string, JudgementRule> dicRules, IDataProvider sqlDataProvider)
+            Dictionary<string, JudgementRule> dicRules, Dictionary<int, ExamProcedure> dicExamProcedures, 
+            IDataProvider sqlDataProvider)
         {
             m_data = Encoding.ASCII.GetString(data, 0, nSize);
             m_dicCars = dicCars;
             m_dicCameras = dicCameras;
             m_dicJudgeRules = dicRules;
+            m_dicExamProcedures = dicExamProcedures;
             m_sqlDataProvider = sqlDataProvider;
 
             Log.GetLogger().InfoFormat("接收到车载数据：{0}", m_data);
@@ -243,6 +246,13 @@ namespace HMQService.Server
             }
             string kflx = m_dicJudgeRules[xmbh].JudgementType;
 
+            if (!m_dicExamProcedures.ContainsKey(kch))
+            {
+                Log.GetLogger().ErrorFormat("m_dicExamProcedures 字典找不到考车号 : {0}", kch);
+                return false;
+            }
+            ExamProcedure examProcedure = m_dicExamProcedures[kch];
+
             //获取考生信息
             StudentInfo studentInfo = new StudentInfo();
             if (!GetStudentInfo(zkzmbh, ref studentInfo))
@@ -250,18 +260,24 @@ namespace HMQService.Server
                 return false;
             }
 
-            try
+            if (!examProcedure.Handle17C52(studentInfo))
             {
-                //使用 C++ dll 进行绘制
-                Log.GetLogger().DebugFormat("kch={0}, zkzmbh={1}, xmCode={2}, kflx={3}", kch, zkzmbh, xmCodeNew, kflx);
-                BaseMethod.TF17C52(kch, zkzmbh, xmCodeNew, kflx);
-            }
-            catch (Exception e)
-            {
-                Log.GetLogger().ErrorFormat("TF17C52 catch an error : {0}, kch = {1}, zkzmbh = {2}, xmCodeNew = {3}, kflx = {4}",
-                    e.Message, kch, zkzmbh, xmCodeNew, kflx);
+                Log.GetLogger().ErrorFormat("examProcedure.Handle17C52 failed, kch={0}", kch);
                 return false;
             }
+
+            //try
+            //{
+            //    //使用 C++ dll 进行绘制
+            //    Log.GetLogger().DebugFormat("kch={0}, zkzmbh={1}, xmCode={2}, kflx={3}", kch, zkzmbh, xmCodeNew, kflx);
+            //    BaseMethod.TF17C52(kch, zkzmbh, xmCodeNew, kflx);
+            //}
+            //catch (Exception e)
+            //{
+            //    Log.GetLogger().ErrorFormat("TF17C52 catch an error : {0}, kch = {1}, zkzmbh = {2}, xmCodeNew = {3}, kflx = {4}",
+            //        e.Message, kch, zkzmbh, xmCodeNew, kflx);
+            //    return false;
+            //}
 
             Log.GetLogger().InfoFormat("HandleM17C52 end, kch={0}, zkzmbh={1}", kch, zkzmbh);
             return true;

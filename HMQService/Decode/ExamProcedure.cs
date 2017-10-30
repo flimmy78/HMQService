@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Drawing;
 using HMQService.Common;
+using HMQService.Model;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
+
 
 namespace HMQService.Decode
 {
@@ -113,6 +115,13 @@ namespace HMQService.Decode
 
             //开启 FourthPic 刷新线程
             InitFourthPic();
+
+            return true;
+        }
+
+        public bool Handle17C52(StudentInfo studentInfo)
+        {
+
 
             return true;
         }

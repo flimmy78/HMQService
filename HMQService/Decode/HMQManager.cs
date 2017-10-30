@@ -122,7 +122,7 @@ namespace HMQService.Decode
             }
 
             //开始监听车载数据
-            tcpServer = new TCPServer(dicCars, dicCameras, dicJudgementRule, sqlDataProvider);
+            tcpServer = new TCPServer(dicCars, dicCameras, dicJudgementRule, dicExamProcedures, sqlDataProvider);
             tcpServer.StartServer();
             udpServer = new UDPServer(dicCars);
             udpServer.StartServer();
