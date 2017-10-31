@@ -715,6 +715,8 @@ namespace HMQService.Server
                 return false;
             }
 
+            Log.GetLogger().DebugFormat("HQW TEMP");
+
             //获取考生信息
             string kch = string.Empty;  //考车号
             string bz = string.Empty;   //备注（车牌号）
@@ -762,22 +764,26 @@ namespace HMQService.Server
                     bz = (null == ds.Tables[0].Rows[0][1]) ? string.Empty : ds.Tables[0].Rows[0][1].ToString();
                     kscx = (null == ds.Tables[0].Rows[0][2]) ? string.Empty : ds.Tables[0].Rows[0][2].ToString();
                     xingming = (null == ds.Tables[0].Rows[0][3]) ? string.Empty : ds.Tables[0].Rows[0][3].ToString();
-                    xingming = (null == ds.Tables[0].Rows[0][4]) ? string.Empty : ds.Tables[0].Rows[0][4].ToString();
+                    xb = (null == ds.Tables[0].Rows[0][4]) ? string.Empty : ds.Tables[0].Rows[0][4].ToString();
                     date = (null == ds.Tables[0].Rows[0][5]) ? string.Empty : ds.Tables[0].Rows[0][5].ToString();
                     lsh = (null == ds.Tables[0].Rows[0][6]) ? string.Empty : ds.Tables[0].Rows[0][6].ToString();
                     sfzmbh = (null == ds.Tables[0].Rows[0][7]) ? string.Empty : ds.Tables[0].Rows[0][7].ToString();
                     jxmc = (null == ds.Tables[0].Rows[0][8]) ? string.Empty : ds.Tables[0].Rows[0][8].ToString();
                     ksy1 = (null == ds.Tables[0].Rows[0][9]) ? string.Empty : ds.Tables[0].Rows[0][9].ToString();
-                    if (string.IsNullOrEmpty(kch) || string.IsNullOrEmpty(bz) || string.IsNullOrEmpty(kscx) || string.IsNullOrEmpty(xingming)
-                        || string.IsNullOrEmpty(xb) || string.IsNullOrEmpty(date) || string.IsNullOrEmpty(lsh) || string.IsNullOrEmpty(sfzmbh) 
-                        || string.IsNullOrEmpty(jxmc) || string.IsNullOrEmpty(ksy1))
-                    {
-                        Log.GetLogger().ErrorFormat("查询 StudentInfo 表值为空，sql={0}", sql);
-                        return false;
-                    }
-
-                    ksyyCode = (null == ds.Tables[0].Rows[0][8]) ? string.Empty : ds.Tables[0].Rows[0][8].ToString();
+                    
+                    ksyyCode = (null == ds.Tables[0].Rows[0][10]) ? string.Empty : ds.Tables[0].Rows[0][10].ToString();
                     ksyyDes = getKsyy(ksyyCode);
+
+                    //if (string.IsNullOrEmpty(kch) || string.IsNullOrEmpty(bz) || string.IsNullOrEmpty(kscx) || string.IsNullOrEmpty(xingming)
+                    //    || string.IsNullOrEmpty(xb) || string.IsNullOrEmpty(date) || string.IsNullOrEmpty(lsh) || string.IsNullOrEmpty(sfzmbh) 
+                    //    || string.IsNullOrEmpty(jxmc) || string.IsNullOrEmpty(ksy1))
+                    //{
+                    //    Log.GetLogger().ErrorFormat("查询 StudentInfo 表值为空，sql={0}", sql);
+                    //    return false;
+                    //}
+
+                    Log.GetLogger().DebugFormat("kch={0}, bz={1}, kscx={2}, xingming={3},xb={4},date={5},lsh={6},sfzmbh={7},jxmc={8},ksy1={9}, ksyyCode={10}, ksyyDes={11}",
+                        kch, bz, kscx, xingming, xb, date, lsh, sfzmbh, jxmc, ksy1, ksyyCode, ksyyDes);
                 }
             }
             catch (Exception e)
@@ -788,7 +794,7 @@ namespace HMQService.Server
 
             studentInfo = new StudentInfo(kch, bz, kscx, xingming, xb, date, lsh, sfzmbh, jxmc, ksy1, ksyyDes, arrayZp, arrayMjzp);
 
-            Log.GetLogger().DebugFormat("GetStudentPhoto success, zkzmbh={0}", zkzmbh);
+            Log.GetLogger().DebugFormat("GetStudentInfo success, zkzmbh={0}", zkzmbh);
             return true;
         }
 
