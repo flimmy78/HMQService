@@ -48,7 +48,7 @@ namespace HMQService.Decode
             m_kch = -1;
             m_thirdPassiveHandle = -1;
             m_fourthPassiveHandle = -1;
-            font = new Font("宋体", 16, FontStyle.Regular);
+            font = new Font("宋体", 14, FontStyle.Regular);
             brush = new SolidBrush(Color.FromArgb(255, 255, 255));
             m_thirdPicVideoBytes = null;
             m_fourthPicVideoBytes = null;
@@ -60,8 +60,6 @@ namespace HMQService.Decode
             imgHgorbhg = Image.FromFile(BaseDefine.IMG_PATH_HGORBHG);
             imgTime = Image.FromFile(BaseDefine.IMG_PATH_TIME);
             imgXmp = Image.FromFile(BaseDefine.IMG_PATH_XMP);
-
-
         }
 
         ~ExamProcedure()
@@ -121,7 +119,44 @@ namespace HMQService.Decode
 
         public bool Handle17C52(StudentInfo studentInfo)
         {
+            //更新考生信息画面
+            try
+            {
+                //Monitor.Enter(bmThirdPic);
+                autoEventThird.Reset();
 
+                bmThirdPic = new Bitmap(imgTbk);
+                gThirdPic = Graphics.FromImage(bmThirdPic);
+
+                string carType = studentInfo.Kch + "-" + studentInfo.Bz + "-" + studentInfo.Kscx;
+                string examReason = studentInfo.Ksy1 + "  " + studentInfo.KsyyDes;
+                gThirdPic.DrawString(carType, font, brush, new Rectangle(0, 8, 350, 38));
+                gThirdPic.DrawString(studentInfo.Xingming, font, brush, new Rectangle(58, 45, 350, 75));
+                gThirdPic.DrawString(studentInfo.Xb, font, brush, new Rectangle(58, 80, 350, 110));
+                gThirdPic.DrawString(studentInfo.Date, font, brush, new Rectangle(90, 115, 350, 145));
+                gThirdPic.DrawString(studentInfo.Lsh, font, brush, new Rectangle(90, 150, 350, 180));
+                gThirdPic.DrawString(studentInfo.Sfzmbh, font, brush, new Rectangle(90, 185, 350, 215));
+                gThirdPic.DrawString(studentInfo.Jxmc, font, brush, new Rectangle(90, 220, 350, 250));
+                gThirdPic.DrawString(examReason, font, brush, new Rectangle(90, 255, 350, 285));
+
+                Stream streamZp = new MemoryStream(studentInfo.ArrayZp);
+                Stream streamMjzp = new MemoryStream(studentInfo.ArrayMjzp);
+                Image imgZp = Image.FromStream(streamZp);
+                Image imgMjzp = Image.FromStream(streamMjzp);
+                gThirdPic.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
+                gThirdPic.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
+
+                SendBitMapToHMQ(bmThirdPic, m_kch, m_thirdPassiveHandle, ref m_thirdPicVideoBytes, ref m_thirdBytesLen);
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+            }
+            finally
+            {
+                //Monitor.Exit(bmThirdPic);
+                autoEventThird.Set();
+            }
 
             return true;
         }
@@ -155,7 +190,7 @@ namespace HMQService.Decode
 
                 try
                 {
-                    Monitor.Enter(m_thirdPicVideoBytes);
+                    Monitor.Enter(bmThirdPic);
 
                     MatrixSendData(m_thirdPicVideoBytes, m_thirdBytesLen, m_thirdPassiveHandle);
                 }
@@ -165,7 +200,7 @@ namespace HMQService.Decode
                 }
                 finally
                 {
-                    Monitor.Exit(m_thirdPicVideoBytes);
+                    Monitor.Exit(bmThirdPic);
                 }
                 
                 System.Threading.Thread.Sleep(1000);
@@ -343,48 +378,48 @@ namespace HMQService.Decode
             bmThirdPic.Save(@"D:\image\thirdPic.png");
             bmFourthPic.Save(@"D:\image\fourthPic.png");
 
-            BaseMethod.MakeAviFile(@"D:\image\third.avi", bmThirdPic);
-            BaseMethod.MakeAviFile(@"D:\image\fourth.avi", bmFourthPic);
+            //BaseMethod.MakeAviFile(@"D:\image\third.avi", bmThirdPic);
+            //BaseMethod.MakeAviFile(@"D:\image\fourth.avi", bmFourthPic);
 
-            //string exePath = @"D:\Users\Hqw\Documents\Work\北科舟宇\project\code\HMQService\HMQService\bin\Debug\mencoder.exe";
-            //string strCmd = string.Format(" -ovc x264 -x264encopts bitrate=256 -vf scale=352:288 \"D:\\image\\third.avi\" -o \"D:\\image\third.yuv\"");
-            //var process = Process.Start(exePath, strCmd);
-            //process.WaitForExit(1000);
+            ////string exePath = @"D:\Users\Hqw\Documents\Work\北科舟宇\project\code\HMQService\HMQService\bin\Debug\mencoder.exe";
+            ////string strCmd = string.Format(" -ovc x264 -x264encopts bitrate=256 -vf scale=352:288 \"D:\\image\\third.avi\" -o \"D:\\image\third.yuv\"");
+            ////var process = Process.Start(exePath, strCmd);
+            ////process.WaitForExit(1000);
 
-            ProcessStartInfo startInfo = new ProcessStartInfo();
-            startInfo.Arguments = string.Format("-ovc x264 -x264encopts bitrate=256 -vf scale=352:288 \"{0}\" -o \"{1}\"",
-                @"D:\image\third.avi",
-                @"D:\image\third.yuv");
-            startInfo.CreateNoWindow = true;
-            startInfo.FileName = @".\mencoder.exe";
-            var process = Process.Start(startInfo);
-            process.WaitForExit(5000);
+            //ProcessStartInfo startInfo = new ProcessStartInfo();
+            //startInfo.Arguments = string.Format("-ovc x264 -x264encopts bitrate=256 -vf scale=352:288 \"{0}\" -o \"{1}\"",
+            //    @"D:\image\third.avi",
+            //    @"D:\image\third.yuv");
+            //startInfo.CreateNoWindow = true;
+            //startInfo.FileName = @".\mencoder.exe";
+            //var process = Process.Start(startInfo);
+            //process.WaitForExit(5000);
 
-            //CHCNetSDK.NET_DVR_MatrixSendData()
+            ////CHCNetSDK.NET_DVR_MatrixSendData()
 
-            try
-            {
-                while(true)
-                {
-                    Byte[] bytes = File.ReadAllBytes(@"D:\image\third.yuv");
-                    int len = bytes.Length;
-                    Log.GetLogger().DebugFormat("len : {0}", len);
-                    //将读取到的文件数据发送给解码器 
-                    IntPtr pBuffer = Marshal.AllocHGlobal((Int32)len);
-                    Marshal.Copy(bytes, 0, pBuffer, len);
-                    if (!CHCNetSDK.NET_DVR_MatrixSendData((int)lh, pBuffer, (uint)len))
-                    {
-                        //发送失败 Failed to send data to the decoder
-                        //数据发送失败，可以循环重新发送，避免数据丢失导致卡顿
-                    }
-                    Marshal.FreeHGlobal(pBuffer);
-                }
+            //try
+            //{
+            //    while(true)
+            //    {
+            //        Byte[] bytes = File.ReadAllBytes(@"D:\image\third.yuv");
+            //        int len = bytes.Length;
+            //        Log.GetLogger().DebugFormat("len : {0}", len);
+            //        //将读取到的文件数据发送给解码器 
+            //        IntPtr pBuffer = Marshal.AllocHGlobal((Int32)len);
+            //        Marshal.Copy(bytes, 0, pBuffer, len);
+            //        if (!CHCNetSDK.NET_DVR_MatrixSendData((int)lh, pBuffer, (uint)len))
+            //        {
+            //            //发送失败 Failed to send data to the decoder
+            //            //数据发送失败，可以循环重新发送，避免数据丢失导致卡顿
+            //        }
+            //        Marshal.FreeHGlobal(pBuffer);
+            //    }
 
-            }
-            catch(Exception e)
-            {
-                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
-            }
+            //}
+            //catch(Exception e)
+            //{
+            //    Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+            //}
 
             return true;
         }
