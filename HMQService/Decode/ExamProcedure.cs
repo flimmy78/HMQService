@@ -48,7 +48,7 @@ namespace HMQService.Decode
             m_kch = -1;
             m_thirdPassiveHandle = -1;
             m_fourthPassiveHandle = -1;
-            font = new Font("宋体", 14, FontStyle.Regular);
+            font = new Font("宋体", 13, FontStyle.Regular);
             brush = new SolidBrush(Color.FromArgb(255, 255, 255));
             m_thirdPicVideoBytes = null;
             m_fourthPicVideoBytes = null;
@@ -128,11 +128,12 @@ namespace HMQService.Decode
                 bmThirdPic = new Bitmap(imgTbk);
                 gThirdPic = Graphics.FromImage(bmThirdPic);
 
-                string carType = studentInfo.Kch + "-" + studentInfo.Bz + "-" + studentInfo.Kscx;
-                string examReason = studentInfo.Ksy1 + "  " + studentInfo.KsyyDes;
+                string carType = studentInfo.Kch + "-" + studentInfo.Bz + "-" + studentInfo.Kscx;   //考车号-车牌号-驾照类型
+                string examReason = studentInfo.Ksy1 + " " + studentInfo.KsyyDes;  //考试员-考试原因
+                string sexAndCount = studentInfo.Xb + " 次数: " + studentInfo.Drcs;   //性别-考试次数
                 gThirdPic.DrawString(carType, font, brush, new Rectangle(0, 8, 350, 38));
                 gThirdPic.DrawString(studentInfo.Xingming, font, brush, new Rectangle(58, 45, 350, 75));
-                gThirdPic.DrawString(studentInfo.Xb, font, brush, new Rectangle(58, 80, 350, 110));
+                gThirdPic.DrawString(sexAndCount, font, brush, new Rectangle(58, 80, 350, 110));
                 gThirdPic.DrawString(studentInfo.Date, font, brush, new Rectangle(90, 115, 350, 145));
                 gThirdPic.DrawString(studentInfo.Lsh, font, brush, new Rectangle(90, 150, 350, 180));
                 gThirdPic.DrawString(studentInfo.Sfzmbh, font, brush, new Rectangle(90, 185, 350, 215));

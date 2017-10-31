@@ -730,8 +730,9 @@ namespace HMQService.Server
             string ksy1 = string.Empty; //考试员1
             string ksyyCode = string.Empty; //考试原因编号
             string ksyyDes = string.Empty;  //考试原因描述
+            string drcs = string.Empty; //当日次数
             sql = string.Format(
-                "select {0},{1}.{2},{3},{4},{5},(Select CONVERT(varchar(100), GETDATE(), 23)) as DATE, {6},{7},{8},{9},{10},{11} from {12} left join {13} on {14}={15} left join {16} on {17}={18} where {19}='{20}';",
+                "select {0},{1}.{2},{3},{4},{5},(Select CONVERT(varchar(100), GETDATE(), 23)) as DATE, {6},{7},{8},{9},{10},{11},{12} from {13} left join {14} on {15}={16} left join {17} on {18}={19} where {20}='{21}';",
                 BaseDefine.DB_FIELD_KCH,
                 BaseDefine.DB_TABLE_SYSCFG,
                 BaseDefine.DB_FIELD_BZ,
@@ -744,6 +745,7 @@ namespace HMQService.Server
                 BaseDefine.DB_FIELD_KSY1,
                 BaseDefine.DB_FIELD_KSYY,
                 BaseDefine.DB_FIELD_ZKZMBH,
+                BaseDefine.DB_FIELD_DRCS,
                 BaseDefine.DB_TABLE_STUDENTINFO,
                 BaseDefine.DB_TABLE_SCHOOLINFO,
                 BaseDefine.DB_FIELD_DLR,
@@ -774,6 +776,8 @@ namespace HMQService.Server
                     ksyyCode = (null == ds.Tables[0].Rows[0][10]) ? string.Empty : ds.Tables[0].Rows[0][10].ToString();
                     ksyyDes = getKsyy(ksyyCode);
 
+                    drcs = (null == ds.Tables[0].Rows[0][12]) ? string.Empty : ds.Tables[0].Rows[0][12].ToString();
+
                     //if (string.IsNullOrEmpty(kch) || string.IsNullOrEmpty(bz) || string.IsNullOrEmpty(kscx) || string.IsNullOrEmpty(xingming)
                     //    || string.IsNullOrEmpty(xb) || string.IsNullOrEmpty(date) || string.IsNullOrEmpty(lsh) || string.IsNullOrEmpty(sfzmbh) 
                     //    || string.IsNullOrEmpty(jxmc) || string.IsNullOrEmpty(ksy1))
@@ -782,8 +786,8 @@ namespace HMQService.Server
                     //    return false;
                     //}
 
-                    Log.GetLogger().DebugFormat("kch={0}, bz={1}, kscx={2}, xingming={3},xb={4},date={5},lsh={6},sfzmbh={7},jxmc={8},ksy1={9}, ksyyCode={10}, ksyyDes={11}",
-                        kch, bz, kscx, xingming, xb, date, lsh, sfzmbh, jxmc, ksy1, ksyyCode, ksyyDes);
+                    Log.GetLogger().DebugFormat("kch={0}, bz={1}, kscx={2}, xingming={3},xb={4},date={5},lsh={6},sfzmbh={7},jxmc={8},ksy1={9}, ksyyCode={10}, ksyyDes={11}, drcs={12}",
+                        kch, bz, kscx, xingming, xb, date, lsh, sfzmbh, jxmc, ksy1, ksyyCode, ksyyDes, drcs);
                 }
             }
             catch (Exception e)
@@ -792,7 +796,7 @@ namespace HMQService.Server
                 return false;
             }
 
-            studentInfo = new StudentInfo(kch, bz, kscx, xingming, xb, date, lsh, sfzmbh, jxmc, ksy1, ksyyDes, arrayZp, arrayMjzp);
+            studentInfo = new StudentInfo(kch, bz, kscx, xingming, xb, date, lsh, sfzmbh, jxmc, ksy1, ksyyDes, drcs, arrayZp, arrayMjzp);
 
             Log.GetLogger().DebugFormat("GetStudentInfo success, zkzmbh={0}", zkzmbh);
             return true;
