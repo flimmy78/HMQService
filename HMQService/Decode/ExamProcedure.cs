@@ -48,7 +48,7 @@ namespace HMQService.Decode
             m_kch = -1;
             m_thirdPassiveHandle = -1;
             m_fourthPassiveHandle = -1;
-            font = new Font("宋体", 14, FontStyle.Regular);
+            font = new Font("宋体", 13, FontStyle.Regular);
             brush = new SolidBrush(Color.FromArgb(255, 255, 255));
             m_thirdPicVideoBytes = null;
             m_fourthPicVideoBytes = null;
@@ -128,11 +128,12 @@ namespace HMQService.Decode
                 bmThirdPic = new Bitmap(imgTbk);
                 gThirdPic = Graphics.FromImage(bmThirdPic);
 
-                string carType = studentInfo.Kch + "-" + studentInfo.Bz + "-" + studentInfo.Kscx;
-                string examReason = studentInfo.Ksy1 + "  " + studentInfo.KsyyDes;
+                string carType = studentInfo.Kch + "-" + studentInfo.Bz + "-" + studentInfo.Kscx;   //考车号-车牌号-驾照类型
+                string examReason = studentInfo.Ksy1 + " " + studentInfo.KsyyDes;  //考试员-考试原因
+                string sexAndCount = studentInfo.Xb + " 次数: " + studentInfo.Drcs;   //性别-考试次数
                 gThirdPic.DrawString(carType, font, brush, new Rectangle(0, 8, 350, 38));
                 gThirdPic.DrawString(studentInfo.Xingming, font, brush, new Rectangle(58, 45, 350, 75));
-                gThirdPic.DrawString(studentInfo.Xb, font, brush, new Rectangle(58, 80, 350, 110));
+                gThirdPic.DrawString(sexAndCount, font, brush, new Rectangle(58, 80, 350, 110));
                 gThirdPic.DrawString(studentInfo.Date, font, brush, new Rectangle(90, 115, 350, 145));
                 gThirdPic.DrawString(studentInfo.Lsh, font, brush, new Rectangle(90, 150, 350, 180));
                 gThirdPic.DrawString(studentInfo.Sfzmbh, font, brush, new Rectangle(90, 185, 350, 215));
@@ -146,6 +147,57 @@ namespace HMQService.Decode
                 gThirdPic.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
                 gThirdPic.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
 
+                SendBitMapToHMQ(bmThirdPic, m_kch, m_thirdPassiveHandle, ref m_thirdPicVideoBytes, ref m_thirdBytesLen);
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+            }
+            finally
+            {
+                //Monitor.Exit(bmThirdPic);
+                autoEventThird.Set();
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 处理 17C56 信号，在考生信息界面绘制考试是否合格的标识
+        /// </summary>
+        /// <param name="bPass">考试是否合格，true-合格，false-不合格</param>
+        /// <returns></returns>
+        public bool Handle17C56(bool bPass)
+        {
+            //更新考生信息画面
+            try
+            {
+                //Monitor.Enter(bmThirdPic);
+                autoEventThird.Reset();
+
+                gThirdPic = Graphics.FromImage(bmThirdPic);
+
+                //合格标识和不合格标识放在同一张图片里，这里需要对图片进行切割
+                Image imgResult = null;
+                Rectangle rect;
+                Bitmap originBitmap = new Bitmap(Image.FromFile(BaseDefine.IMG_PATH_HGORBHG));
+                if (bPass)
+                {
+                    rect = new Rectangle(0, 0, originBitmap.Width / 2, originBitmap.Height);
+                }
+                else
+                {
+                    rect = new Rectangle(originBitmap.Width / 2, 0, originBitmap.Width / 2, originBitmap.Height);
+                }
+                Bitmap bmp = new Bitmap(rect.Width, rect.Height);
+                using (Graphics gph = Graphics.FromImage(bmp))
+                {
+                    gph.DrawImage(originBitmap, new Rectangle(0, 0, bmp.Width, bmp.Height), rect, GraphicsUnit.Pixel);
+                }
+                imgResult = (Image)bmp;
+
+                //绘制合格/不合格标识
+                gThirdPic.DrawImage(imgResult, new Rectangle(100, 50, 135, 100));
                 SendBitMapToHMQ(bmThirdPic, m_kch, m_thirdPassiveHandle, ref m_thirdPicVideoBytes, ref m_thirdBytesLen);
             }
             catch (Exception e)

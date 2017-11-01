@@ -21,11 +21,12 @@ namespace HMQService.Model
         private string jxmc;   //驾校名称
         private string ksy1;   //考试员1
         private string ksyyDes;   //考试原因
+        private string drcs;    //当日次数
         private Byte[] arrayZp;   //照片
         private Byte[] arrayMjzp;   //门禁照片
 
         public StudentInfo(string _kch, string _bz, string _kscx, string _xingming, string _xb, string _date, string _lsh, string _sfzmbh,
-            string _jxmc, string _ksy1, string _ksyyDes, Byte[] _arrayZp, Byte[] _arrayMjzp)
+            string _jxmc, string _ksy1, string _ksyyDes, string _drcs, Byte[] _arrayZp, Byte[] _arrayMjzp)
         {
             this.kch = _kch;
             this.bz = _bz;
@@ -38,6 +39,7 @@ namespace HMQService.Model
             this.jxmc = _jxmc;
             this.ksy1 = _ksy1;
             this.ksyyDes = _ksyyDes;
+            this.drcs = _drcs;
             this.arrayZp = _arrayZp;
             this.arrayMjzp = _arrayMjzp;
         }
@@ -107,6 +109,12 @@ namespace HMQService.Model
             set { ksyyDes = value; }
         }
 
+        public string Drcs
+        {
+            get { return drcs; }
+            set { drcs = value; }
+        }
+
         public Byte[] ArrayZp
         {
             get { return arrayZp; }
@@ -118,7 +126,6 @@ namespace HMQService.Model
             get { return arrayMjzp; }
             set { arrayMjzp = value; }
         }
-
 
 
     }
