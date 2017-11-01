@@ -28,6 +28,7 @@ namespace HMQService.Decode
         private Bitmap bmFourthPic;
         private Font font;
         private Brush brush;
+        private Brush brushBlack;
         private Image imgTbk;
         private Image imgMark;
         private Image imgHgorbhg;
@@ -42,6 +43,14 @@ namespace HMQService.Decode
         private int m_thirdBytesLen;
         private int m_fourthBytesLen;
 
+        private int m_lockThird;    //考生信息界面线程同步锁
+        private int m_lockFourth;   //考试实时信息界面线程同步锁
+
+        private string m_strCurrentState;   //考试项目阶段
+        private DateTime m_startTime;   //考试开始时间
+        private int m_CurrentScore; //考试成绩
+        private Dictionary<int, string[]> m_dicErrorInfo;  //扣分信息
+
         public ExamProcedure()
         {
             m_userId = -1;
@@ -50,6 +59,7 @@ namespace HMQService.Decode
             m_fourthPassiveHandle = -1;
             font = new Font("宋体", 13, FontStyle.Regular);
             brush = new SolidBrush(Color.FromArgb(255, 255, 255));
+            brushBlack = new SolidBrush(Color.FromArgb(0, 0, 0));
             m_thirdPicVideoBytes = null;
             m_fourthPicVideoBytes = null;
             m_thirdBytesLen = 0;
@@ -60,6 +70,13 @@ namespace HMQService.Decode
             imgHgorbhg = Image.FromFile(BaseDefine.IMG_PATH_HGORBHG);
             imgTime = Image.FromFile(BaseDefine.IMG_PATH_TIME);
             imgXmp = Image.FromFile(BaseDefine.IMG_PATH_XMP);
+
+
+            m_lockThird = 0;
+            m_lockFourth = 0;
+            m_strCurrentState = string.Empty;
+            m_CurrentScore = BaseDefine.CONFIG_VALUE_TOTAL_SCORE;
+            m_dicErrorInfo = new Dictionary<int, string[]>();
         }
 
         ~ExamProcedure()
@@ -92,21 +109,9 @@ namespace HMQService.Decode
                 Monitor.Exit(bmThirdPic);
             }
 
-            //初始化 FourthPic
-            try
-            {
-                Monitor.Enter(bmFourthPic);
-
-                gFourthPic = Graphics.FromImage(bmFourthPic);
-            }
-            catch (Exception e)
-            {
-                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
-            }
-            finally
-            {
-                Monitor.Exit(bmFourthPic);
-            }
+            //临时放在这里，后面需要移到17C51
+            m_strCurrentState = "考试开始";
+            m_startTime = DateTime.Now;             
 
             //开启 ThirdPic 刷新线程
             InitThirdPic(); 
@@ -117,8 +122,30 @@ namespace HMQService.Decode
             return true;
         }
 
-        public bool Handle17C52(StudentInfo studentInfo)
+        /// <summary>
+        /// 项目开始，绘制考生信息画面和实时信息画面
+        /// </summary>
+        /// <param name="studentInfo">考生信息</param>
+        /// <param name="xmlx">项目类型</param>
+        /// <returns></returns>
+        public bool Handle17C52(StudentInfo studentInfo, string xmlx)
         {
+            //考试实时信息
+            try
+            {
+                //Monitor.Enter(m_lockFourth);
+
+                m_strCurrentState = xmlx;
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}, xmlx = {1}", e.Message, xmlx);
+            }
+            finally
+            {
+                //Monitor.Exit(m_lockFourth);
+            }
+            
             //更新考生信息画面
             try
             {
@@ -163,12 +190,88 @@ namespace HMQService.Decode
         }
 
         /// <summary>
+        /// 处理扣分 
+        /// </summary>
+        /// <param name="xmName">项目名称</param>
+        /// <param name="kflx">扣分类型</param>
+        /// <param name="kcfs">扣除分数</param>
+        /// <returns></returns>
+        public bool Handle17C53(string xmName, string kflx, int kcfs)
+        {
+            string[] errorInfo = new string[2];
+            errorInfo[0] = string.Format("{0} 扣{1}分", xmName, kcfs);
+            errorInfo[1] = kflx;
+
+            //只存放3条扣分信息，超过3条时覆盖第3条
+            int nIndex = m_dicErrorInfo.Count;
+            if (nIndex > 2)
+            {
+                nIndex = 2;
+            }
+            m_dicErrorInfo[nIndex] = errorInfo;
+
+            //扣除当前得分
+            m_CurrentScore -= kcfs;
+
+            return true;
+        }
+
+        /// <summary>
+        /// 项目结束
+        /// </summary>
+        /// <param name="xmlx">项目类型</param>
+        /// <returns></returns>
+        public bool Handle17C55(string xmlx)
+        {
+            //考试实时信息
+            try
+            {
+                //Monitor.Enter(m_lockFourth);
+
+                m_strCurrentState = xmlx;
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}, xmlx = {1}", e.Message, xmlx);
+            }
+            finally
+            {
+                //Monitor.Exit(m_lockFourth);
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// 处理 17C56 信号，在考生信息界面绘制考试是否合格的标识
         /// </summary>
         /// <param name="bPass">考试是否合格，true-合格，false-不合格</param>
         /// <returns></returns>
         public bool Handle17C56(bool bPass)
         {
+            //考试实时信息
+            try
+            {
+                //Monitor.Enter(m_lockFourth);
+
+                if (bPass)
+                {
+                    m_strCurrentState = "考试合格";
+                }
+                else
+                {
+                    m_strCurrentState = "考试不合格";
+                }
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}, bPass = {1}", e.Message, bPass);
+            }
+            finally
+            {
+                //Monitor.Exit(m_lockFourth);
+            }
+
             //更新考生信息画面
             try
             {
@@ -270,9 +373,67 @@ namespace HMQService.Decode
 
                 try
                 {
-                    Monitor.Enter(m_fourthPicVideoBytes);
+                    //Monitor.Enter(m_lockFourth);
+                    
+                    //重新初始化画板
+                    Bitmap bm = new Bitmap(imgMark);
+                    Graphics graphics = Graphics.FromImage(bm);
 
-                    MatrixSendData(m_fourthPicVideoBytes, m_fourthBytesLen, m_fourthPassiveHandle);
+                    //绘制项目牌列表
+                    int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+                        BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
+                    if (BaseDefine.CONFIG_VALUE_KSKM_2 == nKskm)
+                    {
+                        graphics.DrawImage(imgXmp, new Rectangle(264, 36, 88, 252), 0, 0, 88, 252, GraphicsUnit.Pixel);
+                    }
+                    else
+                    {
+                        graphics.DrawImage(imgXmp, new Rectangle(264, 0, 88, 288), 0, 0, 88, 288, GraphicsUnit.Pixel);
+                    }
+
+                    //绘制实时信息
+                    if (!string.IsNullOrEmpty(m_strCurrentState))
+                    {
+                        TimeSpan ts = DateTime.Now - m_startTime;
+                        string strTotalTime = string.Format("{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
+                        string strScore = string.Format(BaseDefine.STRING_EXAM_TIME_AND_SCORE, strTotalTime, m_CurrentScore);
+                        string strSpeed = string.Format(BaseDefine.STRING_CAR_SPEED, 0.0);
+                        string strStartTime = string.Format(BaseDefine.STRING_EXAM_START_TIME, m_startTime.ToString(BaseDefine.STRING_TIME_FORMAT));
+
+                        graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(4, 10, 348, 40));
+                        graphics.DrawString(strScore, font, brush, new Rectangle(4, 40, 263, 65));
+                        graphics.DrawString(strSpeed, font, brush, new Rectangle(4, 65, 263, 90));
+                        graphics.DrawString(strStartTime, font, brush, new Rectangle(4, 90, 263, 115));
+                    }
+
+                    //绘制扣分信息
+                    foreach (int index in m_dicErrorInfo.Keys)
+                    {
+                        string[] errorInfo = m_dicErrorInfo[index];
+                        if (null == errorInfo)
+                        {
+                            continue;
+                        }
+
+                        if (0 == index)
+                        {
+                            graphics.DrawString(errorInfo[0], font, brushBlack, new Rectangle(2, 120, 260, 145));
+                            graphics.DrawString(errorInfo[1], font, brushBlack, new Rectangle(2, 145, 260, 170));
+                        }
+                        else if (1 == index)
+                        {
+                            graphics.DrawString(errorInfo[0], font, brushBlack, new Rectangle(2, 180, 260, 205));
+                            graphics.DrawString(errorInfo[1], font, brushBlack, new Rectangle(2, 205, 260, 230));
+                        }
+                        else if (2 == index)
+                        {
+                            graphics.DrawString(errorInfo[0], font, brushBlack, new Rectangle(2, 240, 260, 265));
+                            graphics.DrawString(errorInfo[1], font, brushBlack, new Rectangle(2, 265, 260, 288));
+                        }
+                    }
+
+                    //发送画面到合码器
+                    SendBitMapToHMQ(bm, m_kch, m_fourthPassiveHandle, ref m_fourthPicVideoBytes, ref m_fourthBytesLen);
                 }
                 catch (Exception e)
                 {
@@ -280,7 +441,7 @@ namespace HMQService.Decode
                 }
                 finally
                 {
-                    Monitor.Exit(m_fourthPicVideoBytes);
+                    //Monitor.Exit(m_lockFourth);
                 }
 
                 System.Threading.Thread.Sleep(1000);

@@ -238,13 +238,13 @@ namespace HMQService.Server
             int xmCodeNew = GetKM2NewXmBh(xmCode);
             Log.GetLogger().DebugFormat("xmCodeNew = {0}", xmCodeNew);
 
-            //获取扣分类型
+            //获取项目类型（因为数据库里扣分类型和项目类型存在同一张表，所以这里参考C++代码，全部存在同一张字典里）
             if (!m_dicJudgeRules.ContainsKey(xmbh))
             {
                 Log.GetLogger().ErrorFormat("扣分类型 {0} 未配置，请检查配置", xmbh);
                 return false;
             }
-            string kflx = m_dicJudgeRules[xmbh].JudgementType;
+            string xmlx = m_dicJudgeRules[xmbh].JudgementType;  //项目类型
 
             if (!m_dicExamProcedures.ContainsKey(kch))
             {
@@ -260,7 +260,7 @@ namespace HMQService.Server
                 return false;
             }
 
-            if (!examProcedure.Handle17C52(studentInfo))
+            if (!examProcedure.Handle17C52(studentInfo, xmlx))
             {
                 Log.GetLogger().ErrorFormat("examProcedure.Handle17C52 failed, kch={0}", kch);
                 return false;
@@ -361,15 +361,15 @@ namespace HMQService.Server
             string kflx = m_dicJudgeRules[strErrrorCode].JudgementType;
             int kcfs = m_dicJudgeRules[strErrrorCode].Points;
 
-            try
+            if (!m_dicExamProcedures.ContainsKey(kch))
             {
-                //参数：考车号，项目名称，扣分类型，扣除分数
-                BaseMethod.TF17C53(kch, xmName, kflx, kcfs);
+                Log.GetLogger().ErrorFormat("m_dicExamProcedures 字典找不到考车号 : {0}", kch);
+                return false;
             }
-            catch (Exception e)
+            ExamProcedure examProcedure = m_dicExamProcedures[kch];
+            if (!examProcedure.Handle17C53(xmName, kflx, kcfs))
             {
-                Log.GetLogger().ErrorFormat("TF17C53 catch an error : {0}, kch={1}, xmName={2}, kflx={3}, kcfs={4}", e.Message,
-                    kch, xmName, kflx, kcfs);
+                Log.GetLogger().ErrorFormat("examProcedure.Handle17C53 failed, kch={0}", kch);
                 return false;
             }
 
@@ -534,22 +534,23 @@ namespace HMQService.Server
                 xmEndCode = (xmBeginCode / 1000) * 1000 + 990;
             }
 
-            //获取扣分类型
+            //获取项目类型
             if (!m_dicJudgeRules.ContainsKey(xmEndCode.ToString()))
             {
                 Log.GetLogger().ErrorFormat("ErrorData 表不存在 {0} 记录，请检查配置", xmEndCode);
                 return false;
             }
-            string kflx = m_dicJudgeRules[xmEndCode.ToString()].JudgementType;
+            string xmlx = m_dicJudgeRules[xmEndCode.ToString()].JudgementType;
 
-            try
+            if (!m_dicExamProcedures.ContainsKey(kch))
             {
-                BaseMethod.TF17C55(kch, xmBeginCode, kflx);
+                Log.GetLogger().ErrorFormat("m_dicExamProcedures 字典找不到考车号 : {0}", kch);
+                return false;
             }
-            catch(Exception e)
+            ExamProcedure examProcedure = m_dicExamProcedures[kch];
+            if (!examProcedure.Handle17C55(xmlx))
             {
-                Log.GetLogger().ErrorFormat("TF17C55 catch an error : {0}, kch={1}, xmBeginCode={2}, kflx={3}", e.Message,
-                    kch, xmBeginCode, kflx);
+                Log.GetLogger().ErrorFormat("examProcedure.Handle17C55 failed, kch={0}", kch);
                 return false;
             }
 
