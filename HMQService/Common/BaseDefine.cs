@@ -108,6 +108,8 @@ namespace HMQService.Common
         //背景图片
         public static readonly string IMG_PATH_TBK = @".\tbk.skin";
         public static readonly string IMG_PATH_HGORBHG = @".\hgorbhg.skin";
+        public static readonly string IMG_PATH_PASS = @".\pass.skin";
+        public static readonly string IMG_PATH_NOTPASS = @".\notpass.skin";
         public static readonly string IMG_PATH_MARK = @".\mark.skin";
         public static readonly string IMG_PATH_TIME= @".\time.skin";
         public static readonly string IMG_PATH_XMP = @".\xmp.skin";
