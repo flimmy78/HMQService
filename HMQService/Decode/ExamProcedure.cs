@@ -217,12 +217,61 @@ namespace HMQService.Decode
         }
 
         /// <summary>
+        /// 项目结束
+        /// </summary>
+        /// <param name="xmlx">项目类型</param>
+        /// <returns></returns>
+        public bool Handle17C55(string xmlx)
+        {
+            //考试实时信息
+            try
+            {
+                //Monitor.Enter(m_lockFourth);
+
+                m_strCurrentState = xmlx;
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}, xmlx = {1}", e.Message, xmlx);
+            }
+            finally
+            {
+                //Monitor.Exit(m_lockFourth);
+            }
+
+            return true;
+        }
+
+        /// <summary>
         /// 处理 17C56 信号，在考生信息界面绘制考试是否合格的标识
         /// </summary>
         /// <param name="bPass">考试是否合格，true-合格，false-不合格</param>
         /// <returns></returns>
         public bool Handle17C56(bool bPass)
         {
+            //考试实时信息
+            try
+            {
+                //Monitor.Enter(m_lockFourth);
+
+                if (bPass)
+                {
+                    m_strCurrentState = "考试合格";
+                }
+                else
+                {
+                    m_strCurrentState = "考试不合格";
+                }
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}, bPass = {1}", e.Message, bPass);
+            }
+            finally
+            {
+                //Monitor.Exit(m_lockFourth);
+            }
+
             //更新考生信息画面
             try
             {
