@@ -238,13 +238,13 @@ namespace HMQService.Server
             int xmCodeNew = GetKM2NewXmBh(xmCode);
             Log.GetLogger().DebugFormat("xmCodeNew = {0}", xmCodeNew);
 
-            //获取扣分类型
+            //获取项目类型（因为数据库里扣分类型和项目类型存在同一张表，所以这里参考C++代码，全部存在同一张字典里）
             if (!m_dicJudgeRules.ContainsKey(xmbh))
             {
                 Log.GetLogger().ErrorFormat("扣分类型 {0} 未配置，请检查配置", xmbh);
                 return false;
             }
-            string kflx = m_dicJudgeRules[xmbh].JudgementType;
+            string xmlx = m_dicJudgeRules[xmbh].JudgementType;  //项目类型
 
             if (!m_dicExamProcedures.ContainsKey(kch))
             {
@@ -260,7 +260,7 @@ namespace HMQService.Server
                 return false;
             }
 
-            if (!examProcedure.Handle17C52(studentInfo))
+            if (!examProcedure.Handle17C52(studentInfo, xmlx))
             {
                 Log.GetLogger().ErrorFormat("examProcedure.Handle17C52 failed, kch={0}", kch);
                 return false;

@@ -97,7 +97,7 @@ namespace HMQService.Decode
             {
                 Monitor.Enter(bmFourthPic);
 
-                gFourthPic = Graphics.FromImage(bmFourthPic);
+                //gFourthPic = Graphics.FromImage(bmFourthPic);
             }
             catch (Exception e)
             {
@@ -117,7 +117,13 @@ namespace HMQService.Decode
             return true;
         }
 
-        public bool Handle17C52(StudentInfo studentInfo)
+        /// <summary>
+        /// 项目开始，绘制考生信息画面和实时信息画面
+        /// </summary>
+        /// <param name="studentInfo">考生信息</param>
+        /// <param name="xmlx">项目类型</param>
+        /// <returns></returns>
+        public bool Handle17C52(StudentInfo studentInfo, string xmlx)
         {
             //更新考生信息画面
             try
@@ -158,6 +164,45 @@ namespace HMQService.Decode
                 //Monitor.Exit(bmThirdPic);
                 autoEventThird.Set();
             }
+
+            ////更新实时信息界面
+            //try
+            //{
+            //    autoEventFourth.Reset();
+
+            //    bmThirdPic = new Bitmap(imgTbk);
+            //    gThirdPic = Graphics.FromImage(bmThirdPic);
+
+            //    string carType = studentInfo.Kch + "-" + studentInfo.Bz + "-" + studentInfo.Kscx;   //考车号-车牌号-驾照类型
+            //    string examReason = studentInfo.Ksy1 + " " + studentInfo.KsyyDes;  //考试员-考试原因
+            //    string sexAndCount = studentInfo.Xb + " 次数: " + studentInfo.Drcs;   //性别-考试次数
+            //    gThirdPic.DrawString(carType, font, brush, new Rectangle(0, 8, 350, 38));
+            //    gThirdPic.DrawString(studentInfo.Xingming, font, brush, new Rectangle(58, 45, 350, 75));
+            //    gThirdPic.DrawString(sexAndCount, font, brush, new Rectangle(58, 80, 350, 110));
+            //    gThirdPic.DrawString(studentInfo.Date, font, brush, new Rectangle(90, 115, 350, 145));
+            //    gThirdPic.DrawString(studentInfo.Lsh, font, brush, new Rectangle(90, 150, 350, 180));
+            //    gThirdPic.DrawString(studentInfo.Sfzmbh, font, brush, new Rectangle(90, 185, 350, 215));
+            //    gThirdPic.DrawString(studentInfo.Jxmc, font, brush, new Rectangle(90, 220, 350, 250));
+            //    gThirdPic.DrawString(examReason, font, brush, new Rectangle(90, 255, 350, 285));
+
+            //    Stream streamZp = new MemoryStream(studentInfo.ArrayZp);
+            //    Stream streamMjzp = new MemoryStream(studentInfo.ArrayMjzp);
+            //    Image imgZp = Image.FromStream(streamZp);
+            //    Image imgMjzp = Image.FromStream(streamMjzp);
+            //    gThirdPic.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
+            //    gThirdPic.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
+
+            //    SendBitMapToHMQ(bmThirdPic, m_kch, m_thirdPassiveHandle, ref m_thirdPicVideoBytes, ref m_thirdBytesLen);
+            //}
+            //catch (Exception e)
+            //{
+            //    Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+            //}
+            //finally
+            //{
+            //    //Monitor.Exit(bmThirdPic);
+            //    autoEventFourth.Set();
+            //}
 
             return true;
         }
@@ -270,17 +315,38 @@ namespace HMQService.Decode
 
                 try
                 {
-                    Monitor.Enter(m_fourthPicVideoBytes);
+                    //重新初始化画板
+                    Bitmap bm = new Bitmap(imgMark);
+                    Graphics graphics = Graphics.FromImage(bm);
 
-                    MatrixSendData(m_fourthPicVideoBytes, m_fourthBytesLen, m_fourthPassiveHandle);
+                    //绘制项目牌列表
+                    int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+                        BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
+                    if (BaseDefine.CONFIG_VALUE_KSKM_2 == nKskm)
+                    {
+                        graphics.DrawImage(imgXmp, new Rectangle(264, 36, 88, 252), 0, 0, 88, 252, GraphicsUnit.Pixel);
+                    }
+                    else
+                    {
+                        graphics.DrawImage(imgXmp, new Rectangle(264, 0, 88, 288), 0, 0, 88, 288, GraphicsUnit.Pixel);
+                    }
+
+                    //绘制实时信息
+                    string strCurrentState = string.Format("考试开始");
+                    string strScore = string.Format("时长:         成绩:100");
+                    string strSpeed = string.Format("速度: 0.0km/h");
+                    string strCurrentTime = string.Format("开始时间：{0}", DateTime.Now.ToString("HH:mm:ss"));
+                    graphics.DrawString(strCurrentState, font, brush, new Rectangle(4, 10, 348, 40));
+                    graphics.DrawString(strScore, font, brush, new Rectangle(4, 40, 263, 65));
+                    graphics.DrawString(strSpeed, font, brush, new Rectangle(4, 65, 263, 90));
+                    graphics.DrawString(strCurrentTime, font, brush, new Rectangle(4, 90, 263, 115));
+
+                    //发送画面到合码器
+                    SendBitMapToHMQ(bm, m_kch, m_fourthPassiveHandle, ref m_fourthPicVideoBytes, ref m_fourthBytesLen);
                 }
                 catch (Exception e)
                 {
                     Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
-                }
-                finally
-                {
-                    Monitor.Exit(m_fourthPicVideoBytes);
                 }
 
                 System.Threading.Thread.Sleep(1000);

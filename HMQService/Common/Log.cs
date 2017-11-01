@@ -14,5 +14,10 @@ namespace HMQService.Common
         {
             return logger;
         }
+
+        public static void TempDebugFormat(string str)
+        {
+            logger.DebugFormat("HQW DEBUG TEMP : {0}", str);
+        }
     }
 }
