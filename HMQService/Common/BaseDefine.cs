@@ -12,7 +12,11 @@ namespace HMQService.Common
         public static readonly int LISTENING_PORT_UDP = 6709;   //UDP 监听端口号
         public static readonly int VIDEO_FRAME_RATE = 1;    // BitMap 转成 视频码流的每秒帧数
 
+        public static readonly string STRING_TIME_FORMAT = "HH:mm:ss";
         public static readonly string STRING_INIT_CAR = "正在初始化考车 {0} ...";
+        public static readonly string STRING_EXAM_TIME_AND_SCORE = "时长:{0} 成绩:{1}";
+        public static readonly string STRING_CAR_SPEED = "速度: {0} km/h";
+        public static readonly string STRING_EXAM_START_TIME = "开始时间：{0}";
 
         //数据格式
         public const int  PACK_TYPE_M17C51 = 1;
@@ -57,6 +61,7 @@ namespace HMQService.Common
         public static readonly int CONFIG_VALUE_KSKM_3 = 3;     //考试科目为科目3
         public static readonly int CONFIG_VALUE_KSHGFS_2 = 80;  //科目2合格分数
         public static readonly int CONFIG_VALUE_KSHGFS_3 = 90;  //科目3合格分数
+        public static readonly int CONFIG_VALUE_TOTAL_SCORE = 100;  //满分
 
         //数据库
         public static readonly string DB_TABLE_TBKVIDEO = "TBKVideo";

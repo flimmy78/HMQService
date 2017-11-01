@@ -361,15 +361,15 @@ namespace HMQService.Server
             string kflx = m_dicJudgeRules[strErrrorCode].JudgementType;
             int kcfs = m_dicJudgeRules[strErrrorCode].Points;
 
-            try
+            if (!m_dicExamProcedures.ContainsKey(kch))
             {
-                //参数：考车号，项目名称，扣分类型，扣除分数
-                BaseMethod.TF17C53(kch, xmName, kflx, kcfs);
+                Log.GetLogger().ErrorFormat("m_dicExamProcedures 字典找不到考车号 : {0}", kch);
+                return false;
             }
-            catch (Exception e)
+            ExamProcedure examProcedure = m_dicExamProcedures[kch];
+            if (!examProcedure.Handle17C53(xmName, kflx, kcfs))
             {
-                Log.GetLogger().ErrorFormat("TF17C53 catch an error : {0}, kch={1}, xmName={2}, kflx={3}, kcfs={4}", e.Message,
-                    kch, xmName, kflx, kcfs);
+                Log.GetLogger().ErrorFormat("examProcedure.Handle17C53 failed, kch={0}", kch);
                 return false;
             }
 
