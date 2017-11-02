@@ -124,7 +124,7 @@ namespace HMQService.Decode
             //开始监听车载数据
             tcpServer = new TCPServer(dicCars, dicCameras, dicJudgementRule, dicExamProcedures, sqlDataProvider);
             tcpServer.StartServer();
-            udpServer = new UDPServer(dicCars);
+            udpServer = new UDPServer(dicCars, dicExamProcedures);
             udpServer.StartServer();
 
             Log.GetLogger().InfoFormat("HMQManagerThreadProc end.");

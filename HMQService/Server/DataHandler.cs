@@ -174,7 +174,7 @@ namespace HMQService.Server
             //{
             //    return false;
             //}
-            
+
             if (!m_dicExamProcedures.ContainsKey(kch))
             {
                 Log.GetLogger().ErrorFormat("m_dicExamProcedures 字典找不到考车号 : {0}", kch);

@@ -46,6 +46,7 @@ namespace HMQService.Decode
         private StudentInfo m_studentInfo;  //考生信息
         private bool m_bFinish; //考试结束标识 
         private bool m_bPass;   //考试是否合格
+        private GPSData m_gpsData;  //车载GPS实时数据
 
         public ExamProcedure()
         {
@@ -72,6 +73,7 @@ namespace HMQService.Decode
             m_studentInfo = new StudentInfo();
             m_bFinish = false;
             m_bPass = false;
+            m_gpsData = new GPSData();
         }
 
         ~ExamProcedure()
@@ -194,6 +196,28 @@ namespace HMQService.Decode
             if (BaseDefine.CONFIG_VALUE_ZERO_SCORE == m_CurrentScore)
             {
                 m_CurrentScore = BaseDefine.CONFIG_VALUE_ZERO_SCORE;
+            }
+
+            return true;
+        }
+
+        public bool Handle17C54(GPSData gpsData)
+        {
+            //考试实时信息
+            try
+            {
+                //Monitor.Enter(m_lockFourth);
+
+                m_gpsData = gpsData;
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+                return false;
+            }
+            finally
+            {
+                //Monitor.Exit(m_lockFourth);
             }
 
             return true;
@@ -425,7 +449,7 @@ namespace HMQService.Decode
                         TimeSpan ts = DateTime.Now - m_startTime;
                         string strTotalTime = string.Format("{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
                         string strScore = string.Format(BaseDefine.STRING_EXAM_TIME_AND_SCORE, strTotalTime, m_CurrentScore);
-                        string strSpeed = string.Format(BaseDefine.STRING_CAR_SPEED, 0.0);
+                        string strSpeed = string.Format(BaseDefine.STRING_CAR_SPEED, m_gpsData.Speed);
                         string strStartTime = string.Format(BaseDefine.STRING_EXAM_START_TIME, m_startTime.ToString(BaseDefine.STRING_TIME_FORMAT));
 
                         graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(4, 10, 348, 40));
