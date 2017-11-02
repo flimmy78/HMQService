@@ -70,12 +70,15 @@ namespace HMQService.Common
         public static readonly int INTERFACE_FIELD_COUNT_KM3 = 10;  //接口字段数量（科目三），如果后续接口调整，这里需要修改
 
         //配置文件
-        public static readonly string CONFIG_FILE_PATH = @".\config.ini";
-        public static readonly string ZZIPChannel_FILE_PATH = @".\ZZIPChannel.dat";
+        public static readonly string CONFIG_FILE_PATH_CONFIG = @".\config.ini";
+        public static readonly string CONFIG_FILE_PATH_ZZIPChannel = @".\ZZIPChannel.dat";
+        public static readonly string CONFIG_FILE_PATH_MAP = @".\MAP.cfg";
         public static readonly string CONFIG_SECTION_CONFIG = "CONFIG";
         public static readonly string CONFIG_SECTION_SQLLINK = "SQLLINK";
         public static readonly string CONFIG_SECTION_JMQ = "JMQ";
         public static readonly string CONFIG_SECTION_Q = "Q";
+        public static readonly string CONFIG_SECTION_MAPCONFIG = "MAPCONFIG";
+        public static readonly string CONFIG_SECTION_CARSKIN = "CARSKIN";
         public static readonly string CONFIG_KEY_SQLORACLE = "SQLORACLE";
         public static readonly string CONFIG_KEY_LOADMAP = "LOADMAP";
         public static readonly string CONFIG_KEY_SQLORTCP = "SQLORTCP";
@@ -90,6 +93,16 @@ namespace HMQService.Common
         public static readonly string CONFIG_KEY_EVEN= "EVEN";
         public static readonly string CONFIG_KEY_WND2 = "WND2";
         public static readonly string CONFIG_KEY_TIME = "Time";
+        public static readonly string CONFIG_KEY_MAXX = "MAXX";
+        public static readonly string CONFIG_KEY_MAXY = "MAXY";
+        public static readonly string CONFIG_KEY_MINX = "MINX";
+        public static readonly string CONFIG_KEY_MINY = "MINY";
+        public static readonly string CONFIG_KEY_ZOOMIN = "ZoomIn";
+        public static readonly string CONFIG_KEY_XC = "XC";
+        public static readonly string CONFIG_KEY_YC = "YC";
+        public static readonly string CONFIG_KEY_DRAWCAR = "DrawCar";
+        public static readonly string CONFIG_KEY_DITUPY = "DITUPY";
+
         public static readonly int CONFIG_VALUE_KSKM_2 = 2;     //考试科目为科目2
         public static readonly int CONFIG_VALUE_KSKM_3 = 3;     //考试科目为科目3
         public static readonly int CONFIG_VALUE_KSHGFS_2 = 80;  //科目2合格分数
@@ -152,6 +165,7 @@ namespace HMQService.Common
         public static readonly string IMG_PATH_MARK = @".\mark.skin";
         public static readonly string IMG_PATH_TIME= @".\time.skin";
         public static readonly string IMG_PATH_XMP = @".\xmp.skin";
+        public static readonly string IMG_PATH_MAPN = @".\MAPN.skin";
 
         //项目编号
         public const int XMBH_201 = 201;

@@ -77,6 +77,25 @@ namespace HMQService.Common
             return nRet;
         }
 
+        //从INI配置文件取值，返回double类型
+        public static double INIGetDoubleValue(string iniFile, string section, string key, double defaultValue)
+        {
+            double dRet = defaultValue;
+
+            try
+            {
+                string retStr = INIOperator.INIGetStringValue(iniFile, section, key, string.Empty);
+
+                dRet = string.IsNullOrEmpty(retStr) ? defaultValue : double.Parse(retStr);
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}，inifile = {1}, section = {2}, key = {3}", e.Message, iniFile, section, key);
+            }
+
+            return dRet;
+        }
+
         /// <summary>
         /// 检测指定文件是否存在,如果存在则返回true。
         /// </summary>

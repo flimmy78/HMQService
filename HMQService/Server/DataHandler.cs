@@ -220,7 +220,7 @@ namespace HMQService.Server
         private bool HandleM17C52(int kch, string zkzmbh, string xmbh)
         {
             int xmCode = string.IsNullOrEmpty(xmbh) ? 0 : int.Parse(xmbh);
-            int nWnd2 = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nWnd2 = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_WND2, 0);    //画面二状态
             Log.GetLogger().DebugFormat("nWnd2 = {0}", nWnd2);
 
@@ -242,7 +242,7 @@ namespace HMQService.Server
                 {
                     Log.GetLogger().InfoFormat("定点：{0}", xmCode);
 
-                    if (BaseMethod.IsExistFile(BaseDefine.ZZIPChannel_FILE_PATH))
+                    if (BaseMethod.IsExistFile(BaseDefine.CONFIG_FILE_PATH_ZZIPChannel))
                     {
                         XmInfo xmInfo = new XmInfo(kch, xmCode);
 
@@ -324,7 +324,7 @@ namespace HMQService.Server
             int xmCode = xmInfo.XmCode;
 
             string section = string.Format("{0}{1}", BaseDefine.CONFIG_SECTION_Q, xmCode);
-            int sleepTime = BaseMethod.INIGetIntValue(BaseDefine.ZZIPChannel_FILE_PATH, section,
+            int sleepTime = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ZZIPChannel, section,
                 BaseDefine.CONFIG_KEY_TIME, 2000);
 
             System.Threading.Thread.Sleep(sleepTime);
@@ -353,7 +353,7 @@ namespace HMQService.Server
             string strErrrorCode = strArray[1];
             int xmCode = string.IsNullOrEmpty(strXmCode) ? 0 : int.Parse(strXmCode);
 
-            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, 0); //考试科目
             string xmName = string.Empty;   //项目名称
             if (BaseDefine.CONFIG_VALUE_KSKM_3 == kskm) //科目三
@@ -510,7 +510,7 @@ namespace HMQService.Server
             int xmBeginCode = string.IsNullOrEmpty(strXmbh) ? 0 : int.Parse(strXmbh);
             int xmEndCode = 0;
 
-            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, 0); //考试科目
             if (BaseDefine.CONFIG_VALUE_KSKM_3 == kskm) //科目三
             {
@@ -587,7 +587,7 @@ namespace HMQService.Server
             }
             ExamProcedure examPorcedure = m_dicExamProcedures[kch];
 
-            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, 0); //考试科目
             if (BaseDefine.CONFIG_VALUE_KSKM_3 == kskm) //科目三
             {

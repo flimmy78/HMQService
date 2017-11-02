@@ -30,8 +30,11 @@ namespace HMQService.Decode
         private Image imgHgorbhg;
         private Image imgTime;
         private Image imgXmp;
-        private AutoResetEvent autoEventThird;  //自动重置事件
-        private AutoResetEvent autoEventFourth; //自动重置事件
+        private Image imgMap;
+        private Image imgCar;
+        private AutoResetEvent autoEventThird;  //自动重置事件，考生信息刷新线程
+        private AutoResetEvent autoEventFourthInfo; //自动重置事件，考试实时信息刷新线程
+        private AutoResetEvent autoEventFourthMap; //自动重置事件，地图刷新线程
         private Thread m_thirdPicThread;
         private Thread m_fourthPicThread;
 
@@ -47,6 +50,14 @@ namespace HMQService.Decode
         private bool m_bFinish; //考试结束标识 
         private bool m_bPass;   //考试是否合格
         private GPSData m_gpsData;  //车载GPS实时数据
+        private bool m_bDrawMap;    //是否绘制地图
+        private bool m_bDrawCar;    //是否绘制车模型
+        private int m_mapWidth;    
+        private int m_mapHeight;
+        private double m_mapX;
+        private double m_mapY;
+        private double m_zoomIn;
+        private int m_mapPy;    //地图飘移
 
         public ExamProcedure()
         {
@@ -74,6 +85,14 @@ namespace HMQService.Decode
             m_bFinish = false;
             m_bPass = false;
             m_gpsData = new GPSData();
+            m_bDrawMap = false;
+            m_bDrawCar = false;
+            m_mapHeight = 0;
+            m_mapWidth = 0;
+            m_mapX = 0.0;
+            m_mapY = 0.0;
+            m_zoomIn = 0.0;
+            m_mapPy = 0;
         }
 
         ~ExamProcedure()
@@ -325,10 +344,90 @@ namespace HMQService.Decode
 
         private bool InitFourthPic()
         {
-            m_fourthPicThread = new Thread(new ThreadStart(FourthPicKeepThread));
-            m_fourthPicThread.Start();
+            int nLoadMap = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_LOADMAP, 0);
+            if (1 == nLoadMap)
+            {
+                m_bDrawMap = true;
+            }
+
+            if (m_bDrawMap) //地图版本
+            {
+                LoadMapConfig();
+
+                m_fourthPicThread = new Thread(new ThreadStart(FourthPicMapThread));
+                m_fourthPicThread.Start();
+            }
+            else  //项目牌版本
+            {
+                m_fourthPicThread = new Thread(new ThreadStart(FourthPicInfoThread));
+                m_fourthPicThread.Start();
+            }
 
             return true;
+        }
+
+        private void LoadMapConfig()
+        {
+            imgMap = Image.FromFile(BaseDefine.IMG_PATH_MAPN);
+            m_mapWidth = imgMap.Width;
+            m_mapHeight = imgMap.Height;
+
+            int xc = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
+                BaseDefine.CONFIG_KEY_XC, 0);
+            int yc = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
+                BaseDefine.CONFIG_KEY_YC, 0);
+
+            string keyX = string.Empty;
+            if (1 == xc)
+            {
+                keyX = BaseDefine.CONFIG_KEY_MINX;
+            }
+            else
+            {
+                keyX = BaseDefine.CONFIG_KEY_MAXX;
+            }
+            string keyY = string.Empty;
+            if (1 == yc)
+            {
+                keyX = BaseDefine.CONFIG_KEY_MINY;
+            }
+            else
+            {
+                keyX = BaseDefine.CONFIG_KEY_MAXY;
+            }
+
+            m_mapX = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
+                keyX, 0.0);
+            m_mapY = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
+                keyY, 0.0);
+
+            m_zoomIn = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
+                BaseDefine.CONFIG_KEY_ZOOMIN, 0.0);
+
+            int nDrawCar = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_DRAWCAR, 0);
+            if (1 == nDrawCar)
+            {
+                m_bDrawCar = true;
+
+                string carSkinPath = string.Empty;
+                int skinNo = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CARSKIN,
+                    m_kch.ToString(), 0);
+                if (0 == skinNo)
+                {
+                    carSkinPath = string.Format(@".\Car.skin");
+                }
+                else
+                {
+                    carSkinPath = string.Format(@".\Car{0}.skin", skinNo);
+                }
+
+                imgCar = Image.FromFile(carSkinPath);
+            }
+
+            m_mapPy = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_DITUPY, 1);
         }
 
         private void ThirdPicKeepThread()
@@ -413,12 +512,12 @@ namespace HMQService.Decode
             }
         }
 
-        private void FourthPicKeepThread()
+        private void FourthPicInfoThread()
         {
-            autoEventFourth = new AutoResetEvent(true);  //自动重置事件，默认为已触发
+            autoEventFourthInfo = new AutoResetEvent(true);  //自动重置事件，默认为已触发
             while (true)
             {
-                autoEventFourth.WaitOne(Timeout.Infinite);
+                autoEventFourthInfo.WaitOne(Timeout.Infinite);
 
                 try
                 {
@@ -429,7 +528,7 @@ namespace HMQService.Decode
                     Graphics graphics = Graphics.FromImage(bm);
 
                     //绘制项目牌列表
-                    int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+                    int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                         BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
                     if (BaseDefine.CONFIG_VALUE_KSKM_2 == nKskm)
                     {
@@ -498,7 +597,97 @@ namespace HMQService.Decode
 
                 System.Threading.Thread.Sleep(1000);
 
-                autoEventFourth.Set();   //触发事件
+                autoEventFourthInfo.Set();   //触发事件
+            }
+
+        }
+
+        private void FourthPicMapThread()
+        {
+            autoEventFourthInfo = new AutoResetEvent(true);  //自动重置事件，默认为已触发
+            while (true)
+            {
+                autoEventFourthInfo.WaitOne(Timeout.Infinite);
+
+                try
+                {
+                    //Monitor.Enter(m_lockFourth);
+
+                    //重新初始化画板
+                    Bitmap bm = new Bitmap(imgMark);
+                    Graphics graphics = Graphics.FromImage(bm);
+
+                    //绘制项目牌列表
+                    int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+                        BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
+                    if (BaseDefine.CONFIG_VALUE_KSKM_2 == nKskm)
+                    {
+                        graphics.DrawImage(imgXmp, new Rectangle(264, 36, 88, 252), 0, 0, 88, 252, GraphicsUnit.Pixel);
+                    }
+                    else
+                    {
+                        graphics.DrawImage(imgXmp, new Rectangle(264, 0, 88, 288), 0, 0, 88, 288, GraphicsUnit.Pixel);
+                    }
+
+                    //绘制项目状态
+                    DrawXmState(nKskm, ref graphics);
+
+                    //绘制实时状态信息
+                    if (!string.IsNullOrEmpty(m_strCurrentState))
+                    {
+                        TimeSpan ts = DateTime.Now - m_startTime;
+                        string strTotalTime = string.Format("{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
+                        string strScore = string.Format(BaseDefine.STRING_EXAM_TIME_AND_SCORE, strTotalTime, m_CurrentScore);
+                        string strSpeed = string.Format(BaseDefine.STRING_CAR_SPEED, m_gpsData.Speed);
+                        string strStartTime = string.Format(BaseDefine.STRING_EXAM_START_TIME, m_startTime.ToString(BaseDefine.STRING_TIME_FORMAT));
+
+                        graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(4, 10, 348, 40));
+                        graphics.DrawString(strScore, font, brush, new Rectangle(4, 40, 263, 65));
+                        graphics.DrawString(strSpeed, font, brush, new Rectangle(4, 65, 263, 90));
+                        graphics.DrawString(strStartTime, font, brush, new Rectangle(4, 90, 263, 115));
+                    }
+
+                    //绘制扣分信息
+                    foreach (int index in m_dicErrorInfo.Keys)
+                    {
+                        string[] errorInfo = m_dicErrorInfo[index];
+                        if (null == errorInfo)
+                        {
+                            continue;
+                        }
+
+                        if (0 == index)
+                        {
+                            graphics.DrawString(errorInfo[0], font, brushBlack, new Rectangle(2, 120, 260, 145));
+                            graphics.DrawString(errorInfo[1], font, brushBlack, new Rectangle(2, 145, 260, 170));
+                        }
+                        else if (1 == index)
+                        {
+                            graphics.DrawString(errorInfo[0], font, brushBlack, new Rectangle(2, 180, 260, 205));
+                            graphics.DrawString(errorInfo[1], font, brushBlack, new Rectangle(2, 205, 260, 230));
+                        }
+                        else if (2 == index)
+                        {
+                            graphics.DrawString(errorInfo[0], font, brushBlack, new Rectangle(2, 240, 260, 265));
+                            graphics.DrawString(errorInfo[1], font, brushBlack, new Rectangle(2, 265, 260, 288));
+                        }
+                    }
+
+                    //发送画面到合码器
+                    SendBitMapToHMQ(bm, m_kch, m_fourthPassiveHandle);
+                }
+                catch (Exception e)
+                {
+                    Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+                }
+                finally
+                {
+                    //Monitor.Exit(m_lockFourth);
+                }
+
+                System.Threading.Thread.Sleep(1000);
+
+                autoEventFourthInfo.Set();   //触发事件
             }
 
         }
