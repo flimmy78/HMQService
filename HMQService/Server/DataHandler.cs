@@ -161,7 +161,7 @@ namespace HMQService.Server
         }
 
         /// <summary>
-        /// 考试开始？
+        /// 考试开始
         /// </summary>
         /// <param name="kch">考车号</param>
         /// <param name="zkzmbh">准考证明编号</param>
@@ -195,16 +195,16 @@ namespace HMQService.Server
                 return false;
             }
 
-            try
-            {
-                BaseMethod.TF17C51(kch, zkzmbh, kscs, drcs);
-            }
-            catch (Exception e)
-            {
-                Log.GetLogger().ErrorFormat("TF17C51 catch an error : {0}, kch = {1}, zkzmbh = {2}, kscs = {3}, drcs = {4}",
-                    e.Message, kch, zkzmbh, kscs, drcs);
-                return false;
-            }
+            //try
+            //{
+            //    BaseMethod.TF17C51(kch, zkzmbh, kscs, drcs);
+            //}
+            //catch (Exception e)
+            //{
+            //    Log.GetLogger().ErrorFormat("TF17C51 catch an error : {0}, kch = {1}, zkzmbh = {2}, kscs = {3}, drcs = {4}",
+            //        e.Message, kch, zkzmbh, kscs, drcs);
+            //    return false;
+            //}
 
             Log.GetLogger().InfoFormat("HandleM17C51 end, kch={0}, zkzmbh={1}, kscs={2}, drcs={3}", kch, zkzmbh, kscs, drcs);
             return true;

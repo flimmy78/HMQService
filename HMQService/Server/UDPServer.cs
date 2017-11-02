@@ -130,16 +130,16 @@ namespace HMQService.Server
                     return;
                 }
 
-                //GPS 数据，转换为 IntPtr 传给 C++ Dll
-                Byte[] gpsData = data.Skip(8).ToArray();
-                IntPtr unmanagedPointer = Marshal.AllocHGlobal(gpsData.Length);
-                Marshal.Copy(gpsData, 0, unmanagedPointer, gpsData.Length);
+                ////GPS 数据，转换为 IntPtr 传给 C++ Dll
+                //Byte[] gpsData = data.Skip(8).ToArray();
+                //IntPtr unmanagedPointer = Marshal.AllocHGlobal(gpsData.Length);
+                //Marshal.Copy(gpsData, 0, unmanagedPointer, gpsData.Length);
 
 
-                BaseMethod.TF17C54(kch, unmanagedPointer);
+                //BaseMethod.TF17C54(kch, unmanagedPointer);
 
-                System.Threading.Thread.Sleep(1000);
-                Marshal.FreeHGlobal(unmanagedPointer);
+                //System.Threading.Thread.Sleep(1000);
+                //Marshal.FreeHGlobal(unmanagedPointer);
             }
             catch (Exception e)
             {
