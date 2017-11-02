@@ -273,7 +273,7 @@ namespace HMQService.Server
             }
             ExamProcedure examProcedure = m_dicExamProcedures[kch];
 
-            if (!examProcedure.Handle17C52(xmlx))
+            if (!examProcedure.Handle17C52(xmCodeNew, xmlx))
             {
                 Log.GetLogger().ErrorFormat("examProcedure.Handle17C52 failed, kch={0}", kch);
                 return false;
@@ -561,7 +561,7 @@ namespace HMQService.Server
                 return false;
             }
             ExamProcedure examProcedure = m_dicExamProcedures[kch];
-            if (!examProcedure.Handle17C55(xmlx))
+            if (!examProcedure.Handle17C55(xmBeginCode, xmlx))
             {
                 Log.GetLogger().ErrorFormat("examProcedure.Handle17C55 failed, kch={0}", kch);
                 return false;

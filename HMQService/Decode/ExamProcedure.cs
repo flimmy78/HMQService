@@ -46,7 +46,8 @@ namespace HMQService.Decode
         private int m_lockThird;    //考生信息界面线程同步锁
         private int m_lockFourth;   //考试实时信息界面线程同步锁
 
-        private string m_strCurrentState;   //考试项目阶段
+        private string m_strCurrentState;   //考试阶段文字描述
+        private int m_CurrentXmFlag;     //标识当前所处项目，用于绘制项目牌
         private DateTime m_startTime;   //考试开始时间
         private int m_CurrentScore; //考试成绩
         private Dictionary<int, string[]> m_dicErrorInfo;  //扣分信息
@@ -75,6 +76,7 @@ namespace HMQService.Decode
             m_lockThird = 0;
             m_lockFourth = 0;
             m_strCurrentState = string.Empty;
+            m_CurrentXmFlag = 0;
             m_CurrentScore = BaseDefine.CONFIG_VALUE_TOTAL_SCORE;
             m_dicErrorInfo = new Dictionary<int, string[]>();
         }
@@ -126,6 +128,9 @@ namespace HMQService.Decode
                 //Monitor.Enter(m_lockFourth);
 
                 m_strCurrentState = "考试开始";
+                m_CurrentXmFlag = 0;
+                m_CurrentScore = BaseDefine.CONFIG_VALUE_TOTAL_SCORE;
+                m_dicErrorInfo.Clear();
                 m_startTime = DateTime.Now;
             }
             catch (Exception e)
@@ -183,10 +188,10 @@ namespace HMQService.Decode
         /// <summary>
         /// 项目开始，绘制考生信息画面和实时信息画面
         /// </summary>
-        /// <param name="studentInfo">考生信息</param>
-        /// <param name="xmlx">项目类型</param>
+        /// <param name="xmCode">项目编号</param>
+        /// <param name="xmlx">项目名称</param>
         /// <returns></returns>
-        public bool Handle17C52(string xmlx)
+        public bool Handle17C52(int xmCode, string xmlx)
         {
             //考试实时信息
             try
@@ -194,6 +199,9 @@ namespace HMQService.Decode
                 //Monitor.Enter(m_lockFourth);
 
                 m_strCurrentState = xmlx;
+
+                int xmFlag = GetXmFlag(xmCode, true);
+                m_CurrentXmFlag |= xmFlag;
             }
             catch(Exception e)
             {
@@ -241,9 +249,10 @@ namespace HMQService.Decode
         /// <summary>
         /// 项目结束
         /// </summary>
+        /// <param name="xmCode">项目编号</param>
         /// <param name="xmlx">项目类型</param>
         /// <returns></returns>
-        public bool Handle17C55(string xmlx)
+        public bool Handle17C55(int xmCode, string xmlx)
         {
             //考试实时信息
             try
@@ -251,6 +260,15 @@ namespace HMQService.Decode
                 //Monitor.Enter(m_lockFourth);
 
                 m_strCurrentState = xmlx;
+
+                Log.TempDebugFormat(string.Format("Handle17C55 in"));
+
+                int xmFlag = GetXmFlag(xmCode, false);
+
+
+                Log.TempDebugFormat(string.Format("Handle17C55 in，xmCode={0} ,xmFlag = {0}", xmCode, xmFlag));
+
+                m_CurrentXmFlag |= xmFlag;
             }
             catch (Exception e)
             {
@@ -413,7 +431,10 @@ namespace HMQService.Decode
                         graphics.DrawImage(imgXmp, new Rectangle(264, 0, 88, 288), 0, 0, 88, 288, GraphicsUnit.Pixel);
                     }
 
-                    //绘制实时信息
+                    //绘制项目状态
+                    DrawXmState(nKskm, ref graphics);
+
+                    //绘制实时状态信息
                     if (!string.IsNullOrEmpty(m_strCurrentState))
                     {
                         TimeSpan ts = DateTime.Now - m_startTime;
@@ -471,6 +492,84 @@ namespace HMQService.Decode
                 autoEventFourth.Set();   //触发事件
             }
 
+        }
+
+        /// <summary>
+        /// 绘制项目牌实时状态
+        /// </summary>
+        /// <param name="nKskm">考试科目，2--科目2，3--科目3</param>
+        /// <param name="g"></param>
+        private void DrawXmState(int nKskm, ref Graphics g)
+        {
+            if (BaseDefine.CONFIG_VALUE_KSKM_2 == nKskm)
+            {
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_DCRK) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 36, 88, 36), 176, 0, 88, 36, GraphicsUnit.Pixel); //结束倒车入库
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_DCRK) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 36, 88, 36), 88, 0, 88, 36, GraphicsUnit.Pixel); //进入倒车入库
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_CFTC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 72, 88, 36), 176, 36, 88, 36, GraphicsUnit.Pixel); //结束侧方停车
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_CFTC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 72, 88, 36), 88, 36, 88, 36, GraphicsUnit.Pixel); //进入侧方停车
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_DDPQ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 108, 88, 36), 176, 72, 88, 36, GraphicsUnit.Pixel); //结束定点坡起
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_DDPQ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 108, 88, 36), 88, 72, 88, 36, GraphicsUnit.Pixel); //开始定点坡起
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_QXXS) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 144, 88, 36), 176, 108, 88, 36, GraphicsUnit.Pixel); //结束曲线行驶
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_QXXS) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 144, 88, 36), 88, 108, 88, 36, GraphicsUnit.Pixel); //开始曲线行驶
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_ZJZW) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 180, 88, 36), 176, 144, 88, 36, GraphicsUnit.Pixel); //结束直角转弯
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZJZW) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 180, 88, 36), 88, 144, 88, 36, GraphicsUnit.Pixel); //开始直角转弯
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_YWSH) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 216, 88, 36), 176, 180, 88, 36, GraphicsUnit.Pixel); //结束雨雾湿滑
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_YWSH) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 216, 88, 36), 88, 180, 88, 36, GraphicsUnit.Pixel); //开始雨雾湿滑
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_MNSD) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 252, 88, 36), 176, 216, 88, 36, GraphicsUnit.Pixel); //结束雨雾湿滑
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_MNSD) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 252, 88, 36), 88, 216, 88, 36, GraphicsUnit.Pixel); //开始雨雾湿滑
+                }
+            }
+            else
+            {
+
+            }
         }
 
         private bool SendBitMapToHMQ(Bitmap bm, int kch, int passiveHandle, ref Byte[] videoBytes, ref int bytesLen)
@@ -657,6 +756,94 @@ namespace HMQService.Decode
             //}
 
             return true;
+        }
+
+        /// <summary>
+        /// 获取当前项目阶段对应的标识，用于绘制项目牌
+        /// </summary>
+        /// <param name="xmCode">项目编号</param>
+        /// <param name="bStart">true--项目开始，false--项目结束</param>
+        /// <returns></returns>
+        private int GetXmFlag(int xmCode, bool bStart)
+        {
+            int nRet = 0;
+
+            //当前科目二的项目编号为6位数字，如 201510，前3位201表示“倒车入库项目”，后3位表示不同的车库
+            //只需要前3位即可判断具体的项目
+            int xmType = xmCode / 1000;
+
+            if (bStart)
+            {
+                if (BaseDefine.XMBH_201 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_START_DCRK;
+                }
+                else if (BaseDefine.XMBH_204 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_START_CFTC;
+                }
+                else if (BaseDefine.XMBH_203 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_START_DDPQ;
+                }
+                else if (BaseDefine.XMBH_206 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_START_QXXS;
+                }
+                else if (BaseDefine.XMBH_207 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_START_ZJZW;
+                }
+                else if (BaseDefine.XMBH_214 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_START_MNSD;
+                }
+                else if (BaseDefine.XMBH_215 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_START_YWSH;
+                }
+                else if (BaseDefine.XMBH_216 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_START_YWSH;
+                }
+            }
+            else
+            {
+                if (BaseDefine.XMBH_201 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_END_DCRK;
+                }
+                else if (BaseDefine.XMBH_204 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_END_CFTC;
+                }
+                else if (BaseDefine.XMBH_203 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_END_DDPQ;
+                }
+                else if (BaseDefine.XMBH_206 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_END_QXXS;
+                }
+                else if (BaseDefine.XMBH_207 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_END_ZJZW;
+                }
+                else if (BaseDefine.XMBH_214 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_END_MNSD;
+                }
+                else if (BaseDefine.XMBH_215 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_END_YWSH;
+                }
+                else if (BaseDefine.XMBH_216 == xmType)
+                {
+                    nRet = BaseDefine.EXAM_STATE_END_YWSH;
+                }
+            }
+
+            return nRet;
         }
 
     }

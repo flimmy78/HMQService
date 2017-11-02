@@ -18,6 +18,39 @@ namespace HMQService.Common
         public static readonly string STRING_CAR_SPEED = "速度: {0} km/h";
         public static readonly string STRING_EXAM_START_TIME = "开始时间：{0}";
 
+        //考试所处阶段
+        //科目二
+        public const int EXAM_STATE_START_DCRK = 0x0001;    //开始倒车入库
+        public const int EXAM_STATE_END_DCRK = 0x0002;  //结束倒车入库
+        public const int EXAM_STATE_START_CFTC = 0x0004;  //开始侧方停车
+        public const int EXAM_STATE_END_CFTC = 0x0008;  //结束侧方停车
+        public const int EXAM_STATE_START_DDPQ = 0x0010;  //开始定点坡起
+        public const int EXAM_STATE_END_DDPQ = 0x0020;  //结束定点坡起
+        public const int EXAM_STATE_START_QXXS = 0x0040;  //开始曲线行驶
+        public const int EXAM_STATE_END_QXXS = 0x0080;  //结束曲线行驶
+        public const int EXAM_STATE_START_ZJZW = 0x0100;  //开始直角转弯
+        public const int EXAM_STATE_END_ZJZW = 0x0200;  //结束直角转弯
+        public const int EXAM_STATE_START_YWSH = 0x0400;  //开始雨雾湿滑
+        public const int EXAM_STATE_END_YWSH = 0x0800;  //结束雨雾湿滑
+        public const int EXAM_STATE_START_MNSD = 0x1000;  //开始模拟隧道
+        public const int EXAM_STATE_END_MNSD = 0x2000;  //结束模拟隧道
+        ////科目三
+        //public const int EXAM_STATE_START_DCRK = 0x0001;    //开始倒车入库
+        //public const int EXAM_STATE_END_DCRK = 0x0002;  //结束倒车入库
+        //public const int EXAM_STATE_START_CFTC = 0x0004;  //开始侧方停车
+        //public const int EXAM_STATE_END_CFTC = 0x0008;  //结束侧方停车
+        //public const int EXAM_STATE_START_DDPQ = 0x0010;  //开始定点坡起
+        //public const int EXAM_STATE_END_DDPQ = 0x0020;  //结束定点坡起
+        //public const int EXAM_STATE_START_QXXS = 0x0040;  //开始曲线行驶
+        //public const int EXAM_STATE_END_QXXS = 0x0080;  //结束曲线行驶
+        //public const int EXAM_STATE_START_ZJZW = 0x0100;  //开始直角转弯
+        //public const int EXAM_STATE_END_ZJZW = 0x0200;  //结束直角转弯
+        //public const int EXAM_STATE_START_YWSH = 0x0400;  //开始雨雾湿滑
+        //public const int EXAM_STATE_END_YWSH = 0x0800;  //结束雨雾湿滑
+        //public const int EXAM_STATE_START_MNSD = 0x1000;  //开始模拟隧道
+        //public const int EXAM_STATE_END_MNSD = 0x2000;  //结束模拟隧道
+
+
         //数据格式
         public const int  PACK_TYPE_M17C51 = 1;
         public const int PACK_TYPE_M17C52 = 2;
