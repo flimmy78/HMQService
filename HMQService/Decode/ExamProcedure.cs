@@ -22,10 +22,6 @@ namespace HMQService.Decode
         private int m_kch;
         private int m_thirdPassiveHandle;
         private int m_fourthPassiveHandle;
-        private Graphics gThirdPic;
-        private Graphics gFourthPic;
-        private Bitmap bmThirdPic;
-        private Bitmap bmFourthPic;
         private Font font;
         private Brush brush;
         private Brush brushBlack;
@@ -38,10 +34,6 @@ namespace HMQService.Decode
         private AutoResetEvent autoEventFourth; //自动重置事件
         private Thread m_thirdPicThread;
         private Thread m_fourthPicThread;
-        private Byte[] m_thirdPicVideoBytes;
-        private Byte[] m_fourthPicVideoBytes;
-        private int m_thirdBytesLen;
-        private int m_fourthBytesLen;
 
         private int m_lockThird;    //考生信息界面线程同步锁
         private int m_lockFourth;   //考试实时信息界面线程同步锁
@@ -51,6 +43,9 @@ namespace HMQService.Decode
         private DateTime m_startTime;   //考试开始时间
         private int m_CurrentScore; //考试成绩
         private Dictionary<int, string[]> m_dicErrorInfo;  //扣分信息
+        private StudentInfo m_studentInfo;  //考生信息
+        private bool m_bFinish; //考试结束标识 
+        private bool m_bPass;   //考试是否合格
 
         public ExamProcedure()
         {
@@ -61,10 +56,6 @@ namespace HMQService.Decode
             font = new Font("宋体", 13, FontStyle.Regular);
             brush = new SolidBrush(Color.FromArgb(255, 255, 255));
             brushBlack = new SolidBrush(Color.FromArgb(0, 0, 0));
-            m_thirdPicVideoBytes = null;
-            m_fourthPicVideoBytes = null;
-            m_thirdBytesLen = 0;
-            m_fourthBytesLen = 0;
 
             imgTbk = Image.FromFile(BaseDefine.IMG_PATH_TBK);
             imgMark = Image.FromFile(BaseDefine.IMG_PATH_MARK);
@@ -72,13 +63,15 @@ namespace HMQService.Decode
             imgTime = Image.FromFile(BaseDefine.IMG_PATH_TIME);
             imgXmp = Image.FromFile(BaseDefine.IMG_PATH_XMP);
 
-
             m_lockThird = 0;
             m_lockFourth = 0;
             m_strCurrentState = string.Empty;
             m_CurrentXmFlag = 0;
             m_CurrentScore = BaseDefine.CONFIG_VALUE_TOTAL_SCORE;
             m_dicErrorInfo = new Dictionary<int, string[]>();
+            m_studentInfo = new StudentInfo();
+            m_bFinish = false;
+            m_bPass = false;
         }
 
         ~ExamProcedure()
@@ -90,26 +83,6 @@ namespace HMQService.Decode
             m_kch = kch;
             m_thirdPassiveHandle = thirdPH;
             m_fourthPassiveHandle = fourthPH;
-            bmThirdPic = new Bitmap(imgTbk);
-            bmFourthPic = new Bitmap(imgMark);
-
-            //初始化 ThirdPic
-            string strInit = string.Format(BaseDefine.STRING_INIT_CAR, m_kch);
-            try
-            {
-                Monitor.Enter(bmThirdPic);
-
-                gThirdPic = Graphics.FromImage(bmThirdPic);
-                gThirdPic.DrawString(strInit, font, brush, new Rectangle(0, 6, 350, 34));
-            }
-            catch(Exception e)
-            {
-                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
-            }
-            finally
-            {
-                Monitor.Exit(bmThirdPic);
-            }
 
             //开启 ThirdPic 刷新线程
             InitThirdPic(); 
@@ -132,6 +105,8 @@ namespace HMQService.Decode
                 m_CurrentScore = BaseDefine.CONFIG_VALUE_TOTAL_SCORE;
                 m_dicErrorInfo.Clear();
                 m_startTime = DateTime.Now;
+                m_bFinish = false;
+                m_bPass = false;
             }
             catch (Exception e)
             {
@@ -148,29 +123,7 @@ namespace HMQService.Decode
                 //Monitor.Enter(bmThirdPic);
                 autoEventThird.Reset();
 
-                bmThirdPic = new Bitmap(imgTbk);
-                gThirdPic = Graphics.FromImage(bmThirdPic);
-
-                string carType = studentInfo.Kch + "-" + studentInfo.Bz + "-" + studentInfo.Kscx;   //考车号-车牌号-驾照类型
-                string examReason = studentInfo.Ksy1 + " " + studentInfo.KsyyDes;  //考试员-考试原因
-                string sexAndCount = studentInfo.Xb + " 次数: " + studentInfo.Drcs;   //性别-考试次数
-                gThirdPic.DrawString(carType, font, brush, new Rectangle(0, 8, 350, 38));
-                gThirdPic.DrawString(studentInfo.Xingming, font, brush, new Rectangle(58, 45, 350, 75));
-                gThirdPic.DrawString(sexAndCount, font, brush, new Rectangle(58, 80, 350, 110));
-                gThirdPic.DrawString(studentInfo.Date, font, brush, new Rectangle(90, 115, 350, 145));
-                gThirdPic.DrawString(studentInfo.Lsh, font, brush, new Rectangle(90, 150, 350, 180));
-                gThirdPic.DrawString(studentInfo.Sfzmbh, font, brush, new Rectangle(90, 185, 350, 215));
-                gThirdPic.DrawString(studentInfo.Jxmc, font, brush, new Rectangle(90, 220, 350, 250));
-                gThirdPic.DrawString(examReason, font, brush, new Rectangle(90, 255, 350, 285));
-
-                Stream streamZp = new MemoryStream(studentInfo.ArrayZp);
-                Stream streamMjzp = new MemoryStream(studentInfo.ArrayMjzp);
-                Image imgZp = Image.FromStream(streamZp);
-                Image imgMjzp = Image.FromStream(streamMjzp);
-                gThirdPic.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
-                gThirdPic.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
-
-                SendBitMapToHMQ(bmThirdPic, m_kch, m_thirdPassiveHandle, ref m_thirdPicVideoBytes, ref m_thirdBytesLen);
+                m_studentInfo = studentInfo;
             }
             catch (Exception e)
             {
@@ -294,13 +247,17 @@ namespace HMQService.Decode
             {
                 //Monitor.Enter(m_lockFourth);
 
+                m_bFinish = true;   //考试结束
+
                 if (bPass)
                 {
                     m_strCurrentState = "考试合格";
+                    m_bPass = true;
                 }
                 else
                 {
                     m_strCurrentState = "考试不合格";
+                    m_bPass = false;
                 }
             }
             catch (Exception e)
@@ -318,30 +275,8 @@ namespace HMQService.Decode
                 //Monitor.Enter(bmThirdPic);
                 autoEventThird.Reset();
 
-                gThirdPic = Graphics.FromImage(bmThirdPic);
+                m_bFinish = true;   //考试结束
 
-                //合格标识和不合格标识放在同一张图片里，这里需要对图片进行切割
-                Image imgResult = null;
-                Rectangle rect;
-                Bitmap originBitmap = new Bitmap(Image.FromFile(BaseDefine.IMG_PATH_HGORBHG));
-                if (bPass)
-                {
-                    rect = new Rectangle(0, 0, originBitmap.Width / 2, originBitmap.Height);
-                }
-                else
-                {
-                    rect = new Rectangle(originBitmap.Width / 2, 0, originBitmap.Width / 2, originBitmap.Height);
-                }
-                Bitmap bmp = new Bitmap(rect.Width, rect.Height);
-                using (Graphics gph = Graphics.FromImage(bmp))
-                {
-                    gph.DrawImage(originBitmap, new Rectangle(0, 0, bmp.Width, bmp.Height), rect, GraphicsUnit.Pixel);
-                }
-                imgResult = (Image)bmp;
-
-                //绘制合格/不合格标识
-                gThirdPic.DrawImage(imgResult, new Rectangle(100, 50, 135, 100));
-                SendBitMapToHMQ(bmThirdPic, m_kch, m_thirdPassiveHandle, ref m_thirdPicVideoBytes, ref m_thirdBytesLen);
             }
             catch (Exception e)
             {
@@ -358,8 +293,6 @@ namespace HMQService.Decode
 
         private bool InitThirdPic()
         {
-            SendBitMapToHMQ(bmThirdPic, m_kch, m_thirdPassiveHandle, ref m_thirdPicVideoBytes, ref m_thirdBytesLen);
-
             m_thirdPicThread = new Thread(new ThreadStart(ThirdPicKeepThread));
             m_thirdPicThread.Start();
 
@@ -368,8 +301,6 @@ namespace HMQService.Decode
 
         private bool InitFourthPic()
         {
-            SendBitMapToHMQ(bmFourthPic, m_kch, m_fourthPassiveHandle, ref m_fourthPicVideoBytes, ref m_fourthBytesLen);
-
             m_fourthPicThread = new Thread(new ThreadStart(FourthPicKeepThread));
             m_fourthPicThread.Start();
 
@@ -385,9 +316,63 @@ namespace HMQService.Decode
 
                 try
                 {
-                    Monitor.Enter(bmThirdPic);
+                    //Monitor.Enter(bmThirdPic);
 
-                    MatrixSendData(m_thirdPicVideoBytes, m_thirdBytesLen, m_thirdPassiveHandle);
+                    //重新初始化画板
+                    Bitmap bm = new Bitmap(imgTbk);
+                    Graphics graphics = Graphics.FromImage(bm);
+
+                    //绘制考生信息
+                    if (!string.IsNullOrEmpty(m_studentInfo.Sfzmbh))
+                    {
+                        string carType = m_studentInfo.Kch + "-" + m_studentInfo.Bz + "-" + m_studentInfo.Kscx;   //考车号-车牌号-驾照类型
+                        string examReason = m_studentInfo.Ksy1 + " " + m_studentInfo.KsyyDes;  //考试员-考试原因
+                        string sexAndCount = m_studentInfo.Xb + " 次数: " + m_studentInfo.Drcs;   //性别-考试次数
+                        graphics.DrawString(carType, font, brush, new Rectangle(0, 8, 350, 38));
+                        graphics.DrawString(m_studentInfo.Xingming, font, brush, new Rectangle(58, 45, 350, 75));
+                        graphics.DrawString(sexAndCount, font, brush, new Rectangle(58, 80, 350, 110));
+                        graphics.DrawString(m_studentInfo.Date, font, brush, new Rectangle(90, 115, 350, 145));
+                        graphics.DrawString(m_studentInfo.Lsh, font, brush, new Rectangle(90, 150, 350, 180));
+                        graphics.DrawString(m_studentInfo.Sfzmbh, font, brush, new Rectangle(90, 185, 350, 215));
+                        graphics.DrawString(m_studentInfo.Jxmc, font, brush, new Rectangle(90, 220, 350, 250));
+                        graphics.DrawString(examReason, font, brush, new Rectangle(90, 255, 350, 285));
+
+                        Stream streamZp = new MemoryStream(m_studentInfo.ArrayZp);
+                        Stream streamMjzp = new MemoryStream(m_studentInfo.ArrayMjzp);
+                        Image imgZp = Image.FromStream(streamZp);
+                        Image imgMjzp = Image.FromStream(streamMjzp);
+                        graphics.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
+                        graphics.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
+                    }
+
+                    if (m_bFinish)
+                    {
+                        //合格标识和不合格标识放在同一张图片里，这里需要对图片进行切割
+                        Image imgResult = null;
+                        Rectangle rect;
+                        Bitmap originBitmap = new Bitmap(Image.FromFile(BaseDefine.IMG_PATH_HGORBHG));
+                        if (m_bPass)
+                        {
+                            rect = new Rectangle(0, 0, originBitmap.Width / 2, originBitmap.Height);
+                        }
+                        else
+                        {
+                            rect = new Rectangle(originBitmap.Width / 2, 0, originBitmap.Width / 2, originBitmap.Height);
+                        }
+                        Bitmap bmp = new Bitmap(rect.Width, rect.Height);
+                        using (Graphics gph = Graphics.FromImage(bmp))
+                        {
+                            gph.DrawImage(originBitmap, new Rectangle(0, 0, bmp.Width, bmp.Height), rect, GraphicsUnit.Pixel);
+                        }
+                        imgResult = (Image)bmp;
+
+                        //绘制合格/不合格标识
+                        graphics.DrawImage(imgResult, new Rectangle(100, 50, 135, 100));
+                    }
+
+                    //发送画面到合码器
+                    SendBitMapToHMQ(bm, m_kch, m_thirdPassiveHandle);
+
                 }
                 catch (Exception e)
                 {
@@ -395,7 +380,7 @@ namespace HMQService.Decode
                 }
                 finally
                 {
-                    Monitor.Exit(bmThirdPic);
+                    //Monitor.Exit(bmThirdPic);
                 }
                 
                 System.Threading.Thread.Sleep(1000);
@@ -476,7 +461,7 @@ namespace HMQService.Decode
                     }
 
                     //发送画面到合码器
-                    SendBitMapToHMQ(bm, m_kch, m_fourthPassiveHandle, ref m_fourthPicVideoBytes, ref m_fourthBytesLen);
+                    SendBitMapToHMQ(bm, m_kch, m_fourthPassiveHandle);
                 }
                 catch (Exception e)
                 {
@@ -572,7 +557,7 @@ namespace HMQService.Decode
             }
         }
 
-        private bool SendBitMapToHMQ(Bitmap bm, int kch, int passiveHandle, ref Byte[] videoBytes, ref int bytesLen)
+        private bool SendBitMapToHMQ(Bitmap bm, int kch, int passiveHandle)
         {
             bool bRet = false;
 
@@ -601,6 +586,8 @@ namespace HMQService.Decode
             }
 
             //AVI 转 264 码流
+            Byte[] videoBytes = null;
+            int bytesLen = 0;
             bRet = MakeYuvFile(aviFilePath, yuvFilePath, ref videoBytes, ref bytesLen);
             if (!bRet)
             {
@@ -709,8 +696,8 @@ namespace HMQService.Decode
 
         private bool SavePngFile(int lh)
         {
-            bmThirdPic.Save(@"D:\image\thirdPic.png");
-            bmFourthPic.Save(@"D:\image\fourthPic.png");
+            //bmThirdPic.Save(@"D:\image\thirdPic.png");
+            //bmFourthPic.Save(@"D:\image\fourthPic.png");
 
             //BaseMethod.MakeAviFile(@"D:\image\third.avi", bmThirdPic);
             //BaseMethod.MakeAviFile(@"D:\image\fourth.avi", bmFourthPic);
