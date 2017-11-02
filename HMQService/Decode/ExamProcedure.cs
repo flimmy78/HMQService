@@ -604,47 +604,48 @@ namespace HMQService.Decode
 
         private void FourthPicMapThread()
         {
-            autoEventFourthInfo = new AutoResetEvent(true);  //自动重置事件，默认为已触发
+            autoEventFourthMap = new AutoResetEvent(true);  //自动重置事件，默认为已触发
             while (true)
             {
-                autoEventFourthInfo.WaitOne(Timeout.Infinite);
+                autoEventFourthMap.WaitOne(Timeout.Infinite);
 
                 try
                 {
                     //Monitor.Enter(m_lockFourth);
 
                     //重新初始化画板
-                    Bitmap bm = new Bitmap(imgMark);
+                    Bitmap bm = new Bitmap(352, 288);
                     Graphics graphics = Graphics.FromImage(bm);
+                    graphics.DrawImage(imgMap, new Rectangle(0, 0, 352, 288), m_mapWidth, m_mapHeight, 352, 288, GraphicsUnit.Pixel);
 
-                    //绘制项目牌列表
+                    //绘制考车
+                    if (m_bDrawCar)
+                    {
+                        graphics.TranslateTransform(176, 144);
+                        graphics.RotateTransform(m_gpsData.DirectionAngle);
+                        graphics.TranslateTransform(-176, -144);
+
+                        graphics.DrawImage(imgCar, new Rectangle(0, 0, 352, 288));  //车模型
+
+                        graphics.ResetTransform();
+                    }
+
+                    graphics.DrawImage(imgMark, new Rectangle(0, 0, 352, 288)); //遮罩
+
                     int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                         BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
-                    if (BaseDefine.CONFIG_VALUE_KSKM_2 == nKskm)
-                    {
-                        graphics.DrawImage(imgXmp, new Rectangle(264, 36, 88, 252), 0, 0, 88, 252, GraphicsUnit.Pixel);
-                    }
-                    else
-                    {
-                        graphics.DrawImage(imgXmp, new Rectangle(264, 0, 88, 288), 0, 0, 88, 288, GraphicsUnit.Pixel);
-                    }
-
-                    //绘制项目状态
-                    DrawXmState(nKskm, ref graphics);
 
                     //绘制实时状态信息
                     if (!string.IsNullOrEmpty(m_strCurrentState))
                     {
-                        TimeSpan ts = DateTime.Now - m_startTime;
-                        string strTotalTime = string.Format("{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
-                        string strScore = string.Format(BaseDefine.STRING_EXAM_TIME_AND_SCORE, strTotalTime, m_CurrentScore);
-                        string strSpeed = string.Format(BaseDefine.STRING_CAR_SPEED, m_gpsData.Speed);
-                        string strStartTime = string.Format(BaseDefine.STRING_EXAM_START_TIME, m_startTime.ToString(BaseDefine.STRING_TIME_FORMAT));
+                        string speed = string.Format("{0} km/h", m_gpsData.Speed);
+                        string mileage = string.Format("{0} m", m_gpsData.Mileage);
+                        string score = string.Format("成绩:{0}", m_CurrentScore);
 
-                        graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(4, 10, 348, 40));
-                        graphics.DrawString(strScore, font, brush, new Rectangle(4, 40, 263, 65));
-                        graphics.DrawString(strSpeed, font, brush, new Rectangle(4, 65, 263, 90));
-                        graphics.DrawString(strStartTime, font, brush, new Rectangle(4, 90, 263, 115));
+                        graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(0, 0, 348, 30));
+                        graphics.DrawString(speed, font, brush, new Rectangle(0, 236, 98, 262));
+                        graphics.DrawString(mileage, font, brush, new Rectangle(0, 262, 98, 288));
+                        graphics.DrawString(score, font, brush, new Rectangle(264, 236, 350, 262));
                     }
 
                     //绘制扣分信息
@@ -656,20 +657,19 @@ namespace HMQService.Decode
                             continue;
                         }
 
+                        string errorMsg = string.Format("{0} {1}", errorInfo[0], errorInfo[1]);
+
                         if (0 == index)
                         {
-                            graphics.DrawString(errorInfo[0], font, brushBlack, new Rectangle(2, 120, 260, 145));
-                            graphics.DrawString(errorInfo[1], font, brushBlack, new Rectangle(2, 145, 260, 170));
+                            graphics.DrawString(errorMsg, font, brushBlack, new Rectangle(6, 216, 346, 236));
                         }
                         else if (1 == index)
                         {
-                            graphics.DrawString(errorInfo[0], font, brushBlack, new Rectangle(2, 180, 260, 205));
-                            graphics.DrawString(errorInfo[1], font, brushBlack, new Rectangle(2, 205, 260, 230));
+                            graphics.DrawString(errorMsg, font, brushBlack, new Rectangle(6, 196, 346, 216));
                         }
                         else if (2 == index)
                         {
-                            graphics.DrawString(errorInfo[0], font, brushBlack, new Rectangle(2, 240, 260, 265));
-                            graphics.DrawString(errorInfo[1], font, brushBlack, new Rectangle(2, 265, 260, 288));
+                            graphics.DrawString(errorMsg, font, brushBlack, new Rectangle(6, 176, 346, 196));
                         }
                     }
 
@@ -687,7 +687,7 @@ namespace HMQService.Decode
 
                 System.Threading.Thread.Sleep(1000);
 
-                autoEventFourthInfo.Set();   //触发事件
+                autoEventFourthMap.Set();   //触发事件
             }
 
         }

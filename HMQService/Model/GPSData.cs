@@ -35,17 +35,17 @@ namespace HMQService.Model
             get { return latitude; }
         }
 
-        public double DirectionAngle
+        public float DirectionAngle
         {
             get { return directionAngle; }
         }
 
-        public double Speed
+        public float Speed
         {
             get { return speed; }
         }
 
-        public double Mileage
+        public float Mileage
         {
             get { return mileage; }
         }
