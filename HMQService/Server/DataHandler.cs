@@ -170,8 +170,28 @@ namespace HMQService.Server
         {
             int kscs = 0;   //考试次数
             int drcs = 0;   //当日次数
-            if (!GetExamCount(zkzmbh, ref kscs, ref drcs))
+            //if (!GetExamCount(zkzmbh, ref kscs, ref drcs))
+            //{
+            //    return false;
+            //}
+            
+            if (!m_dicExamProcedures.ContainsKey(kch))
             {
+                Log.GetLogger().ErrorFormat("m_dicExamProcedures 字典找不到考车号 : {0}", kch);
+                return false;
+            }
+            ExamProcedure examProcedure = m_dicExamProcedures[kch];
+
+            //获取考生信息
+            StudentInfo studentInfo = new StudentInfo();
+            if (!GetStudentInfo(zkzmbh, ref studentInfo))
+            {
+                return false;
+            }
+
+            if (!examProcedure.Handle17C51(studentInfo))
+            {
+                Log.GetLogger().ErrorFormat("examProcedure.Handle17C51 failed, kch={0}", kch);
                 return false;
             }
 
@@ -253,14 +273,7 @@ namespace HMQService.Server
             }
             ExamProcedure examProcedure = m_dicExamProcedures[kch];
 
-            //获取考生信息
-            StudentInfo studentInfo = new StudentInfo();
-            if (!GetStudentInfo(zkzmbh, ref studentInfo))
-            {
-                return false;
-            }
-
-            if (!examProcedure.Handle17C52(studentInfo, xmlx))
+            if (!examProcedure.Handle17C52(xmlx))
             {
                 Log.GetLogger().ErrorFormat("examProcedure.Handle17C52 failed, kch={0}", kch);
                 return false;

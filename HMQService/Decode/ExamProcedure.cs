@@ -109,10 +109,6 @@ namespace HMQService.Decode
                 Monitor.Exit(bmThirdPic);
             }
 
-            //临时放在这里，后面需要移到17C51
-            m_strCurrentState = "考试开始";
-            m_startTime = DateTime.Now;             
-
             //开启 ThirdPic 刷新线程
             InitThirdPic(); 
 
@@ -122,30 +118,25 @@ namespace HMQService.Decode
             return true;
         }
 
-        /// <summary>
-        /// 项目开始，绘制考生信息画面和实时信息画面
-        /// </summary>
-        /// <param name="studentInfo">考生信息</param>
-        /// <param name="xmlx">项目类型</param>
-        /// <returns></returns>
-        public bool Handle17C52(StudentInfo studentInfo, string xmlx)
+        public bool Handle17C51(StudentInfo studentInfo)
         {
             //考试实时信息
             try
             {
                 //Monitor.Enter(m_lockFourth);
 
-                m_strCurrentState = xmlx;
+                m_strCurrentState = "考试开始";
+                m_startTime = DateTime.Now;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                Log.GetLogger().ErrorFormat("catch an error : {0}, xmlx = {1}", e.Message, xmlx);
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
             }
             finally
             {
                 //Monitor.Exit(m_lockFourth);
             }
-            
+
             //更新考生信息画面
             try
             {
@@ -190,6 +181,33 @@ namespace HMQService.Decode
         }
 
         /// <summary>
+        /// 项目开始，绘制考生信息画面和实时信息画面
+        /// </summary>
+        /// <param name="studentInfo">考生信息</param>
+        /// <param name="xmlx">项目类型</param>
+        /// <returns></returns>
+        public bool Handle17C52(string xmlx)
+        {
+            //考试实时信息
+            try
+            {
+                //Monitor.Enter(m_lockFourth);
+
+                m_strCurrentState = xmlx;
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}, xmlx = {1}", e.Message, xmlx);
+            }
+            finally
+            {
+                //Monitor.Exit(m_lockFourth);
+            }
+            
+            return true;
+        }
+
+        /// <summary>
         /// 处理扣分 
         /// </summary>
         /// <param name="xmName">项目名称</param>
@@ -212,6 +230,10 @@ namespace HMQService.Decode
 
             //扣除当前得分
             m_CurrentScore -= kcfs;
+            if (BaseDefine.CONFIG_VALUE_ZERO_SCORE == m_CurrentScore)
+            {
+                m_CurrentScore = BaseDefine.CONFIG_VALUE_ZERO_SCORE;
+            }
 
             return true;
         }

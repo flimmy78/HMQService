@@ -62,6 +62,7 @@ namespace HMQService.Common
         public static readonly int CONFIG_VALUE_KSHGFS_2 = 80;  //科目2合格分数
         public static readonly int CONFIG_VALUE_KSHGFS_3 = 90;  //科目3合格分数
         public static readonly int CONFIG_VALUE_TOTAL_SCORE = 100;  //满分
+        public static readonly int CONFIG_VALUE_ZERO_SCORE = 0;  //零分
 
         //数据库
         public static readonly string DB_TABLE_TBKVIDEO = "TBKVideo";
