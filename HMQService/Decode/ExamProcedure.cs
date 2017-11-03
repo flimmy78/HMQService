@@ -392,11 +392,11 @@ namespace HMQService.Decode
             string keyY = string.Empty;
             if (1 == yc)
             {
-                keyX = BaseDefine.CONFIG_KEY_MINY;
+                keyY = BaseDefine.CONFIG_KEY_MINY;
             }
             else
             {
-                keyX = BaseDefine.CONFIG_KEY_MAXY;
+                keyY = BaseDefine.CONFIG_KEY_MAXY;
             }
 
             m_mapX = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
@@ -623,8 +623,11 @@ namespace HMQService.Decode
                 {
                     //Monitor.Enter(m_lockFourth);
 
+                    Font font = new Font("宋体", 10, FontStyle.Regular);
+
                     //重新初始化画板
-                    Bitmap bm = new Bitmap(352, 288);
+                    //Bitmap bm = new Bitmap(352, 288);
+                    Bitmap bm = new Bitmap(imgMap, 352, 288);
                     Graphics graphics = Graphics.FromImage(bm);
                     graphics.DrawImage(imgMap, new Rectangle(0, 0, 352, 288), m_mapWidth, m_mapHeight, 352, 288, GraphicsUnit.Pixel);
 
@@ -648,14 +651,26 @@ namespace HMQService.Decode
                     //绘制实时状态信息
                     if (!string.IsNullOrEmpty(m_strCurrentState))
                     {
+                        TimeSpan ts;
+                        if (m_bFinish)
+                        {
+                            ts = m_endTime - m_startTime;
+                        }
+                        else
+                        {
+                            ts = DateTime.Now - m_startTime;
+                        }
+
                         string speed = string.Format("{0} km/h", m_gpsData.Speed);
                         string mileage = string.Format("{0} m", m_gpsData.Mileage);
                         string score = string.Format("成绩:{0}", m_CurrentScore);
+                        string time = string.Format("时长:{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
 
-                        graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(0, 0, 348, 30));
-                        graphics.DrawString(speed, font, brush, new Rectangle(0, 236, 98, 262));
-                        graphics.DrawString(mileage, font, brush, new Rectangle(0, 262, 98, 288));
-                        graphics.DrawString(score, font, brush, new Rectangle(264, 236, 350, 262));
+                        graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(0, 8, 348, 30));
+                        graphics.DrawString(speed, font, brush, new Rectangle(0, 240, 98, 262));
+                        graphics.DrawString(mileage, font, brush, new Rectangle(0, 265, 98, 288));
+                        graphics.DrawString(score, font, brush, new Rectangle(263, 240, 350, 262));
+                        graphics.DrawString(time, font, brush, new Rectangle(263, 265, 350, 288));
                     }
 
                     //绘制扣分信息
