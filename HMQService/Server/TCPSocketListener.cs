@@ -112,16 +112,13 @@ namespace HMQService.Server
 
                     //发送确认信息给车载
                     m_clientSocket.Send(byteBuffer);
+                    string recvStr = Encoding.ASCII.GetString(byteBuffer, 0, size);
+                    Log.GetLogger().InfoFormat("发送确认信息给车载完成 : {0}", recvStr);
 
                     //数据处理
                     dataHandler = new DataHandler(byteBuffer, size, m_dicCars, m_dicCameras, m_dicJudgeRules, m_dicExamProcedures,
                         m_sqlDataProvider);
                     dataHandler.StartHandle();
-
-                    ////发送确认信息给车载
-                    //m_clientSocket.Send(byteBuffer);
-
-                    Log.GetLogger().InfoFormat("发送确认信息给车载完成");
                 }
 				catch (Exception e)
 				{
