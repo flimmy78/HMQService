@@ -130,11 +130,10 @@ namespace HMQService.Server
                     break;
                 case BaseDefine.PACK_TYPE_M17C56:   //考试完成
                     {
-                        string strKscj = retArray[5];  //考试完成时该字段表示考试成绩
-                        int kscj = string.IsNullOrEmpty(strKscj) ? 0 : int.Parse(strKscj);
+                        int kscj = string.IsNullOrEmpty(score) ? 0 : int.Parse(score);
                         if (0 == kscj)
                         {
-                            errorMsg = string.Format("车载接口传的考试成绩为 {0}", strKscj);
+                            errorMsg = string.Format("车载接口传的考试成绩为 {0}", score);
                             goto END;
                         }
 

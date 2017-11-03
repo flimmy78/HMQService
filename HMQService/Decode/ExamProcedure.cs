@@ -44,6 +44,7 @@ namespace HMQService.Decode
         private string m_strCurrentState;   //考试阶段文字描述
         private int m_CurrentXmFlag;     //标识当前所处项目，用于绘制项目牌
         private DateTime m_startTime;   //考试开始时间
+        private DateTime m_endTime; //考试结束时间
         private int m_CurrentScore; //考试成绩
         private Dictionary<int, string[]> m_dicErrorInfo;  //扣分信息
         private StudentInfo m_studentInfo;  //考生信息
@@ -291,6 +292,7 @@ namespace HMQService.Decode
                 //Monitor.Enter(m_lockFourth);
 
                 m_bFinish = true;   //考试结束
+                m_endTime = DateTime.Now;
 
                 if (bPass)
                 {
@@ -545,7 +547,15 @@ namespace HMQService.Decode
                     //绘制实时状态信息
                     if (!string.IsNullOrEmpty(m_strCurrentState))
                     {
-                        TimeSpan ts = DateTime.Now - m_startTime;
+                        TimeSpan ts;
+                        if (m_bFinish)
+                        {
+                            ts = m_endTime - m_startTime;
+                        }
+                        else
+                        {
+                            ts = DateTime.Now - m_startTime;
+                        }
                         string strTotalTime = string.Format("{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
                         string strScore = string.Format(BaseDefine.STRING_EXAM_TIME_AND_SCORE, strTotalTime, m_CurrentScore);
                         string strSpeed = string.Format(BaseDefine.STRING_CAR_SPEED, m_gpsData.Speed);
