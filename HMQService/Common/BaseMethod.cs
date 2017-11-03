@@ -149,7 +149,7 @@ namespace HMQService.Common
                 return false;
             }
 
-            Log.GetLogger().DebugFormat("MakeAviFile end, filepath = {0}", filePath);
+            //Log.GetLogger().DebugFormat("MakeAviFile end, filepath = {0}", filePath);
             return true;
         }
     }
