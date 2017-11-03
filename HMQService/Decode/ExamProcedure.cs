@@ -55,6 +55,8 @@ namespace HMQService.Decode
         private bool m_bDrawCar;    //是否绘制车模型
         private int m_mapWidth;    
         private int m_mapHeight;
+        private int m_carX; //考车所在位置
+        private int m_carY; //考车所在位置
         private double m_mapX;
         private double m_mapY;
         private double m_zoomIn;
@@ -94,6 +96,8 @@ namespace HMQService.Decode
             m_mapY = 0.0;
             m_zoomIn = 0.0;
             m_mapPy = 0;
+            m_carX = 0;
+            m_carY = 0;
         }
 
         ~ExamProcedure()
@@ -229,6 +233,36 @@ namespace HMQService.Decode
                 //Monitor.Enter(m_lockFourth);
 
                 m_gpsData = gpsData;
+
+                if (m_bDrawMap)
+                {
+                    int tempx = 0;
+                    int tempy = 0;
+
+                    if (1 == m_mapPy)
+                    {
+                        tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) - 176;
+                        tempy = Math.Abs((int)((m_gpsData.Latitude - m_mapY) * m_zoomIn)) - 144;
+                    }
+                    else
+                    {
+                        tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn));
+                        tempy = Math.Abs((int)((m_gpsData.Latitude - m_mapY) * m_zoomIn));
+                    }
+
+                    if (tempx < 0 || tempx > m_mapWidth || tempy < 0 || tempy > m_mapHeight)
+                    {
+                        Log.GetLogger().ErrorFormat("GPS数据存在异常，longitude={0}, latitude={1}, zoomin={2}", m_gpsData.Longitude,
+                            m_gpsData.Latitude, m_zoomIn);
+                    }
+                    else
+                    {
+                        m_carX = tempx;
+                        m_carY = tempy;
+                    }
+
+                }
+
             }
             catch (Exception e)
             {
@@ -392,17 +426,20 @@ namespace HMQService.Decode
             string keyY = string.Empty;
             if (1 == yc)
             {
-                keyX = BaseDefine.CONFIG_KEY_MINY;
+                keyY = BaseDefine.CONFIG_KEY_MINY;
             }
             else
             {
-                keyX = BaseDefine.CONFIG_KEY_MAXY;
+                keyY = BaseDefine.CONFIG_KEY_MAXY;
             }
 
             m_mapX = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
                 keyX, 0.0);
             m_mapY = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
                 keyY, 0.0);
+
+            Log.TempDebugFormat(string.Format("here x : {0}", m_mapX));
+            Log.TempDebugFormat(string.Format("here y : {0}", m_mapY));
 
             m_zoomIn = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
                 BaseDefine.CONFIG_KEY_ZOOMIN, 0.0);
@@ -623,10 +660,13 @@ namespace HMQService.Decode
                 {
                     //Monitor.Enter(m_lockFourth);
 
+                    Font font = new Font("宋体", 10, FontStyle.Regular);
+
                     //重新初始化画板
-                    Bitmap bm = new Bitmap(352, 288);
+                    //Bitmap bm = new Bitmap(352, 288);
+                    Bitmap bm = new Bitmap(imgMap, 352, 288);
                     Graphics graphics = Graphics.FromImage(bm);
-                    graphics.DrawImage(imgMap, new Rectangle(0, 0, 352, 288), m_mapWidth, m_mapHeight, 352, 288, GraphicsUnit.Pixel);
+                    graphics.DrawImage(imgMap, new Rectangle(0, 0, 352, 288), m_carX, m_carY, 352, 288, GraphicsUnit.Pixel);
 
                     //绘制考车
                     if (m_bDrawCar)
@@ -648,14 +688,26 @@ namespace HMQService.Decode
                     //绘制实时状态信息
                     if (!string.IsNullOrEmpty(m_strCurrentState))
                     {
+                        TimeSpan ts;
+                        if (m_bFinish)
+                        {
+                            ts = m_endTime - m_startTime;
+                        }
+                        else
+                        {
+                            ts = DateTime.Now - m_startTime;
+                        }
+
                         string speed = string.Format("{0} km/h", m_gpsData.Speed);
                         string mileage = string.Format("{0} m", m_gpsData.Mileage);
                         string score = string.Format("成绩:{0}", m_CurrentScore);
+                        string time = string.Format("时长:{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
 
-                        graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(0, 0, 348, 30));
-                        graphics.DrawString(speed, font, brush, new Rectangle(0, 236, 98, 262));
-                        graphics.DrawString(mileage, font, brush, new Rectangle(0, 262, 98, 288));
-                        graphics.DrawString(score, font, brush, new Rectangle(264, 236, 350, 262));
+                        graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(0, 8, 348, 30));
+                        graphics.DrawString(speed, font, brush, new Rectangle(0, 240, 98, 262));
+                        graphics.DrawString(mileage, font, brush, new Rectangle(0, 265, 98, 288));
+                        graphics.DrawString(score, font, brush, new Rectangle(263, 240, 350, 262));
+                        graphics.DrawString(time, font, brush, new Rectangle(263, 265, 350, 288));
                     }
 
                     //绘制扣分信息

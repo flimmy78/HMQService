@@ -237,6 +237,7 @@ namespace HMQService.Server
                 m_dicCars[kch].StartDynamicDecode(camera, 1);   //第二画面进项目
 
                 //处理定点
+                //半坡停车时，车载会发 15010 摄像头编号过来，切换摄像头后，另外开一个线程，休眠几秒时间后，切换为原来的摄像头
                 if ((BaseDefine.XMBH_15010 == xmCode) || (BaseDefine.XMBH_15020 == xmCode) || (BaseDefine.XMBH_15030 == xmCode))
                 {
                     Log.GetLogger().InfoFormat("定点：{0}", xmCode);
