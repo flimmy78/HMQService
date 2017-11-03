@@ -124,7 +124,7 @@ namespace HMQService.Decode
             //开始监听车载数据
             tcpServer = new TCPServer(dicCars, dicCameras, dicJudgementRule, dicExamProcedures, sqlDataProvider);
             tcpServer.StartServer();
-            udpServer = new UDPServer(dicCars);
+            udpServer = new UDPServer(dicCars, dicExamProcedures);
             udpServer.StartServer();
 
             Log.GetLogger().InfoFormat("HMQManagerThreadProc end.");
@@ -215,7 +215,7 @@ namespace HMQService.Decode
 
             try
             {
-                string configStr = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_SQLLINK,
+                string configStr = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_SQLLINK,
                     BaseDefine.CONFIG_KEY_ServerPZ, string.Empty);
                 if (!string.IsNullOrEmpty(configStr))
                 {
@@ -252,7 +252,7 @@ namespace HMQService.Decode
 
             try
             {
-                string configStr = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+                string configStr = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                     BaseDefine.CONFIG_KEY_SQLORACLE, string.Empty);
                 if (!string.IsNullOrEmpty(configStr))
                 {
@@ -401,12 +401,12 @@ namespace HMQService.Decode
             int kch = 0;
             int count = 4;
             string key = string.Empty;
-            m_dispalyShow[4] = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+            m_dispalyShow[4] = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_VIDEOWND, 1);
             for (int i = 0; i < count; i++)
             {
                 key = string.Format("{0}{1}", BaseDefine.CONFIG_KEY_DISPLAY, i + 1);
-                m_dispalyShow[i] = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+                m_dispalyShow[i] = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                     key, i);
                 kch += m_dispalyShow[i];
             }
@@ -416,7 +416,7 @@ namespace HMQService.Decode
                 {
                     key = string.Format("{0}{1}", BaseDefine.CONFIG_KEY_DISPLAY, i + 1);
                     string value = i.ToString();
-                    INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG, key, value);
+                    INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG, key, value);
                     m_dispalyShow[i] = i;
                 }
             }
@@ -424,13 +424,13 @@ namespace HMQService.Decode
                 m_dispalyShow[2], m_dispalyShow[3], m_dispalyShow[4]);
 
             //合码器初始化
-            int nNum = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_JMQ,
+            int nNum = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_JMQ,
                 BaseDefine.CONFIG_KEY_NUM, 0);    //合码器数量
-            int nEven = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_JMQ,
+            int nEven = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_JMQ,
                 BaseDefine.CONFIG_KEY_EVEN, 0);    //是否隔行合码
-            int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
-            int nWnd2 = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nWnd2 = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_WND2, 0);    //画面二状态
             if (0 == nNum)
             {
@@ -442,7 +442,7 @@ namespace HMQService.Decode
             string errorMsg = string.Empty;
             for (int i = 1; i <= nNum; i++)
             {
-                string strConf = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_JMQ,
+                string strConf = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_JMQ,
                     i.ToString(), string.Empty);
                 string[] confArray = BaseMethod.SplitString(strConf, BaseDefine.SPLIT_CHAR_COMMA, out errorMsg);
                 if (!string.IsNullOrEmpty(errorMsg) || confArray.Length != 4)
@@ -477,7 +477,7 @@ namespace HMQService.Decode
                     }
 
                     string keyBNC = string.Format("BNC{0}", j + 1); //从 1 开始
-                    int nKch = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, sectionJMQ, keyBNC, -1);
+                    int nKch = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, sectionJMQ, keyBNC, -1);
                     if (-1 == nKch)  //没有配置
                     {
                         Log.GetLogger().InfoFormat("合码器 JMQ{0} 的 BNC 通道 {1} 处于空闲，可以配置。", i, keyBNC);

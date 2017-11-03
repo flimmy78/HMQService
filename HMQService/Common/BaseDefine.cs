@@ -18,6 +18,39 @@ namespace HMQService.Common
         public static readonly string STRING_CAR_SPEED = "速度: {0} km/h";
         public static readonly string STRING_EXAM_START_TIME = "开始时间：{0}";
 
+        //考试所处阶段
+        //科目二
+        public const int EXAM_STATE_START_DCRK = 0x0001;    //开始倒车入库
+        public const int EXAM_STATE_END_DCRK = 0x0002;  //结束倒车入库
+        public const int EXAM_STATE_START_CFTC = 0x0004;  //开始侧方停车
+        public const int EXAM_STATE_END_CFTC = 0x0008;  //结束侧方停车
+        public const int EXAM_STATE_START_DDPQ = 0x0010;  //开始定点坡起
+        public const int EXAM_STATE_END_DDPQ = 0x0020;  //结束定点坡起
+        public const int EXAM_STATE_START_QXXS = 0x0040;  //开始曲线行驶
+        public const int EXAM_STATE_END_QXXS = 0x0080;  //结束曲线行驶
+        public const int EXAM_STATE_START_ZJZW = 0x0100;  //开始直角转弯
+        public const int EXAM_STATE_END_ZJZW = 0x0200;  //结束直角转弯
+        public const int EXAM_STATE_START_YWSH = 0x0400;  //开始雨雾湿滑
+        public const int EXAM_STATE_END_YWSH = 0x0800;  //结束雨雾湿滑
+        public const int EXAM_STATE_START_MNSD = 0x1000;  //开始模拟隧道
+        public const int EXAM_STATE_END_MNSD = 0x2000;  //结束模拟隧道
+        ////科目三
+        //public const int EXAM_STATE_START_DCRK = 0x0001;    //开始倒车入库
+        //public const int EXAM_STATE_END_DCRK = 0x0002;  //结束倒车入库
+        //public const int EXAM_STATE_START_CFTC = 0x0004;  //开始侧方停车
+        //public const int EXAM_STATE_END_CFTC = 0x0008;  //结束侧方停车
+        //public const int EXAM_STATE_START_DDPQ = 0x0010;  //开始定点坡起
+        //public const int EXAM_STATE_END_DDPQ = 0x0020;  //结束定点坡起
+        //public const int EXAM_STATE_START_QXXS = 0x0040;  //开始曲线行驶
+        //public const int EXAM_STATE_END_QXXS = 0x0080;  //结束曲线行驶
+        //public const int EXAM_STATE_START_ZJZW = 0x0100;  //开始直角转弯
+        //public const int EXAM_STATE_END_ZJZW = 0x0200;  //结束直角转弯
+        //public const int EXAM_STATE_START_YWSH = 0x0400;  //开始雨雾湿滑
+        //public const int EXAM_STATE_END_YWSH = 0x0800;  //结束雨雾湿滑
+        //public const int EXAM_STATE_START_MNSD = 0x1000;  //开始模拟隧道
+        //public const int EXAM_STATE_END_MNSD = 0x2000;  //结束模拟隧道
+
+
         //数据格式
         public const int  PACK_TYPE_M17C51 = 1;
         public const int PACK_TYPE_M17C52 = 2;
@@ -37,12 +70,15 @@ namespace HMQService.Common
         public static readonly int INTERFACE_FIELD_COUNT_KM3 = 10;  //接口字段数量（科目三），如果后续接口调整，这里需要修改
 
         //配置文件
-        public static readonly string CONFIG_FILE_PATH = @".\config.ini";
-        public static readonly string ZZIPChannel_FILE_PATH = @".\ZZIPChannel.dat";
+        public static readonly string CONFIG_FILE_PATH_CONFIG = @".\config.ini";
+        public static readonly string CONFIG_FILE_PATH_ZZIPChannel = @".\ZZIPChannel.dat";
+        public static readonly string CONFIG_FILE_PATH_MAP = @".\MAP.cfg";
         public static readonly string CONFIG_SECTION_CONFIG = "CONFIG";
         public static readonly string CONFIG_SECTION_SQLLINK = "SQLLINK";
         public static readonly string CONFIG_SECTION_JMQ = "JMQ";
         public static readonly string CONFIG_SECTION_Q = "Q";
+        public static readonly string CONFIG_SECTION_MAPCONFIG = "MAPCONFIG";
+        public static readonly string CONFIG_SECTION_CARSKIN = "CARSKIN";
         public static readonly string CONFIG_KEY_SQLORACLE = "SQLORACLE";
         public static readonly string CONFIG_KEY_LOADMAP = "LOADMAP";
         public static readonly string CONFIG_KEY_SQLORTCP = "SQLORTCP";
@@ -57,11 +93,22 @@ namespace HMQService.Common
         public static readonly string CONFIG_KEY_EVEN= "EVEN";
         public static readonly string CONFIG_KEY_WND2 = "WND2";
         public static readonly string CONFIG_KEY_TIME = "Time";
+        public static readonly string CONFIG_KEY_MAXX = "MAXX";
+        public static readonly string CONFIG_KEY_MAXY = "MAXY";
+        public static readonly string CONFIG_KEY_MINX = "MINX";
+        public static readonly string CONFIG_KEY_MINY = "MINY";
+        public static readonly string CONFIG_KEY_ZOOMIN = "ZoomIn";
+        public static readonly string CONFIG_KEY_XC = "XC";
+        public static readonly string CONFIG_KEY_YC = "YC";
+        public static readonly string CONFIG_KEY_DRAWCAR = "DrawCar";
+        public static readonly string CONFIG_KEY_DITUPY = "DITUPY";
+
         public static readonly int CONFIG_VALUE_KSKM_2 = 2;     //考试科目为科目2
         public static readonly int CONFIG_VALUE_KSKM_3 = 3;     //考试科目为科目3
         public static readonly int CONFIG_VALUE_KSHGFS_2 = 80;  //科目2合格分数
         public static readonly int CONFIG_VALUE_KSHGFS_3 = 90;  //科目3合格分数
         public static readonly int CONFIG_VALUE_TOTAL_SCORE = 100;  //满分
+        public static readonly int CONFIG_VALUE_ZERO_SCORE = 0;  //零分
 
         //数据库
         public static readonly string DB_TABLE_TBKVIDEO = "TBKVideo";
@@ -118,6 +165,7 @@ namespace HMQService.Common
         public static readonly string IMG_PATH_MARK = @".\mark.skin";
         public static readonly string IMG_PATH_TIME= @".\time.skin";
         public static readonly string IMG_PATH_XMP = @".\xmp.skin";
+        public static readonly string IMG_PATH_MAPN = @".\MAPN.skin";
 
         //项目编号
         public const int XMBH_201 = 201;

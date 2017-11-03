@@ -161,7 +161,7 @@ namespace HMQService.Server
         }
 
         /// <summary>
-        /// 考试开始？
+        /// 考试开始
         /// </summary>
         /// <param name="kch">考车号</param>
         /// <param name="zkzmbh">准考证明编号</param>
@@ -170,21 +170,41 @@ namespace HMQService.Server
         {
             int kscs = 0;   //考试次数
             int drcs = 0;   //当日次数
-            if (!GetExamCount(zkzmbh, ref kscs, ref drcs))
+            //if (!GetExamCount(zkzmbh, ref kscs, ref drcs))
+            //{
+            //    return false;
+            //}
+
+            if (!m_dicExamProcedures.ContainsKey(kch))
+            {
+                Log.GetLogger().ErrorFormat("m_dicExamProcedures 字典找不到考车号 : {0}", kch);
+                return false;
+            }
+            ExamProcedure examProcedure = m_dicExamProcedures[kch];
+
+            //获取考生信息
+            StudentInfo studentInfo = new StudentInfo();
+            if (!GetStudentInfo(zkzmbh, ref studentInfo))
             {
                 return false;
             }
 
-            try
+            if (!examProcedure.Handle17C51(studentInfo))
             {
-                BaseMethod.TF17C51(kch, zkzmbh, kscs, drcs);
-            }
-            catch (Exception e)
-            {
-                Log.GetLogger().ErrorFormat("TF17C51 catch an error : {0}, kch = {1}, zkzmbh = {2}, kscs = {3}, drcs = {4}",
-                    e.Message, kch, zkzmbh, kscs, drcs);
+                Log.GetLogger().ErrorFormat("examProcedure.Handle17C51 failed, kch={0}", kch);
                 return false;
             }
+
+            //try
+            //{
+            //    BaseMethod.TF17C51(kch, zkzmbh, kscs, drcs);
+            //}
+            //catch (Exception e)
+            //{
+            //    Log.GetLogger().ErrorFormat("TF17C51 catch an error : {0}, kch = {1}, zkzmbh = {2}, kscs = {3}, drcs = {4}",
+            //        e.Message, kch, zkzmbh, kscs, drcs);
+            //    return false;
+            //}
 
             Log.GetLogger().InfoFormat("HandleM17C51 end, kch={0}, zkzmbh={1}, kscs={2}, drcs={3}", kch, zkzmbh, kscs, drcs);
             return true;
@@ -200,7 +220,7 @@ namespace HMQService.Server
         private bool HandleM17C52(int kch, string zkzmbh, string xmbh)
         {
             int xmCode = string.IsNullOrEmpty(xmbh) ? 0 : int.Parse(xmbh);
-            int nWnd2 = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nWnd2 = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_WND2, 0);    //画面二状态
             Log.GetLogger().DebugFormat("nWnd2 = {0}", nWnd2);
 
@@ -222,7 +242,7 @@ namespace HMQService.Server
                 {
                     Log.GetLogger().InfoFormat("定点：{0}", xmCode);
 
-                    if (BaseMethod.IsExistFile(BaseDefine.ZZIPChannel_FILE_PATH))
+                    if (BaseMethod.IsExistFile(BaseDefine.CONFIG_FILE_PATH_ZZIPChannel))
                     {
                         XmInfo xmInfo = new XmInfo(kch, xmCode);
 
@@ -253,14 +273,7 @@ namespace HMQService.Server
             }
             ExamProcedure examProcedure = m_dicExamProcedures[kch];
 
-            //获取考生信息
-            StudentInfo studentInfo = new StudentInfo();
-            if (!GetStudentInfo(zkzmbh, ref studentInfo))
-            {
-                return false;
-            }
-
-            if (!examProcedure.Handle17C52(studentInfo, xmlx))
+            if (!examProcedure.Handle17C52(xmCodeNew, xmlx))
             {
                 Log.GetLogger().ErrorFormat("examProcedure.Handle17C52 failed, kch={0}", kch);
                 return false;
@@ -311,7 +324,7 @@ namespace HMQService.Server
             int xmCode = xmInfo.XmCode;
 
             string section = string.Format("{0}{1}", BaseDefine.CONFIG_SECTION_Q, xmCode);
-            int sleepTime = BaseMethod.INIGetIntValue(BaseDefine.ZZIPChannel_FILE_PATH, section,
+            int sleepTime = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ZZIPChannel, section,
                 BaseDefine.CONFIG_KEY_TIME, 2000);
 
             System.Threading.Thread.Sleep(sleepTime);
@@ -340,7 +353,7 @@ namespace HMQService.Server
             string strErrrorCode = strArray[1];
             int xmCode = string.IsNullOrEmpty(strXmCode) ? 0 : int.Parse(strXmCode);
 
-            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, 0); //考试科目
             string xmName = string.Empty;   //项目名称
             if (BaseDefine.CONFIG_VALUE_KSKM_3 == kskm) //科目三
@@ -497,7 +510,7 @@ namespace HMQService.Server
             int xmBeginCode = string.IsNullOrEmpty(strXmbh) ? 0 : int.Parse(strXmbh);
             int xmEndCode = 0;
 
-            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, 0); //考试科目
             if (BaseDefine.CONFIG_VALUE_KSKM_3 == kskm) //科目三
             {
@@ -548,7 +561,7 @@ namespace HMQService.Server
                 return false;
             }
             ExamProcedure examProcedure = m_dicExamProcedures[kch];
-            if (!examProcedure.Handle17C55(xmlx))
+            if (!examProcedure.Handle17C55(xmBeginCode, xmlx))
             {
                 Log.GetLogger().ErrorFormat("examProcedure.Handle17C55 failed, kch={0}", kch);
                 return false;
@@ -574,7 +587,7 @@ namespace HMQService.Server
             }
             ExamProcedure examPorcedure = m_dicExamProcedures[kch];
 
-            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH, BaseDefine.CONFIG_SECTION_CONFIG,
+            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, 0); //考试科目
             if (BaseDefine.CONFIG_VALUE_KSKM_3 == kskm) //科目三
             {

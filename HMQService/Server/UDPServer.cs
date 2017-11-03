@@ -21,13 +21,15 @@ namespace HMQService.Server
         private Thread m_serverThread = null;
         private bool m_stopServer = false;
         private Dictionary<int, CarManager> m_dicCars = new Dictionary<int, CarManager>();
+        private Dictionary<int, ExamProcedure> m_dicExamProcedures = new Dictionary<int, ExamProcedure>();
 
         /// <summary>
         /// Constructors.
         /// </summary>
-        public UDPServer(Dictionary<int, CarManager> dicCars)
+        public UDPServer(Dictionary<int, CarManager> dicCars, Dictionary<int, ExamProcedure> dicEP)
         {
             m_dicCars = dicCars;
+            m_dicExamProcedures = dicEP;
             Init(DEFAULT_IP_END_POINT);
         }
 
@@ -124,22 +126,33 @@ namespace HMQService.Server
                     Log.GetLogger().ErrorFormat("udp 数据解析得到的考车号为 {0}", kch);
                     return;
                 }
-                if (!m_dicCars.ContainsKey(kch))
+                if (!m_dicCars.ContainsKey(kch) || !m_dicExamProcedures.ContainsKey(kch))
                 {
                     Log.GetLogger().ErrorFormat("不存在考车 {0}，请检查配置", kch);
                     return;
                 }
+                ExamProcedure examProcedure = m_dicExamProcedures[kch];
 
-                //GPS 数据，转换为 IntPtr 传给 C++ Dll
-                Byte[] gpsData = data.Skip(8).ToArray();
-                IntPtr unmanagedPointer = Marshal.AllocHGlobal(gpsData.Length);
-                Marshal.Copy(gpsData, 0, unmanagedPointer, gpsData.Length);
+                //接下来的数据结构可以参考 GPSData 类
+                //8个字节存放double类型的经度
+                //8个字节存放double类型的纬度
+                //4个字节存放float类型的方向角
+                //4个字节存放float类型的速度
+                //4个字节存放float类型的里程
+                double longitude = System.BitConverter.ToDouble(data.Skip(8).Take(8).ToArray(), 0);
+                double latitude = System.BitConverter.ToDouble(data.Skip(16).Take(8).ToArray(), 0);
+                float directionAngle = System.BitConverter.ToSingle(data.Skip(24).Take(4).ToArray(), 0);
+                float speed = System.BitConverter.ToSingle(data.Skip(28).Take(4).ToArray(), 0);
+                float mileage = System.BitConverter.ToSingle(data.Skip(32).Take(4).ToArray(), 0);
+                Log.GetLogger().DebugFormat("longitude={0}, latitude={1}, angle={3}, speed={4}, mileage={5}",
+                    longitude, latitude, directionAngle, speed, mileage);
 
+                GPSData gpsData = new GPSData(longitude, latitude, directionAngle, speed, mileage);
 
-                BaseMethod.TF17C54(kch, unmanagedPointer);
-
-                System.Threading.Thread.Sleep(1000);
-                Marshal.FreeHGlobal(unmanagedPointer);
+                if (!examProcedure.Handle17C54(gpsData))
+                {
+                    Log.GetLogger().ErrorFormat("examProcedure.Handle17C54 failed, kch={0}", kch);
+                }
             }
             catch (Exception e)
             {
