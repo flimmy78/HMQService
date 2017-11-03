@@ -144,7 +144,7 @@ namespace HMQService.Server
                 float directionAngle = System.BitConverter.ToSingle(data.Skip(24).Take(4).ToArray(), 0);
                 float speed = System.BitConverter.ToSingle(data.Skip(28).Take(4).ToArray(), 0);
                 float mileage = System.BitConverter.ToSingle(data.Skip(32).Take(4).ToArray(), 0);
-                Log.GetLogger().DebugFormat("longitude={0}, latitude={1}, angle={3}, speed={4}, mileage={5}",
+                Log.GetLogger().DebugFormat("longitude={0}, latitude={1}, angle={2}, speed={3}, mileage={4}",
                     longitude, latitude, directionAngle, speed, mileage);
 
                 GPSData gpsData = new GPSData(longitude, latitude, directionAngle, speed, mileage);
