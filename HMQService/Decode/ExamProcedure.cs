@@ -642,13 +642,9 @@ namespace HMQService.Decode
                         int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                             BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
 
-                        Log.TempDebugFormat("111");
-
                         //绘制实时状态信息
                         if (!string.IsNullOrEmpty(m_strCurrentState))
                         {
-                            Log.TempDebugFormat("222");
-
                             TimeSpan ts;
                             if (m_bFinish)
                             {
@@ -660,24 +656,16 @@ namespace HMQService.Decode
                             }
 
                             string speed = string.Format("{0} km/h", m_gpsData.Speed);
-                            Log.TempDebugFormat("333");
                             string mileage = string.Format("{0} m", m_gpsData.Mileage);
-                            Log.TempDebugFormat("444");
                             string score = string.Format("成绩:{0}", m_CurrentScore);
-                            Log.TempDebugFormat("555");
                             string time = string.Format("时长:{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
-                            Log.TempDebugFormat("666");
 
                             graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(0, 8, 348, 30));
-                            Log.TempDebugFormat("777");
                             graphics.DrawString(speed, font, brush, new Rectangle(0, 240, 98, 262));
                             graphics.DrawString(mileage, font, brush, new Rectangle(0, 265, 98, 288));
                             graphics.DrawString(score, font, brush, new Rectangle(263, 240, 350, 262));
                             graphics.DrawString(time, font, brush, new Rectangle(263, 265, 350, 288));
-                            Log.TempDebugFormat("888");
                         }
-
-                        Log.TempDebugFormat("999");
 
                         //绘制扣分信息
                         foreach (int index in m_dicErrorInfo.Keys)
@@ -703,8 +691,6 @@ namespace HMQService.Decode
                                 graphics.DrawString(errorMsg, font, brushBlack, new Rectangle(6, 176, 346, 196));
                             }
                         }
-
-                        Log.TempDebugFormat("10101010");
 
                         //发送画面到合码器
                         SendBitMapToHMQ(bm, m_kch, m_fourthPassiveHandle);

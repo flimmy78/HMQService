@@ -43,7 +43,7 @@ namespace TcpClient
                 {
                     clientSocket.Send(Encoding.ASCII.GetBytes(sendString));
 
-                    byte[] data = new byte[1024];
+                    byte[] data = new byte[512];
                     int size = clientSocket.Receive(data);
                     string strRecv = Encoding.ASCII.GetString(data, 0, size);
 
