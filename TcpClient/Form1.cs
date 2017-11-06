@@ -47,15 +47,15 @@ namespace TcpClient
                     int size = clientSocket.Receive(data);
                     string strRecv = Encoding.ASCII.GetString(data, 0, size);
 
-                    //if (sendString.CompareTo(strRecv) == 0)
+                    if (sendString.CompareTo(strRecv) == 0)
                     {
                         sendString = string.Empty;
                     }
-                    //else
-                    //{
-                    //    MessageBox.Show("接收到的返回数据不一致");
-                        
-                    //}
+                    else
+                    {
+                        MessageBox.Show("接收到的返回数据不一致");
+                        sendString = string.Empty;
+                    }
                 }
 
                 Thread.Sleep(1000);
