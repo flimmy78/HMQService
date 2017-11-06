@@ -99,7 +99,7 @@ namespace HMQService.Server
 				try
 				{
                     int size = 0;
-                    Byte[] byteBuffer = new Byte[1024];
+                    Byte[] byteBuffer = new Byte[512];
 
                     //接收车载信息
                     size = m_clientSocket.Receive(byteBuffer);
