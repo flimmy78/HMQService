@@ -40,6 +40,7 @@ namespace HMQService.Decode
 
         private static readonly object m_lockThird = new object();    //考生信息界面线程同步锁
         private static readonly object m_lockFourth = new object();   //考试实时信息界面线程同步锁
+        private static readonly object m_lockCommon = new object(); //三四画面通用线程同步锁
 
         private string m_strCurrentState;   //考试阶段文字描述
         private int m_CurrentXmFlag;     //标识当前所处项目，用于绘制项目牌
@@ -282,11 +283,7 @@ namespace HMQService.Decode
                 {
                     m_strCurrentState = xmlx;
 
-                    Log.TempDebugFormat(string.Format("Handle17C55 in"));
-
                     int xmFlag = GetXmFlag(xmCode, false);
-
-                    Log.TempDebugFormat(string.Format("Handle17C55 in，xmCode={0} ,xmFlag = {0}", xmCode, xmFlag));
 
                     m_CurrentXmFlag |= xmFlag;
                 }
@@ -329,21 +326,6 @@ namespace HMQService.Decode
             catch (Exception e)
             {
                 Log.GetLogger().ErrorFormat("catch an error : {0}, bPass = {1}", e.Message, bPass);
-            }
-
-            //更新考生信息画面
-            try
-            {
-                lock(m_lockThird)
-                {
-                    autoEventThird.Reset();
-
-                    m_bFinish = true;   //考试结束
-                }
-            }
-            catch (Exception e)
-            {
-                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
             }
 
             return true;
@@ -418,9 +400,6 @@ namespace HMQService.Decode
                     keyX, 0.0);
                 m_mapY = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
                     keyY, 0.0);
-
-                Log.TempDebugFormat(string.Format("here x : {0}", m_mapX));
-                Log.TempDebugFormat(string.Format("here y : {0}", m_mapY));
 
                 m_zoomIn = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
                     BaseDefine.CONFIG_KEY_ZOOMIN, 0.0);
@@ -640,15 +619,11 @@ namespace HMQService.Decode
                     {
                         Font font = new Font("宋体", 10, FontStyle.Regular);
 
-                        Log.TempDebugFormat("1");
-
                         //重新初始化画板
                         //Bitmap bm = new Bitmap(352, 288);
                         Bitmap bm = new Bitmap(imgMap, 352, 288);
                         Graphics graphics = Graphics.FromImage(bm);
                         graphics.DrawImage(imgMap, new Rectangle(0, 0, 352, 288), m_carX, m_carY, 352, 288, GraphicsUnit.Pixel);
-
-                        Log.TempDebugFormat("2");
 
                         //绘制考车
                         if (m_bDrawCar)
@@ -662,19 +637,17 @@ namespace HMQService.Decode
                             graphics.ResetTransform();
                         }
 
-                        Log.TempDebugFormat("3");
-
                         graphics.DrawImage(imgMark, new Rectangle(0, 0, 352, 288)); //遮罩
 
                         int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                             BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
 
-                        Log.TempDebugFormat("4");
+                        Log.TempDebugFormat("111");
 
                         //绘制实时状态信息
                         if (!string.IsNullOrEmpty(m_strCurrentState))
                         {
-                            Log.TempDebugFormat("5");
+                            Log.TempDebugFormat("222");
 
                             TimeSpan ts;
                             if (m_bFinish)
@@ -687,18 +660,24 @@ namespace HMQService.Decode
                             }
 
                             string speed = string.Format("{0} km/h", m_gpsData.Speed);
+                            Log.TempDebugFormat("333");
                             string mileage = string.Format("{0} m", m_gpsData.Mileage);
+                            Log.TempDebugFormat("444");
                             string score = string.Format("成绩:{0}", m_CurrentScore);
+                            Log.TempDebugFormat("555");
                             string time = string.Format("时长:{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
+                            Log.TempDebugFormat("666");
 
                             graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(0, 8, 348, 30));
+                            Log.TempDebugFormat("777");
                             graphics.DrawString(speed, font, brush, new Rectangle(0, 240, 98, 262));
                             graphics.DrawString(mileage, font, brush, new Rectangle(0, 265, 98, 288));
                             graphics.DrawString(score, font, brush, new Rectangle(263, 240, 350, 262));
                             graphics.DrawString(time, font, brush, new Rectangle(263, 265, 350, 288));
+                            Log.TempDebugFormat("888");
                         }
 
-                        Log.TempDebugFormat("6");
+                        Log.TempDebugFormat("999");
 
                         //绘制扣分信息
                         foreach (int index in m_dicErrorInfo.Keys)
@@ -725,13 +704,10 @@ namespace HMQService.Decode
                             }
                         }
 
-                        Log.TempDebugFormat("7");
+                        Log.TempDebugFormat("10101010");
 
                         //发送画面到合码器
                         SendBitMapToHMQ(bm, m_kch, m_fourthPassiveHandle);
-
-                        Log.TempDebugFormat("8");
-
                     }
                 }
                 catch (Exception e)
@@ -829,12 +805,14 @@ namespace HMQService.Decode
             bool bRet = false;
 
             string videoPath = @".\video";
+            Random rd = new Random();
+            int nRand = rd.Next(0, 100);
             if (!Directory.Exists(videoPath))
             {
                 Directory.CreateDirectory(videoPath);
             }
-            string aviFilePath = string.Format(@"{0}\{1}_{2}.avi", videoPath, kch, passiveHandle);
-            string yuvFilePath = string.Format(@"{0}\{1}_{2}.yuv", videoPath, kch, passiveHandle);
+            string aviFilePath = string.Format(@"{0}\{1}_{2}_{3}.avi", videoPath, kch, passiveHandle, nRand);
+            string yuvFilePath = string.Format(@"{0}\{1}_{2}_{3}.yuv", videoPath, kch, passiveHandle, nRand);
 
             if (BaseMethod.IsExistFile(aviFilePath))
             {
