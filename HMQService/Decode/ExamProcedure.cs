@@ -177,6 +177,12 @@ namespace HMQService.Decode
                 {
                     m_strCurrentState = xmlx;
 
+                    //科目三地图模式需要实时展示项目状态图片，这里将其它状态清空，仅保留当前项目状态
+                    if (m_bDrawMap && (BaseDefine.CONFIG_VALUE_KSKM_3 == m_kskm))  
+                    {
+                        m_CurrentXmFlag = 0;
+                    }
+
                     uint xmFlag = GetXmFlag(xmCode, true);
                     m_CurrentXmFlag |= xmFlag;
                 }
@@ -540,7 +546,7 @@ namespace HMQService.Decode
                         }
 
                         //绘制项目状态
-                        DrawXmState(ref graphics);
+                        DrawXmStateInfo(ref graphics);
 
                         //绘制实时状态信息
                         if (!string.IsNullOrEmpty(m_strCurrentState))
@@ -663,11 +669,17 @@ namespace HMQService.Decode
                             string score = string.Format("成绩:{0}", m_CurrentScore);
                             string time = string.Format("时长:{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
 
-                            graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(0, 8, 348, 30));
+                            graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(72, 8, 348, 30));
                             graphics.DrawString(speed, font, brush, new Rectangle(0, 240, 98, 262));
                             graphics.DrawString(mileage, font, brush, new Rectangle(0, 265, 98, 288));
                             graphics.DrawString(score, font, brush, new Rectangle(263, 240, 350, 262));
                             graphics.DrawString(time, font, brush, new Rectangle(263, 265, 350, 288));
+                        }
+
+                        //绘制科目三考试项目牌
+                        if (BaseDefine.CONFIG_VALUE_KSKM_3 == m_kskm)
+                        {
+                            DrawXmStateMap(ref graphics);
                         }
 
                         //绘制扣分信息
@@ -712,10 +724,10 @@ namespace HMQService.Decode
         }
 
         /// <summary>
-        /// 绘制项目牌实时状态
+        /// 绘制项目牌实时状态(项目牌模式)
         /// </summary>
         /// <param name="g"></param>
-        private void DrawXmState(ref Graphics g)
+        private void DrawXmStateInfo(ref Graphics g)
         {
             #region 科目二
             if (BaseDefine.CONFIG_VALUE_KSKM_2 == m_kskm)
@@ -933,6 +945,93 @@ namespace HMQService.Decode
                 }
             }
             #endregion
+        }
+
+        /// <summary>
+        /// 绘制项目牌实时状态(地图模式)
+        /// </summary>
+        /// <param name="g"></param>
+        private void DrawXmStateMap(ref Graphics g)
+        {
+            if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_SC) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 72, 72, 72, GraphicsUnit.Pixel); //开始上车准备
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_QB) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 144, 72, 72, GraphicsUnit.Pixel); //开始起步
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZHIXIAN) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 216, 72, 72, GraphicsUnit.Pixel); //开始直线
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_JJ) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 288, 72, 72, GraphicsUnit.Pixel); //开始加减
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_BG) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 360, 72, 72, GraphicsUnit.Pixel); //开始变更
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_KB) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 432, 72, 72, GraphicsUnit.Pixel); //开始靠边
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZHIXING) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 504, 72, 72, GraphicsUnit.Pixel); //开始直行
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZZ) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 576, 72, 72, GraphicsUnit.Pixel); //开始左转
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_YZ) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 648, 72, 72, GraphicsUnit.Pixel); //开始右转
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_RX) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 720, 72, 72, GraphicsUnit.Pixel); //开始人行
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_XX) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 792, 72, 72, GraphicsUnit.Pixel); //开始学校
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_CZ) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 864, 72, 72, GraphicsUnit.Pixel); //开始车站
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_HC) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 936, 72, 72, GraphicsUnit.Pixel); //开始会车
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_CC) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 1008, 72, 72, GraphicsUnit.Pixel); //开始超车
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_DT) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 1080, 72, 72, GraphicsUnit.Pixel); //开始掉头
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_YJ) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 1152, 72, 72, GraphicsUnit.Pixel); //开始夜间
+            }
         }
 
         private bool SendBitMapToHMQ(Bitmap bm, int kch, int passiveHandle)
