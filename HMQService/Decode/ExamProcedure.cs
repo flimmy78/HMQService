@@ -214,7 +214,7 @@ namespace HMQService.Decode
 
                 //扣除当前得分
                 m_CurrentScore -= kcfs;
-                if (BaseDefine.CONFIG_VALUE_ZERO_SCORE == m_CurrentScore)
+                if (m_CurrentScore <= BaseDefine.CONFIG_VALUE_ZERO_SCORE)
                 {
                     m_CurrentScore = BaseDefine.CONFIG_VALUE_ZERO_SCORE;
                 }
