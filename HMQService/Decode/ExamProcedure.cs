@@ -42,8 +42,9 @@ namespace HMQService.Decode
         private static readonly object m_lockFourth = new object();   //考试实时信息界面线程同步锁
         private static readonly object m_lockCommon = new object(); //三四画面通用线程同步锁
 
+        private int m_kskm; //考试科目
         private string m_strCurrentState;   //考试阶段文字描述
-        private int m_CurrentXmFlag;     //标识当前所处项目，用于绘制项目牌
+        private uint m_CurrentXmFlag;     //标识当前所处项目，用于绘制项目牌
         private DateTime m_startTime;   //考试开始时间
         private DateTime m_endTime; //考试结束时间
         private int m_CurrentScore; //考试成绩
@@ -79,6 +80,7 @@ namespace HMQService.Decode
             imgTime = Image.FromFile(BaseDefine.IMG_PATH_TIME);
             imgXmp = Image.FromFile(BaseDefine.IMG_PATH_XMP);
 
+            m_kskm = 0;
             m_strCurrentState = string.Empty;
             m_CurrentXmFlag = 0;
             m_CurrentScore = BaseDefine.CONFIG_VALUE_TOTAL_SCORE;
@@ -108,6 +110,9 @@ namespace HMQService.Decode
             m_kch = kch;
             m_thirdPassiveHandle = thirdPH;
             m_fourthPassiveHandle = fourthPH;
+
+            m_kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_KSKM, BaseDefine.CONFIG_VALUE_KSKM_2);
 
             //开启 ThirdPic 刷新线程
             InitThirdPic(); 
@@ -172,7 +177,7 @@ namespace HMQService.Decode
                 {
                     m_strCurrentState = xmlx;
 
-                    int xmFlag = GetXmFlag(xmCode, true);
+                    uint xmFlag = GetXmFlag(xmCode, true);
                     m_CurrentXmFlag |= xmFlag;
                 }
             }
@@ -218,7 +223,7 @@ namespace HMQService.Decode
             return true;
         }
 
-        public bool Handle17C54(GPSData gpsData)
+        public bool HandleGPS(GPSData gpsData)
         {
             //考试实时信息
             try
@@ -283,7 +288,7 @@ namespace HMQService.Decode
                 {
                     m_strCurrentState = xmlx;
 
-                    int xmFlag = GetXmFlag(xmCode, false);
+                    uint xmFlag = GetXmFlag(xmCode, false);
 
                     m_CurrentXmFlag |= xmFlag;
                 }
@@ -525,9 +530,7 @@ namespace HMQService.Decode
                         Graphics graphics = Graphics.FromImage(bm);
 
                         //绘制项目牌列表
-                        int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
-                            BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
-                        if (BaseDefine.CONFIG_VALUE_KSKM_2 == nKskm)
+                        if (BaseDefine.CONFIG_VALUE_KSKM_2 == m_kskm)
                         {
                             graphics.DrawImage(imgXmp, new Rectangle(264, 36, 88, 252), 0, 0, 88, 252, GraphicsUnit.Pixel);
                         }
@@ -537,7 +540,7 @@ namespace HMQService.Decode
                         }
 
                         //绘制项目状态
-                        DrawXmState(nKskm, ref graphics);
+                        DrawXmState(ref graphics);
 
                         //绘制实时状态信息
                         if (!string.IsNullOrEmpty(m_strCurrentState))
@@ -711,11 +714,11 @@ namespace HMQService.Decode
         /// <summary>
         /// 绘制项目牌实时状态
         /// </summary>
-        /// <param name="nKskm">考试科目，2--科目2，3--科目3</param>
         /// <param name="g"></param>
-        private void DrawXmState(int nKskm, ref Graphics g)
+        private void DrawXmState(ref Graphics g)
         {
-            if (BaseDefine.CONFIG_VALUE_KSKM_2 == nKskm)
+            #region 科目二
+            if (BaseDefine.CONFIG_VALUE_KSKM_2 == m_kskm)
             {
                 if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_DCRK) > 0)
                 {
@@ -780,10 +783,156 @@ namespace HMQService.Decode
                     g.DrawImage(imgXmp, new Rectangle(264, 252, 88, 36), 88, 216, 88, 36, GraphicsUnit.Pixel); //开始雨雾湿滑
                 }
             }
-            else
-            {
+            #endregion
 
+            #region 科目三
+            if (BaseDefine.CONFIG_VALUE_KSKM_3 == m_kskm)
+            {
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_SC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 0, 44, 36), 176, 0, 44, 36, GraphicsUnit.Pixel); //结束上车准备
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_SC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 0, 44, 36), 88, 0, 44, 36, GraphicsUnit.Pixel); //开始上车准备
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_QB) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 0, 44, 36), 220, 0, 44, 36, GraphicsUnit.Pixel); //结束起步
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_QB) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 0, 44, 36), 132, 0, 44, 36, GraphicsUnit.Pixel); //开始起步
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_ZHIXIAN) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 36, 44, 36), 176, 36, 44, 36, GraphicsUnit.Pixel); //结束直线
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZHIXIAN) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 36, 44, 36), 88, 36, 44, 36, GraphicsUnit.Pixel); //开始直线
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_JJ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 36, 44, 36), 220, 36, 44, 36, GraphicsUnit.Pixel); //结束加减档
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_JJ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 36, 44, 36), 132, 36, 44, 36, GraphicsUnit.Pixel); //开始加减档
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_BG) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 72, 44, 36), 176, 72, 44, 36, GraphicsUnit.Pixel); //结束变更
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_BG) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 72, 44, 36), 88, 72, 44, 36, GraphicsUnit.Pixel); //开始变更
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_KB) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 72, 44, 36), 220, 72, 44, 36, GraphicsUnit.Pixel); //结束靠边
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_KB) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 72, 44, 36), 132, 72, 44, 36, GraphicsUnit.Pixel); //开始靠边
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_ZHIXING) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 108, 44, 36), 176, 108, 44, 36, GraphicsUnit.Pixel); //结束直行
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZHIXING) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 108, 44, 36), 88, 108, 44, 36, GraphicsUnit.Pixel); //开始直行
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_ZZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 108, 44, 36), 220, 108, 44, 36, GraphicsUnit.Pixel); //结束左转
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 108, 44, 36), 132, 108, 44, 36, GraphicsUnit.Pixel); //开始左转
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_YZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 144, 44, 36), 176, 144, 44, 36, GraphicsUnit.Pixel); //结束右转
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_YZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 144, 44, 36), 88, 144, 44, 36, GraphicsUnit.Pixel); //开始右转
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_RX) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 144, 44, 36), 220, 144, 44, 36, GraphicsUnit.Pixel); //结束人行
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_RX) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 144, 44, 36), 132, 144, 44, 36, GraphicsUnit.Pixel); //开始人行
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_XX) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 180, 44, 36), 176, 180, 44, 36, GraphicsUnit.Pixel); //结束学校
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_XX) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 180, 44, 36), 88, 180, 44, 36, GraphicsUnit.Pixel); //开始学校
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_CZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 180, 44, 36), 220, 180, 44, 36, GraphicsUnit.Pixel); //结束车站
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_CZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 180, 44, 36), 132, 180, 44, 36, GraphicsUnit.Pixel); //开始车站
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_HC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 216, 44, 36), 176, 216, 44, 36, GraphicsUnit.Pixel); //结束会车
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_HC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 216, 44, 36), 88, 216, 44, 36, GraphicsUnit.Pixel); //开始会车
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_CC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 216, 44, 36), 220, 216, 44, 36, GraphicsUnit.Pixel); //结束超车
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_CC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 216, 44, 36), 132, 216, 44, 36, GraphicsUnit.Pixel); //开始超车
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_DT) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 252, 44, 36), 176, 252, 44, 36, GraphicsUnit.Pixel); //结束掉头
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_DT) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 252, 44, 36), 88, 252, 44, 36, GraphicsUnit.Pixel); //开始掉头
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_YJ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 252, 44, 36), 220, 252, 44, 36, GraphicsUnit.Pixel); //结束夜间
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_YJ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 252, 44, 36), 132, 252, 44, 36, GraphicsUnit.Pixel); //开始夜间
+                }
             }
+            #endregion
         }
 
         private bool SendBitMapToHMQ(Bitmap bm, int kch, int passiveHandle)
@@ -982,84 +1131,229 @@ namespace HMQService.Decode
         /// <param name="xmCode">项目编号</param>
         /// <param name="bStart">true--项目开始，false--项目结束</param>
         /// <returns></returns>
-        private int GetXmFlag(int xmCode, bool bStart)
+        private uint GetXmFlag(int xmCode, bool bStart)
         {
-            int nRet = 0;
+            uint nRet = 0;
 
-            //当前科目二的项目编号为6位数字，如 201510，前3位201表示“倒车入库项目”，后3位表示不同的车库
-            //只需要前3位即可判断具体的项目
-            int xmType = xmCode / 1000;
-
-            if (bStart)
+            #region 科目二
+            if (BaseDefine.CONFIG_VALUE_KSKM_2 == m_kskm)   //科目二
             {
-                if (BaseDefine.XMBH_201 == xmType)
+                //当前科目二的项目编号为6位数字，如 201510，前3位201表示“倒车入库项目”，后3位表示不同的车库
+                //只需要前3位即可判断具体的项目
+                xmCode = xmCode / 1000;
+
+                if (bStart)
                 {
-                    nRet = BaseDefine.EXAM_STATE_START_DCRK;
+                    if (BaseDefine.XMBH_201 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_DCRK;
+                    }
+                    else if (BaseDefine.XMBH_204 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_CFTC;
+                    }
+                    else if (BaseDefine.XMBH_203 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_DDPQ;
+                    }
+                    else if (BaseDefine.XMBH_206 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_QXXS;
+                    }
+                    else if (BaseDefine.XMBH_207 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_ZJZW;
+                    }
+                    else if (BaseDefine.XMBH_214 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_MNSD;
+                    }
+                    else if (BaseDefine.XMBH_215 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_YWSH;
+                    }
+                    else if (BaseDefine.XMBH_216 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_YWSH;
+                    }
                 }
-                else if (BaseDefine.XMBH_204 == xmType)
+                else
                 {
-                    nRet = BaseDefine.EXAM_STATE_START_CFTC;
-                }
-                else if (BaseDefine.XMBH_203 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_START_DDPQ;
-                }
-                else if (BaseDefine.XMBH_206 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_START_QXXS;
-                }
-                else if (BaseDefine.XMBH_207 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_START_ZJZW;
-                }
-                else if (BaseDefine.XMBH_214 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_START_MNSD;
-                }
-                else if (BaseDefine.XMBH_215 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_START_YWSH;
-                }
-                else if (BaseDefine.XMBH_216 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_START_YWSH;
+                    if (BaseDefine.XMBH_201 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_DCRK;
+                    }
+                    else if (BaseDefine.XMBH_204 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_CFTC;
+                    }
+                    else if (BaseDefine.XMBH_203 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_DDPQ;
+                    }
+                    else if (BaseDefine.XMBH_206 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_QXXS;
+                    }
+                    else if (BaseDefine.XMBH_207 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_ZJZW;
+                    }
+                    else if (BaseDefine.XMBH_214 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_MNSD;
+                    }
+                    else if (BaseDefine.XMBH_215 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_YWSH;
+                    }
+                    else if (BaseDefine.XMBH_216 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_YWSH;
+                    }
                 }
             }
-            else
+            #endregion
+
+            #region 科目三
+            if (BaseDefine.CONFIG_VALUE_KSKM_3 == m_kskm)   //科目三
             {
-                if (BaseDefine.XMBH_201 == xmType)
+                if (bStart)
                 {
-                    nRet = BaseDefine.EXAM_STATE_END_DCRK;
+                    if (BaseDefine.XMBH_201 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_SC;
+                    }
+                    else if (BaseDefine.XMBH_202 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_QB;
+                    }
+                    else if (BaseDefine.XMBH_203 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_ZHIXIAN;
+                    }
+                    else if (BaseDefine.XMBH_204 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_BG;
+                    }
+                    else if (BaseDefine.XMBH_206 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_RX;
+                    }
+                    else if (BaseDefine.XMBH_207 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_XX;
+                    }
+                    else if (BaseDefine.XMBH_208 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_CZ;
+                    }
+                    else if (BaseDefine.XMBH_209 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_HC;
+                    }
+                    else if (BaseDefine.XMBH_210 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_CC;
+                    }
+                    else if (BaseDefine.XMBH_211 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_KB;
+                    }
+                    else if (BaseDefine.XMBH_212 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_DT;
+                    }
+                    else if (BaseDefine.XMBH_213 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_YJ;
+                    }
+                    else if (BaseDefine.XMBH_214 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_ZZ;
+                    }
+                    else if (BaseDefine.XMBH_215 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_YZ;
+                    }
+                    else if (BaseDefine.XMBH_216 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_ZHIXING;
+                    }
+                    else if (BaseDefine.XMBH_217 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_JJ;
+                    }
                 }
-                else if (BaseDefine.XMBH_204 == xmType)
+                else
                 {
-                    nRet = BaseDefine.EXAM_STATE_END_CFTC;
-                }
-                else if (BaseDefine.XMBH_203 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_END_DDPQ;
-                }
-                else if (BaseDefine.XMBH_206 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_END_QXXS;
-                }
-                else if (BaseDefine.XMBH_207 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_END_ZJZW;
-                }
-                else if (BaseDefine.XMBH_214 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_END_MNSD;
-                }
-                else if (BaseDefine.XMBH_215 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_END_YWSH;
-                }
-                else if (BaseDefine.XMBH_216 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_END_YWSH;
+                    if (BaseDefine.XMBH_201 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_SC;
+                    }
+                    else if (BaseDefine.XMBH_202 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_QB;
+                    }
+                    else if (BaseDefine.XMBH_203 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_ZHIXIAN;
+                    }
+                    else if (BaseDefine.XMBH_204 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_BG;
+                    }
+                    else if (BaseDefine.XMBH_206 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_RX;
+                    }
+                    else if (BaseDefine.XMBH_207 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_XX;
+                    }
+                    else if (BaseDefine.XMBH_208 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_CZ;
+                    }
+                    else if (BaseDefine.XMBH_209 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_HC;
+                    }
+                    else if (BaseDefine.XMBH_210 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_CC;
+                    }
+                    else if (BaseDefine.XMBH_211 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_KB;
+                    }
+                    else if (BaseDefine.XMBH_212 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_DT;
+                    }
+                    else if (BaseDefine.XMBH_213 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_YJ;
+                    }
+                    else if (BaseDefine.XMBH_214 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_ZZ;
+                    }
+                    else if (BaseDefine.XMBH_215 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_YZ;
+                    }
+                    else if (BaseDefine.XMBH_216 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_ZHIXING;
+                    }
+                    else if (BaseDefine.XMBH_217 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_JJ;
+                    }
                 }
             }
+            #endregion
 
             return nRet;
         }

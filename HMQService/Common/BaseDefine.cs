@@ -20,39 +20,56 @@ namespace HMQService.Common
 
         //考试所处阶段
         //科目二
-        public const int EXAM_STATE_START_DCRK = 0x0001;    //开始倒车入库
-        public const int EXAM_STATE_END_DCRK = 0x0002;  //结束倒车入库
-        public const int EXAM_STATE_START_CFTC = 0x0004;  //开始侧方停车
-        public const int EXAM_STATE_END_CFTC = 0x0008;  //结束侧方停车
-        public const int EXAM_STATE_START_DDPQ = 0x0010;  //开始定点坡起
-        public const int EXAM_STATE_END_DDPQ = 0x0020;  //结束定点坡起
-        public const int EXAM_STATE_START_QXXS = 0x0040;  //开始曲线行驶
-        public const int EXAM_STATE_END_QXXS = 0x0080;  //结束曲线行驶
-        public const int EXAM_STATE_START_ZJZW = 0x0100;  //开始直角转弯
-        public const int EXAM_STATE_END_ZJZW = 0x0200;  //结束直角转弯
-        public const int EXAM_STATE_START_YWSH = 0x0400;  //开始雨雾湿滑
-        public const int EXAM_STATE_END_YWSH = 0x0800;  //结束雨雾湿滑
-        public const int EXAM_STATE_START_MNSD = 0x1000;  //开始模拟隧道
-        public const int EXAM_STATE_END_MNSD = 0x2000;  //结束模拟隧道
-        ////科目三
-        //public const int EXAM_STATE_START_DCRK = 0x0001;    //开始倒车入库
-        //public const int EXAM_STATE_END_DCRK = 0x0002;  //结束倒车入库
-        //public const int EXAM_STATE_START_CFTC = 0x0004;  //开始侧方停车
-        //public const int EXAM_STATE_END_CFTC = 0x0008;  //结束侧方停车
-        //public const int EXAM_STATE_START_DDPQ = 0x0010;  //开始定点坡起
-        //public const int EXAM_STATE_END_DDPQ = 0x0020;  //结束定点坡起
-        //public const int EXAM_STATE_START_QXXS = 0x0040;  //开始曲线行驶
-        //public const int EXAM_STATE_END_QXXS = 0x0080;  //结束曲线行驶
-        //public const int EXAM_STATE_START_ZJZW = 0x0100;  //开始直角转弯
-        //public const int EXAM_STATE_END_ZJZW = 0x0200;  //结束直角转弯
-        //public const int EXAM_STATE_START_YWSH = 0x0400;  //开始雨雾湿滑
-        //public const int EXAM_STATE_END_YWSH = 0x0800;  //结束雨雾湿滑
-        //public const int EXAM_STATE_START_MNSD = 0x1000;  //开始模拟隧道
-        //public const int EXAM_STATE_END_MNSD = 0x2000;  //结束模拟隧道
-
+        public const uint EXAM_STATE_START_DCRK = 0x0001;    //开始倒车入库
+        public const uint EXAM_STATE_END_DCRK = 0x0002;  //结束倒车入库
+        public const uint EXAM_STATE_START_CFTC = 0x0004;  //开始侧方停车
+        public const uint EXAM_STATE_END_CFTC = 0x0008;  //结束侧方停车
+        public const uint EXAM_STATE_START_DDPQ = 0x0010;  //开始定点坡起
+        public const uint EXAM_STATE_END_DDPQ = 0x0020;  //结束定点坡起
+        public const uint EXAM_STATE_START_QXXS = 0x0040;  //开始曲线行驶
+        public const uint EXAM_STATE_END_QXXS = 0x0080;  //结束曲线行驶
+        public const uint EXAM_STATE_START_ZJZW = 0x0100;  //开始直角转弯
+        public const uint EXAM_STATE_END_ZJZW = 0x0200;  //结束直角转弯
+        public const uint EXAM_STATE_START_YWSH = 0x0400;  //开始雨雾湿滑
+        public const uint EXAM_STATE_END_YWSH = 0x0800;  //结束雨雾湿滑
+        public const uint EXAM_STATE_START_MNSD = 0x1000;  //开始模拟隧道
+        public const uint EXAM_STATE_END_MNSD = 0x2000;  //结束模拟隧道
+        //科目三
+        public const uint EXAM_STATE_START_SC = 0x0001;    //开始上车
+        public const uint EXAM_STATE_END_SC = 0x0002;  //结束上车
+        public const uint EXAM_STATE_START_QB = 0x0004;  //开始起步
+        public const uint EXAM_STATE_END_QB = 0x0008;  //结束起步
+        public const uint EXAM_STATE_START_ZHIXIAN = 0x0010;  //开始直线
+        public const uint EXAM_STATE_END_ZHIXIAN = 0x0020;  //结束直线
+        public const uint EXAM_STATE_START_JJ= 0x0040;  //开始加减
+        public const uint EXAM_STATE_END_JJ = 0x0080;  //结束加减
+        public const uint EXAM_STATE_START_BG = 0x0100;  //开始变更
+        public const uint EXAM_STATE_END_BG = 0x0200;  //结束变更
+        public const uint EXAM_STATE_START_KB = 0x0400;  //开始靠边
+        public const uint EXAM_STATE_END_KB = 0x0800;  //结束靠边
+        public const uint EXAM_STATE_START_ZHIXING = 0x1000;  //开始直行
+        public const uint EXAM_STATE_END_ZHIXING = 0x2000;  //结束直行
+        public const uint EXAM_STATE_START_ZZ = 0x4000;  //开始左转
+        public const uint EXAM_STATE_END_ZZ = 0x8000;  //结束左转
+        public const uint EXAM_STATE_START_YZ = 0x00010000;    //开始右转
+        public const uint EXAM_STATE_END_YZ = 0x00020000;  //结束右转
+        public const uint EXAM_STATE_START_RX = 0x00040000;    //开始人行
+        public const uint EXAM_STATE_END_RX = 0x00080000;  //结束人行
+        public const uint EXAM_STATE_START_XX = 0x00100000;    //开始学校
+        public const uint EXAM_STATE_END_XX = 0x00200000;  //结束学校
+        public const uint EXAM_STATE_START_CZ = 0x00400000;    //开始车站
+        public const uint EXAM_STATE_END_CZ = 0x00800000;  //结束车站
+        public const uint EXAM_STATE_START_HC = 0x01000000;    //开始会车
+        public const uint EXAM_STATE_END_HC = 0x02000000;  //结束会车
+        public const uint EXAM_STATE_START_CC = 0x04000000;    //开始超车
+        public const uint EXAM_STATE_END_CC = 0x08000000;  //结束超车
+        public const uint EXAM_STATE_START_DT = 0x10000000;    //开始掉头
+        public const uint EXAM_STATE_END_DT = 0x20000000;  //结束掉头
+        public const uint EXAM_STATE_START_YJ = 0x40000000;    //开始夜间
+        public const uint EXAM_STATE_END_YJ = 0x80000000;  //结束夜间
 
         //数据格式
-        public const int  PACK_TYPE_M17C51 = 1;
+        public const int PACK_TYPE_M17C51 = 1;
         public const int PACK_TYPE_M17C52 = 2;
         public const int PACK_TYPE_M17C53 = 3;
         public const int PACK_TYPE_M17C54 = 4;

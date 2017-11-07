@@ -149,9 +149,9 @@ namespace HMQService.Server
 
                 GPSData gpsData = new GPSData(longitude, latitude, directionAngle, speed, mileage);
 
-                if (!examProcedure.Handle17C54(gpsData))
+                if (!examProcedure.HandleGPS(gpsData))
                 {
-                    Log.GetLogger().ErrorFormat("examProcedure.Handle17C54 failed, kch={0}", kch);
+                    Log.GetLogger().ErrorFormat("examProcedure.HandleGPS failed, kch={0}", kch);
                 }
             }
             catch (Exception e)
