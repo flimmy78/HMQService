@@ -87,8 +87,6 @@ namespace HMQService.Server
 		/// </summary>
 		private void SocketListenerThreadStart()
 		{
-			int size=0;
-			Byte [] byteBuffer = new Byte[1024];
             DataHandler dataHandler = null;
 
             //m_lastReceiveDateTime = DateTime.Now;
@@ -100,8 +98,11 @@ namespace HMQService.Server
 			{
 				try
 				{
+                    int size = 0;
+                    Byte[] byteBuffer = new Byte[512];
+
                     //接收车载信息
-					size = m_clientSocket.Receive(byteBuffer);
+                    size = m_clientSocket.Receive(byteBuffer);
 					m_currentReceiveDateTime=DateTime.Now;
                     if (0 == size)
                     {

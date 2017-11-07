@@ -38,11 +38,13 @@ namespace HMQService.Decode
         private Thread m_thirdPicThread;
         private Thread m_fourthPicThread;
 
-        private int m_lockThird;    //考生信息界面线程同步锁
-        private int m_lockFourth;   //考试实时信息界面线程同步锁
+        private static readonly object m_lockThird = new object();    //考生信息界面线程同步锁
+        private static readonly object m_lockFourth = new object();   //考试实时信息界面线程同步锁
+        private static readonly object m_lockCommon = new object(); //三四画面通用线程同步锁
 
+        private int m_kskm; //考试科目
         private string m_strCurrentState;   //考试阶段文字描述
-        private int m_CurrentXmFlag;     //标识当前所处项目，用于绘制项目牌
+        private uint m_CurrentXmFlag;     //标识当前所处项目，用于绘制项目牌
         private DateTime m_startTime;   //考试开始时间
         private DateTime m_endTime; //考试结束时间
         private int m_CurrentScore; //考试成绩
@@ -78,8 +80,7 @@ namespace HMQService.Decode
             imgTime = Image.FromFile(BaseDefine.IMG_PATH_TIME);
             imgXmp = Image.FromFile(BaseDefine.IMG_PATH_XMP);
 
-            m_lockThird = 0;
-            m_lockFourth = 0;
+            m_kskm = 0;
             m_strCurrentState = string.Empty;
             m_CurrentXmFlag = 0;
             m_CurrentScore = BaseDefine.CONFIG_VALUE_TOTAL_SCORE;
@@ -110,6 +111,9 @@ namespace HMQService.Decode
             m_thirdPassiveHandle = thirdPH;
             m_fourthPassiveHandle = fourthPH;
 
+            m_kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_KSKM, BaseDefine.CONFIG_VALUE_KSKM_2);
+
             //开启 ThirdPic 刷新线程
             InitThirdPic(); 
 
@@ -124,41 +128,35 @@ namespace HMQService.Decode
             //考试实时信息
             try
             {
-                //Monitor.Enter(m_lockFourth);
-
-                m_strCurrentState = "考试开始";
-                m_CurrentXmFlag = 0;
-                m_CurrentScore = BaseDefine.CONFIG_VALUE_TOTAL_SCORE;
-                m_dicErrorInfo.Clear();
-                m_startTime = DateTime.Now;
-                m_bFinish = false;
-                m_bPass = false;
+                lock(m_lockFourth)
+                {
+                    m_strCurrentState = "考试开始";
+                    m_CurrentXmFlag = 0;
+                    m_CurrentScore = BaseDefine.CONFIG_VALUE_TOTAL_SCORE;
+                    m_dicErrorInfo.Clear();
+                    m_startTime = DateTime.Now;
+                    m_bFinish = false;
+                    m_bPass = false;
+                }
             }
             catch (Exception e)
             {
                 Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
-            }
-            finally
-            {
-                //Monitor.Exit(m_lockFourth);
             }
 
             //更新考生信息画面
             try
             {
-                //Monitor.Enter(bmThirdPic);
-                autoEventThird.Reset();
+                lock(m_lockThird)
+                {
+                    autoEventThird.Reset();
 
-                m_studentInfo = studentInfo;
+                    m_studentInfo = studentInfo;
+                }
             }
             catch (Exception e)
             {
                 Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
-            }
-            finally
-            {
-                //Monitor.Exit(bmThirdPic);
-                autoEventThird.Set();
             }
 
             return true;
@@ -175,20 +173,23 @@ namespace HMQService.Decode
             //考试实时信息
             try
             {
-                //Monitor.Enter(m_lockFourth);
+                lock(m_lockFourth)
+                {
+                    m_strCurrentState = xmlx;
 
-                m_strCurrentState = xmlx;
+                    //科目三地图模式需要实时展示项目状态图片，这里将其它状态清空，仅保留当前项目状态
+                    if (m_bDrawMap && (BaseDefine.CONFIG_VALUE_KSKM_3 == m_kskm))  
+                    {
+                        m_CurrentXmFlag = 0;
+                    }
 
-                int xmFlag = GetXmFlag(xmCode, true);
-                m_CurrentXmFlag |= xmFlag;
+                    uint xmFlag = GetXmFlag(xmCode, true);
+                    m_CurrentXmFlag |= xmFlag;
+                }
             }
             catch(Exception e)
             {
                 Log.GetLogger().ErrorFormat("catch an error : {0}, xmlx = {1}", e.Message, xmlx);
-            }
-            finally
-            {
-                //Monitor.Exit(m_lockFourth);
             }
             
             return true;
@@ -207,71 +208,70 @@ namespace HMQService.Decode
             errorInfo[0] = string.Format("{0} 扣{1}分", xmName, kcfs);
             errorInfo[1] = kflx;
 
-            //只存放3条扣分信息，超过3条时覆盖第3条
-            int nIndex = m_dicErrorInfo.Count;
-            if (nIndex > 2)
+            lock(m_lockFourth)
             {
-                nIndex = 2;
-            }
-            m_dicErrorInfo[nIndex] = errorInfo;
+                //只存放3条扣分信息，超过3条时覆盖第3条
+                int nIndex = m_dicErrorInfo.Count;
+                if (nIndex > 2)
+                {
+                    nIndex = 2;
+                }
+                m_dicErrorInfo[nIndex] = errorInfo;
 
-            //扣除当前得分
-            m_CurrentScore -= kcfs;
-            if (BaseDefine.CONFIG_VALUE_ZERO_SCORE == m_CurrentScore)
-            {
-                m_CurrentScore = BaseDefine.CONFIG_VALUE_ZERO_SCORE;
+                //扣除当前得分
+                m_CurrentScore -= kcfs;
+                if (m_CurrentScore <= BaseDefine.CONFIG_VALUE_ZERO_SCORE)
+                {
+                    m_CurrentScore = BaseDefine.CONFIG_VALUE_ZERO_SCORE;
+                }
             }
 
             return true;
         }
 
-        public bool Handle17C54(GPSData gpsData)
+        public bool HandleGPS(GPSData gpsData)
         {
             //考试实时信息
             try
             {
-                //Monitor.Enter(m_lockFourth);
-
-                m_gpsData = gpsData;
-
-                if (m_bDrawMap)
+                lock(m_lockFourth)
                 {
-                    int tempx = 0;
-                    int tempy = 0;
+                    m_gpsData = gpsData;
 
-                    if (1 == m_mapPy)
+                    if (m_bDrawMap)
                     {
-                        tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) - 176;
-                        tempy = Math.Abs((int)((m_gpsData.Latitude - m_mapY) * m_zoomIn)) - 144;
-                    }
-                    else
-                    {
-                        tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn));
-                        tempy = Math.Abs((int)((m_gpsData.Latitude - m_mapY) * m_zoomIn));
-                    }
+                        int tempx = 0;
+                        int tempy = 0;
 
-                    if (tempx < 0 || tempx > m_mapWidth || tempy < 0 || tempy > m_mapHeight)
-                    {
-                        Log.GetLogger().ErrorFormat("GPS数据存在异常，longitude={0}, latitude={1}, zoomin={2}", m_gpsData.Longitude,
-                            m_gpsData.Latitude, m_zoomIn);
-                    }
-                    else
-                    {
-                        m_carX = tempx;
-                        m_carY = tempy;
-                    }
+                        if (1 == m_mapPy)
+                        {
+                            tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) - 176;
+                            tempy = Math.Abs((int)((m_gpsData.Latitude - m_mapY) * m_zoomIn)) - 144;
+                        }
+                        else
+                        {
+                            tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn));
+                            tempy = Math.Abs((int)((m_gpsData.Latitude - m_mapY) * m_zoomIn));
+                        }
 
+                        if (tempx < 0 || tempx > m_mapWidth || tempy < 0 || tempy > m_mapHeight)
+                        {
+                            Log.GetLogger().ErrorFormat("GPS数据存在异常，longitude={0}, latitude={1}, zoomin={2}", m_gpsData.Longitude,
+                                m_gpsData.Latitude, m_zoomIn);
+                        }
+                        else
+                        {
+                            m_carX = tempx;
+                            m_carY = tempy;
+                        }
+
+                    }
                 }
-
             }
             catch (Exception e)
             {
                 Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
                 return false;
-            }
-            finally
-            {
-                //Monitor.Exit(m_lockFourth);
             }
 
             return true;
@@ -290,24 +290,18 @@ namespace HMQService.Decode
             {
                 //Monitor.Enter(m_lockFourth);
 
-                m_strCurrentState = xmlx;
+                lock(m_lockFourth)
+                {
+                    m_strCurrentState = xmlx;
 
-                Log.TempDebugFormat(string.Format("Handle17C55 in"));
+                    uint xmFlag = GetXmFlag(xmCode, false);
 
-                int xmFlag = GetXmFlag(xmCode, false);
-
-
-                Log.TempDebugFormat(string.Format("Handle17C55 in，xmCode={0} ,xmFlag = {0}", xmCode, xmFlag));
-
-                m_CurrentXmFlag |= xmFlag;
+                    m_CurrentXmFlag |= xmFlag;
+                }
             }
             catch (Exception e)
             {
                 Log.GetLogger().ErrorFormat("catch an error : {0}, xmlx = {1}", e.Message, xmlx);
-            }
-            finally
-            {
-                //Monitor.Exit(m_lockFourth);
             }
 
             return true;
@@ -323,48 +317,26 @@ namespace HMQService.Decode
             //考试实时信息
             try
             {
-                //Monitor.Enter(m_lockFourth);
-
-                m_bFinish = true;   //考试结束
-                m_endTime = DateTime.Now;
-
-                if (bPass)
+                lock(m_lockFourth)
                 {
-                    m_strCurrentState = "考试合格";
-                    m_bPass = true;
-                }
-                else
-                {
-                    m_strCurrentState = "考试不合格";
-                    m_bPass = false;
+                    m_bFinish = true;   //考试结束
+                    m_endTime = DateTime.Now;
+
+                    if (bPass)
+                    {
+                        m_strCurrentState = "考试合格";
+                        m_bPass = true;
+                    }
+                    else
+                    {
+                        m_strCurrentState = "考试不合格";
+                        m_bPass = false;
+                    }
                 }
             }
             catch (Exception e)
             {
                 Log.GetLogger().ErrorFormat("catch an error : {0}, bPass = {1}", e.Message, bPass);
-            }
-            finally
-            {
-                //Monitor.Exit(m_lockFourth);
-            }
-
-            //更新考生信息画面
-            try
-            {
-                //Monitor.Enter(bmThirdPic);
-                autoEventThird.Reset();
-
-                m_bFinish = true;   //考试结束
-
-            }
-            catch (Exception e)
-            {
-                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
-            }
-            finally
-            {
-                //Monitor.Exit(bmThirdPic);
-                autoEventThird.Set();
             }
 
             return true;
@@ -405,68 +377,68 @@ namespace HMQService.Decode
 
         private void LoadMapConfig()
         {
-            imgMap = Image.FromFile(BaseDefine.IMG_PATH_MAPN);
-            m_mapWidth = imgMap.Width;
-            m_mapHeight = imgMap.Height;
-
-            int xc = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
-                BaseDefine.CONFIG_KEY_XC, 0);
-            int yc = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
-                BaseDefine.CONFIG_KEY_YC, 0);
-
-            string keyX = string.Empty;
-            if (1 == xc)
+            lock(m_lockFourth)
             {
-                keyX = BaseDefine.CONFIG_KEY_MINX;
-            }
-            else
-            {
-                keyX = BaseDefine.CONFIG_KEY_MAXX;
-            }
-            string keyY = string.Empty;
-            if (1 == yc)
-            {
-                keyY = BaseDefine.CONFIG_KEY_MINY;
-            }
-            else
-            {
-                keyY = BaseDefine.CONFIG_KEY_MAXY;
-            }
+                imgMap = Image.FromFile(BaseDefine.IMG_PATH_MAPN);
+                m_mapWidth = imgMap.Width;
+                m_mapHeight = imgMap.Height;
 
-            m_mapX = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
-                keyX, 0.0);
-            m_mapY = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
-                keyY, 0.0);
+                int xc = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
+                    BaseDefine.CONFIG_KEY_XC, 0);
+                int yc = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
+                    BaseDefine.CONFIG_KEY_YC, 0);
 
-            Log.TempDebugFormat(string.Format("here x : {0}", m_mapX));
-            Log.TempDebugFormat(string.Format("here y : {0}", m_mapY));
-
-            m_zoomIn = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
-                BaseDefine.CONFIG_KEY_ZOOMIN, 0.0);
-
-            int nDrawCar = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
-                BaseDefine.CONFIG_KEY_DRAWCAR, 0);
-            if (1 == nDrawCar)
-            {
-                m_bDrawCar = true;
-
-                string carSkinPath = string.Empty;
-                int skinNo = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CARSKIN,
-                    m_kch.ToString(), 0);
-                if (0 == skinNo)
+                string keyX = string.Empty;
+                if (1 == xc)
                 {
-                    carSkinPath = string.Format(@".\Car.skin");
+                    keyX = BaseDefine.CONFIG_KEY_MINX;
                 }
                 else
                 {
-                    carSkinPath = string.Format(@".\Car{0}.skin", skinNo);
+                    keyX = BaseDefine.CONFIG_KEY_MAXX;
+                }
+                string keyY = string.Empty;
+                if (1 == yc)
+                {
+                    keyY = BaseDefine.CONFIG_KEY_MINY;
+                }
+                else
+                {
+                    keyY = BaseDefine.CONFIG_KEY_MAXY;
                 }
 
-                imgCar = Image.FromFile(carSkinPath);
-            }
+                m_mapX = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
+                    keyX, 0.0);
+                m_mapY = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
+                    keyY, 0.0);
 
-            m_mapPy = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
-                BaseDefine.CONFIG_KEY_DITUPY, 1);
+                m_zoomIn = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
+                    BaseDefine.CONFIG_KEY_ZOOMIN, 0.0);
+
+                int nDrawCar = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+                    BaseDefine.CONFIG_KEY_DRAWCAR, 0);
+                if (1 == nDrawCar)
+                {
+                    m_bDrawCar = true;
+
+                    string carSkinPath = string.Empty;
+                    int skinNo = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CARSKIN,
+                        m_kch.ToString(), 0);
+                    if (0 == skinNo)
+                    {
+                        carSkinPath = string.Format(@".\Car.skin");
+                    }
+                    else
+                    {
+                        carSkinPath = string.Format(@".\Car{0}.skin", skinNo);
+                    }
+
+                    imgCar = Image.FromFile(carSkinPath);
+                }
+
+                m_mapPy = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+                    BaseDefine.CONFIG_KEY_DITUPY, 1);
+            }  
         }
 
         private void ThirdPicKeepThread()
@@ -478,71 +450,68 @@ namespace HMQService.Decode
 
                 try
                 {
-                    //Monitor.Enter(bmThirdPic);
-
-                    //重新初始化画板
-                    Bitmap bm = new Bitmap(imgTbk);
-                    Graphics graphics = Graphics.FromImage(bm);
-
-                    //绘制考生信息
-                    if (!string.IsNullOrEmpty(m_studentInfo.Sfzmbh))
+                    lock(m_lockThird)
                     {
-                        string carType = m_studentInfo.Kch + "-" + m_studentInfo.Bz + "-" + m_studentInfo.Kscx;   //考车号-车牌号-驾照类型
-                        string examReason = m_studentInfo.Ksy1 + " " + m_studentInfo.KsyyDes;  //考试员-考试原因
-                        string sexAndCount = m_studentInfo.Xb + " 次数: " + m_studentInfo.Drcs;   //性别-考试次数
-                        graphics.DrawString(carType, font, brush, new Rectangle(0, 8, 350, 38));
-                        graphics.DrawString(m_studentInfo.Xingming, font, brush, new Rectangle(58, 45, 350, 75));
-                        graphics.DrawString(sexAndCount, font, brush, new Rectangle(58, 80, 350, 110));
-                        graphics.DrawString(m_studentInfo.Date, font, brush, new Rectangle(90, 115, 350, 145));
-                        graphics.DrawString(m_studentInfo.Lsh, font, brush, new Rectangle(90, 150, 350, 180));
-                        graphics.DrawString(m_studentInfo.Sfzmbh, font, brush, new Rectangle(90, 185, 350, 215));
-                        graphics.DrawString(m_studentInfo.Jxmc, font, brush, new Rectangle(90, 220, 350, 250));
-                        graphics.DrawString(examReason, font, brush, new Rectangle(90, 255, 350, 285));
+                        //重新初始化画板
+                        Bitmap bm = new Bitmap(imgTbk);
+                        Graphics graphics = Graphics.FromImage(bm);
 
-                        Stream streamZp = new MemoryStream(m_studentInfo.ArrayZp);
-                        Stream streamMjzp = new MemoryStream(m_studentInfo.ArrayMjzp);
-                        Image imgZp = Image.FromStream(streamZp);
-                        Image imgMjzp = Image.FromStream(streamMjzp);
-                        graphics.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
-                        graphics.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
+                        //绘制考生信息
+                        if (!string.IsNullOrEmpty(m_studentInfo.Sfzmbh))
+                        {
+                            string carType = m_studentInfo.Kch + "-" + m_studentInfo.Bz + "-" + m_studentInfo.Kscx;   //考车号-车牌号-驾照类型
+                            string examReason = m_studentInfo.Ksy1 + " " + m_studentInfo.KsyyDes;  //考试员-考试原因
+                            string sexAndCount = m_studentInfo.Xb + " 次数: " + m_studentInfo.Drcs;   //性别-考试次数
+                            graphics.DrawString(carType, font, brush, new Rectangle(0, 8, 350, 38));
+                            graphics.DrawString(m_studentInfo.Xingming, font, brush, new Rectangle(58, 45, 350, 75));
+                            graphics.DrawString(sexAndCount, font, brush, new Rectangle(58, 80, 350, 110));
+                            graphics.DrawString(m_studentInfo.Date, font, brush, new Rectangle(90, 115, 350, 145));
+                            graphics.DrawString(m_studentInfo.Lsh, font, brush, new Rectangle(90, 150, 350, 180));
+                            graphics.DrawString(m_studentInfo.Sfzmbh, font, brush, new Rectangle(90, 185, 350, 215));
+                            graphics.DrawString(m_studentInfo.Jxmc, font, brush, new Rectangle(90, 220, 350, 250));
+                            graphics.DrawString(examReason, font, brush, new Rectangle(90, 255, 350, 285));
+
+                            Stream streamZp = new MemoryStream(m_studentInfo.ArrayZp);
+                            Stream streamMjzp = new MemoryStream(m_studentInfo.ArrayMjzp);
+                            Image imgZp = Image.FromStream(streamZp);
+                            Image imgMjzp = Image.FromStream(streamMjzp);
+                            graphics.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
+                            graphics.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
+                        }
+
+                        if (m_bFinish)
+                        {
+                            //合格标识和不合格标识放在同一张图片里，这里需要对图片进行切割
+                            Image imgResult = null;
+                            Rectangle rect;
+                            Bitmap originBitmap = new Bitmap(Image.FromFile(BaseDefine.IMG_PATH_HGORBHG));
+                            if (m_bPass)
+                            {
+                                rect = new Rectangle(0, 0, originBitmap.Width / 2, originBitmap.Height);
+                            }
+                            else
+                            {
+                                rect = new Rectangle(originBitmap.Width / 2, 0, originBitmap.Width / 2, originBitmap.Height);
+                            }
+                            Bitmap bmp = new Bitmap(rect.Width, rect.Height);
+                            using (Graphics gph = Graphics.FromImage(bmp))
+                            {
+                                gph.DrawImage(originBitmap, new Rectangle(0, 0, bmp.Width, bmp.Height), rect, GraphicsUnit.Pixel);
+                            }
+                            imgResult = (Image)bmp;
+
+                            //绘制合格/不合格标识
+                            graphics.DrawImage(imgResult, new Rectangle(100, 50, 135, 100));
+                        }
+
+                        //发送画面到合码器
+                        SendBitMapToHMQ(bm, m_kch, m_thirdPassiveHandle);
+
                     }
-
-                    if (m_bFinish)
-                    {
-                        //合格标识和不合格标识放在同一张图片里，这里需要对图片进行切割
-                        Image imgResult = null;
-                        Rectangle rect;
-                        Bitmap originBitmap = new Bitmap(Image.FromFile(BaseDefine.IMG_PATH_HGORBHG));
-                        if (m_bPass)
-                        {
-                            rect = new Rectangle(0, 0, originBitmap.Width / 2, originBitmap.Height);
-                        }
-                        else
-                        {
-                            rect = new Rectangle(originBitmap.Width / 2, 0, originBitmap.Width / 2, originBitmap.Height);
-                        }
-                        Bitmap bmp = new Bitmap(rect.Width, rect.Height);
-                        using (Graphics gph = Graphics.FromImage(bmp))
-                        {
-                            gph.DrawImage(originBitmap, new Rectangle(0, 0, bmp.Width, bmp.Height), rect, GraphicsUnit.Pixel);
-                        }
-                        imgResult = (Image)bmp;
-
-                        //绘制合格/不合格标识
-                        graphics.DrawImage(imgResult, new Rectangle(100, 50, 135, 100));
-                    }
-
-                    //发送画面到合码器
-                    SendBitMapToHMQ(bm, m_kch, m_thirdPassiveHandle);
-
                 }
                 catch (Exception e)
                 {
                     Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
-                }
-                finally
-                {
-                    //Monitor.Exit(bmThirdPic);
                 }
                 
                 System.Threading.Thread.Sleep(1000);
@@ -560,86 +529,83 @@ namespace HMQService.Decode
 
                 try
                 {
-                    //Monitor.Enter(m_lockFourth);
-                    
-                    //重新初始化画板
-                    Bitmap bm = new Bitmap(imgMark);
-                    Graphics graphics = Graphics.FromImage(bm);
-
-                    //绘制项目牌列表
-                    int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
-                        BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
-                    if (BaseDefine.CONFIG_VALUE_KSKM_2 == nKskm)
+                    lock(m_lockFourth)
                     {
-                        graphics.DrawImage(imgXmp, new Rectangle(264, 36, 88, 252), 0, 0, 88, 252, GraphicsUnit.Pixel);
-                    }
-                    else
-                    {
-                        graphics.DrawImage(imgXmp, new Rectangle(264, 0, 88, 288), 0, 0, 88, 288, GraphicsUnit.Pixel);
-                    }
+                        //重新初始化画板
+                        Bitmap bm = new Bitmap(imgMark);
+                        Graphics graphics = Graphics.FromImage(bm);
 
-                    //绘制项目状态
-                    DrawXmState(nKskm, ref graphics);
-
-                    //绘制实时状态信息
-                    if (!string.IsNullOrEmpty(m_strCurrentState))
-                    {
-                        TimeSpan ts;
-                        if (m_bFinish)
+                        //绘制项目牌列表
+                        if (BaseDefine.CONFIG_VALUE_KSKM_2 == m_kskm)
                         {
-                            ts = m_endTime - m_startTime;
+                            graphics.DrawImage(imgXmp, new Rectangle(264, 36, 88, 252), 0, 0, 88, 252, GraphicsUnit.Pixel);
                         }
                         else
                         {
-                            ts = DateTime.Now - m_startTime;
+                            graphics.DrawImage(imgXmp, new Rectangle(264, 0, 88, 288), 0, 0, 88, 288, GraphicsUnit.Pixel);
                         }
-                        string strTotalTime = string.Format("{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
-                        string strScore = string.Format(BaseDefine.STRING_EXAM_TIME_AND_SCORE, strTotalTime, m_CurrentScore);
-                        string strSpeed = string.Format(BaseDefine.STRING_CAR_SPEED, m_gpsData.Speed);
-                        string strStartTime = string.Format(BaseDefine.STRING_EXAM_START_TIME, m_startTime.ToString(BaseDefine.STRING_TIME_FORMAT));
 
-                        graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(4, 10, 348, 40));
-                        graphics.DrawString(strScore, font, brush, new Rectangle(4, 40, 263, 65));
-                        graphics.DrawString(strSpeed, font, brush, new Rectangle(4, 65, 263, 90));
-                        graphics.DrawString(strStartTime, font, brush, new Rectangle(4, 90, 263, 115));
+                        //绘制项目状态
+                        DrawXmStateInfo(ref graphics);
+
+                        //绘制实时状态信息
+                        if (!string.IsNullOrEmpty(m_strCurrentState))
+                        {
+                            TimeSpan ts;
+                            if (m_bFinish)
+                            {
+                                ts = m_endTime - m_startTime;
+                            }
+                            else
+                            {
+                                ts = DateTime.Now - m_startTime;
+                            }
+                            string strTotalTime = string.Format("{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
+                            string strScore = string.Format(BaseDefine.STRING_EXAM_TIME_AND_SCORE, strTotalTime, m_CurrentScore);
+                            string strSpeed = string.Format(BaseDefine.STRING_CAR_SPEED, m_gpsData.Speed);
+                            string strStartTime = string.Format(BaseDefine.STRING_EXAM_START_TIME, m_startTime.ToString(BaseDefine.STRING_TIME_FORMAT));
+
+                            graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(4, 10, 348, 40));
+                            graphics.DrawString(strScore, font, brush, new Rectangle(4, 40, 263, 65));
+                            graphics.DrawString(strSpeed, font, brush, new Rectangle(4, 65, 263, 90));
+                            graphics.DrawString(strStartTime, font, brush, new Rectangle(4, 90, 263, 115));
+                        }
+
+                        //绘制扣分信息
+                        foreach (int index in m_dicErrorInfo.Keys)
+                        {
+                            string[] errorInfo = m_dicErrorInfo[index];
+                            if (null == errorInfo)
+                            {
+                                continue;
+                            }
+
+                            if (0 == index)
+                            {
+                                graphics.DrawString(errorInfo[0], font, brushBlack, new Rectangle(2, 120, 260, 145));
+                                graphics.DrawString(errorInfo[1], font, brushBlack, new Rectangle(2, 145, 260, 170));
+                            }
+                            else if (1 == index)
+                            {
+                                graphics.DrawString(errorInfo[0], font, brushBlack, new Rectangle(2, 180, 260, 205));
+                                graphics.DrawString(errorInfo[1], font, brushBlack, new Rectangle(2, 205, 260, 230));
+                            }
+                            else if (2 == index)
+                            {
+                                graphics.DrawString(errorInfo[0], font, brushBlack, new Rectangle(2, 240, 260, 265));
+                                graphics.DrawString(errorInfo[1], font, brushBlack, new Rectangle(2, 265, 260, 288));
+                            }
+                        }
+
+                        //发送画面到合码器
+                        SendBitMapToHMQ(bm, m_kch, m_fourthPassiveHandle);
+
                     }
-
-                    //绘制扣分信息
-                    foreach (int index in m_dicErrorInfo.Keys)
-                    {
-                        string[] errorInfo = m_dicErrorInfo[index];
-                        if (null == errorInfo)
-                        {
-                            continue;
-                        }
-
-                        if (0 == index)
-                        {
-                            graphics.DrawString(errorInfo[0], font, brushBlack, new Rectangle(2, 120, 260, 145));
-                            graphics.DrawString(errorInfo[1], font, brushBlack, new Rectangle(2, 145, 260, 170));
-                        }
-                        else if (1 == index)
-                        {
-                            graphics.DrawString(errorInfo[0], font, brushBlack, new Rectangle(2, 180, 260, 205));
-                            graphics.DrawString(errorInfo[1], font, brushBlack, new Rectangle(2, 205, 260, 230));
-                        }
-                        else if (2 == index)
-                        {
-                            graphics.DrawString(errorInfo[0], font, brushBlack, new Rectangle(2, 240, 260, 265));
-                            graphics.DrawString(errorInfo[1], font, brushBlack, new Rectangle(2, 265, 260, 288));
-                        }
-                    }
-
-                    //发送画面到合码器
-                    SendBitMapToHMQ(bm, m_kch, m_fourthPassiveHandle);
+                    
                 }
                 catch (Exception e)
                 {
                     Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
-                }
-                finally
-                {
-                    //Monitor.Exit(m_lockFourth);
                 }
 
                 System.Threading.Thread.Sleep(1000);
@@ -658,93 +624,96 @@ namespace HMQService.Decode
 
                 try
                 {
-                    //Monitor.Enter(m_lockFourth);
-
-                    Font font = new Font("宋体", 10, FontStyle.Regular);
-
-                    //重新初始化画板
-                    //Bitmap bm = new Bitmap(352, 288);
-                    Bitmap bm = new Bitmap(imgMap, 352, 288);
-                    Graphics graphics = Graphics.FromImage(bm);
-                    graphics.DrawImage(imgMap, new Rectangle(0, 0, 352, 288), m_carX, m_carY, 352, 288, GraphicsUnit.Pixel);
-
-                    //绘制考车
-                    if (m_bDrawCar)
+                    lock(m_lockFourth)
                     {
-                        graphics.TranslateTransform(176, 144);
-                        graphics.RotateTransform(m_gpsData.DirectionAngle);
-                        graphics.TranslateTransform(-176, -144);
+                        Font font = new Font("宋体", 10, FontStyle.Regular);
 
-                        graphics.DrawImage(imgCar, new Rectangle(0, 0, 352, 288));  //车模型
+                        //重新初始化画板
+                        //Bitmap bm = new Bitmap(352, 288);
+                        Bitmap bm = new Bitmap(imgMap, 352, 288);
+                        Graphics graphics = Graphics.FromImage(bm);
+                        graphics.DrawImage(imgMap, new Rectangle(0, 0, 352, 288), m_carX, m_carY, 352, 288, GraphicsUnit.Pixel);
 
-                        graphics.ResetTransform();
+                        //绘制考车
+                        if (m_bDrawCar)
+                        {
+                            graphics.TranslateTransform(176, 144);
+                            graphics.RotateTransform(m_gpsData.DirectionAngle);
+                            graphics.TranslateTransform(-176, -144);
+
+                            graphics.DrawImage(imgCar, new Rectangle(0, 0, 352, 288));  //车模型
+
+                            graphics.ResetTransform();
+                        }
+
+                        graphics.DrawImage(imgMark, new Rectangle(0, 0, 352, 288)); //遮罩
+
+                        int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+                            BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
+
+                        //绘制实时状态信息
+                        if (!string.IsNullOrEmpty(m_strCurrentState))
+                        {
+                            TimeSpan ts;
+                            if (m_bFinish)
+                            {
+                                ts = m_endTime - m_startTime;
+                            }
+                            else
+                            {
+                                ts = DateTime.Now - m_startTime;
+                            }
+
+                            string speed = string.Format("{0} km/h", m_gpsData.Speed);
+                            string mileage = string.Format("{0} m", m_gpsData.Mileage);
+                            string score = string.Format("成绩:{0}", m_CurrentScore);
+                            string time = string.Format("时长:{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
+
+                            graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(72, 8, 348, 30));
+                            graphics.DrawString(speed, font, brush, new Rectangle(0, 240, 98, 262));
+                            graphics.DrawString(mileage, font, brush, new Rectangle(0, 265, 98, 288));
+                            graphics.DrawString(score, font, brush, new Rectangle(263, 240, 350, 262));
+                            graphics.DrawString(time, font, brush, new Rectangle(263, 265, 350, 288));
+                        }
+
+                        //绘制科目三考试项目牌
+                        if (BaseDefine.CONFIG_VALUE_KSKM_3 == m_kskm)
+                        {
+                            DrawXmStateMap(ref graphics);
+                        }
+
+                        //绘制扣分信息
+                        foreach (int index in m_dicErrorInfo.Keys)
+                        {
+                            string[] errorInfo = m_dicErrorInfo[index];
+                            if (null == errorInfo)
+                            {
+                                continue;
+                            }
+
+                            string errorMsg = string.Format("{0} {1}", errorInfo[0], errorInfo[1]);
+
+                            if (0 == index)
+                            {
+                                graphics.DrawString(errorMsg, font, brushBlack, new Rectangle(6, 216, 346, 236));
+                            }
+                            else if (1 == index)
+                            {
+                                graphics.DrawString(errorMsg, font, brushBlack, new Rectangle(6, 196, 346, 216));
+                            }
+                            else if (2 == index)
+                            {
+                                graphics.DrawString(errorMsg, font, brushBlack, new Rectangle(6, 176, 346, 196));
+                            }
+                        }
+
+                        //发送画面到合码器
+                        SendBitMapToHMQ(bm, m_kch, m_fourthPassiveHandle);
                     }
-
-                    graphics.DrawImage(imgMark, new Rectangle(0, 0, 352, 288)); //遮罩
-
-                    int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
-                        BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
-
-                    //绘制实时状态信息
-                    if (!string.IsNullOrEmpty(m_strCurrentState))
-                    {
-                        TimeSpan ts;
-                        if (m_bFinish)
-                        {
-                            ts = m_endTime - m_startTime;
-                        }
-                        else
-                        {
-                            ts = DateTime.Now - m_startTime;
-                        }
-
-                        string speed = string.Format("{0} km/h", m_gpsData.Speed);
-                        string mileage = string.Format("{0} m", m_gpsData.Mileage);
-                        string score = string.Format("成绩:{0}", m_CurrentScore);
-                        string time = string.Format("时长:{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
-
-                        graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(0, 8, 348, 30));
-                        graphics.DrawString(speed, font, brush, new Rectangle(0, 240, 98, 262));
-                        graphics.DrawString(mileage, font, brush, new Rectangle(0, 265, 98, 288));
-                        graphics.DrawString(score, font, brush, new Rectangle(263, 240, 350, 262));
-                        graphics.DrawString(time, font, brush, new Rectangle(263, 265, 350, 288));
-                    }
-
-                    //绘制扣分信息
-                    foreach (int index in m_dicErrorInfo.Keys)
-                    {
-                        string[] errorInfo = m_dicErrorInfo[index];
-                        if (null == errorInfo)
-                        {
-                            continue;
-                        }
-
-                        string errorMsg = string.Format("{0} {1}", errorInfo[0], errorInfo[1]);
-
-                        if (0 == index)
-                        {
-                            graphics.DrawString(errorMsg, font, brushBlack, new Rectangle(6, 216, 346, 236));
-                        }
-                        else if (1 == index)
-                        {
-                            graphics.DrawString(errorMsg, font, brushBlack, new Rectangle(6, 196, 346, 216));
-                        }
-                        else if (2 == index)
-                        {
-                            graphics.DrawString(errorMsg, font, brushBlack, new Rectangle(6, 176, 346, 196));
-                        }
-                    }
-
-                    //发送画面到合码器
-                    SendBitMapToHMQ(bm, m_kch, m_fourthPassiveHandle);
                 }
                 catch (Exception e)
                 {
                     Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
-                }
-                finally
-                {
-                    //Monitor.Exit(m_lockFourth);
                 }
 
                 System.Threading.Thread.Sleep(1000);
@@ -755,13 +724,13 @@ namespace HMQService.Decode
         }
 
         /// <summary>
-        /// 绘制项目牌实时状态
+        /// 绘制项目牌实时状态(项目牌模式)
         /// </summary>
-        /// <param name="nKskm">考试科目，2--科目2，3--科目3</param>
         /// <param name="g"></param>
-        private void DrawXmState(int nKskm, ref Graphics g)
+        private void DrawXmStateInfo(ref Graphics g)
         {
-            if (BaseDefine.CONFIG_VALUE_KSKM_2 == nKskm)
+            #region 科目二
+            if (BaseDefine.CONFIG_VALUE_KSKM_2 == m_kskm)
             {
                 if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_DCRK) > 0)
                 {
@@ -826,9 +795,242 @@ namespace HMQService.Decode
                     g.DrawImage(imgXmp, new Rectangle(264, 252, 88, 36), 88, 216, 88, 36, GraphicsUnit.Pixel); //开始雨雾湿滑
                 }
             }
-            else
-            {
+            #endregion
 
+            #region 科目三
+            if (BaseDefine.CONFIG_VALUE_KSKM_3 == m_kskm)
+            {
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_SC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 0, 44, 36), 176, 0, 44, 36, GraphicsUnit.Pixel); //结束上车准备
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_SC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 0, 44, 36), 88, 0, 44, 36, GraphicsUnit.Pixel); //开始上车准备
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_QB) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 0, 44, 36), 220, 0, 44, 36, GraphicsUnit.Pixel); //结束起步
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_QB) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 0, 44, 36), 132, 0, 44, 36, GraphicsUnit.Pixel); //开始起步
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_ZHIXIAN) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 36, 44, 36), 176, 36, 44, 36, GraphicsUnit.Pixel); //结束直线
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZHIXIAN) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 36, 44, 36), 88, 36, 44, 36, GraphicsUnit.Pixel); //开始直线
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_JJ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 36, 44, 36), 220, 36, 44, 36, GraphicsUnit.Pixel); //结束加减档
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_JJ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 36, 44, 36), 132, 36, 44, 36, GraphicsUnit.Pixel); //开始加减档
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_BG) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 72, 44, 36), 176, 72, 44, 36, GraphicsUnit.Pixel); //结束变更
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_BG) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 72, 44, 36), 88, 72, 44, 36, GraphicsUnit.Pixel); //开始变更
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_KB) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 72, 44, 36), 220, 72, 44, 36, GraphicsUnit.Pixel); //结束靠边
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_KB) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 72, 44, 36), 132, 72, 44, 36, GraphicsUnit.Pixel); //开始靠边
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_ZHIXING) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 108, 44, 36), 176, 108, 44, 36, GraphicsUnit.Pixel); //结束直行
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZHIXING) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 108, 44, 36), 88, 108, 44, 36, GraphicsUnit.Pixel); //开始直行
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_ZZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 108, 44, 36), 220, 108, 44, 36, GraphicsUnit.Pixel); //结束左转
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 108, 44, 36), 132, 108, 44, 36, GraphicsUnit.Pixel); //开始左转
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_YZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 144, 44, 36), 176, 144, 44, 36, GraphicsUnit.Pixel); //结束右转
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_YZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 144, 44, 36), 88, 144, 44, 36, GraphicsUnit.Pixel); //开始右转
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_RX) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 144, 44, 36), 220, 144, 44, 36, GraphicsUnit.Pixel); //结束人行
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_RX) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 144, 44, 36), 132, 144, 44, 36, GraphicsUnit.Pixel); //开始人行
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_XX) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 180, 44, 36), 176, 180, 44, 36, GraphicsUnit.Pixel); //结束学校
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_XX) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 180, 44, 36), 88, 180, 44, 36, GraphicsUnit.Pixel); //开始学校
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_CZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 180, 44, 36), 220, 180, 44, 36, GraphicsUnit.Pixel); //结束车站
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_CZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 180, 44, 36), 132, 180, 44, 36, GraphicsUnit.Pixel); //开始车站
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_HC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 216, 44, 36), 176, 216, 44, 36, GraphicsUnit.Pixel); //结束会车
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_HC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 216, 44, 36), 88, 216, 44, 36, GraphicsUnit.Pixel); //开始会车
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_CC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 216, 44, 36), 220, 216, 44, 36, GraphicsUnit.Pixel); //结束超车
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_CC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 216, 44, 36), 132, 216, 44, 36, GraphicsUnit.Pixel); //开始超车
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_DT) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 252, 44, 36), 176, 252, 44, 36, GraphicsUnit.Pixel); //结束掉头
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_DT) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 252, 44, 36), 88, 252, 44, 36, GraphicsUnit.Pixel); //开始掉头
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_YJ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 252, 44, 36), 220, 252, 44, 36, GraphicsUnit.Pixel); //结束夜间
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_YJ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 252, 44, 36), 132, 252, 44, 36, GraphicsUnit.Pixel); //开始夜间
+                }
+            }
+            #endregion
+        }
+
+        /// <summary>
+        /// 绘制项目牌实时状态(地图模式)
+        /// </summary>
+        /// <param name="g"></param>
+        private void DrawXmStateMap(ref Graphics g)
+        {
+            if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_SC) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 72, 72, 72, GraphicsUnit.Pixel); //开始上车准备
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_QB) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 144, 72, 72, GraphicsUnit.Pixel); //开始起步
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZHIXIAN) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 216, 72, 72, GraphicsUnit.Pixel); //开始直线
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_JJ) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 288, 72, 72, GraphicsUnit.Pixel); //开始加减
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_BG) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 360, 72, 72, GraphicsUnit.Pixel); //开始变更
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_KB) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 432, 72, 72, GraphicsUnit.Pixel); //开始靠边
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZHIXING) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 504, 72, 72, GraphicsUnit.Pixel); //开始直行
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZZ) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 576, 72, 72, GraphicsUnit.Pixel); //开始左转
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_YZ) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 648, 72, 72, GraphicsUnit.Pixel); //开始右转
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_RX) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 720, 72, 72, GraphicsUnit.Pixel); //开始人行
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_XX) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 792, 72, 72, GraphicsUnit.Pixel); //开始学校
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_CZ) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 864, 72, 72, GraphicsUnit.Pixel); //开始车站
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_HC) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 936, 72, 72, GraphicsUnit.Pixel); //开始会车
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_CC) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 1008, 72, 72, GraphicsUnit.Pixel); //开始超车
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_DT) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 1080, 72, 72, GraphicsUnit.Pixel); //开始掉头
+            }
+
+            else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_YJ) > 0)
+            {
+                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 1152, 72, 72, GraphicsUnit.Pixel); //开始夜间
             }
         }
 
@@ -837,12 +1039,14 @@ namespace HMQService.Decode
             bool bRet = false;
 
             string videoPath = @".\video";
+            Random rd = new Random();
+            int nRand = rd.Next(0, 100);
             if (!Directory.Exists(videoPath))
             {
                 Directory.CreateDirectory(videoPath);
             }
-            string aviFilePath = string.Format(@"{0}\{1}_{2}.avi", videoPath, kch, passiveHandle);
-            string yuvFilePath = string.Format(@"{0}\{1}_{2}.yuv", videoPath, kch, passiveHandle);
+            string aviFilePath = string.Format(@"{0}\{1}_{2}_{3}.avi", videoPath, kch, passiveHandle, nRand);
+            string yuvFilePath = string.Format(@"{0}\{1}_{2}_{3}.yuv", videoPath, kch, passiveHandle, nRand);
 
             if (BaseMethod.IsExistFile(aviFilePath))
             {
@@ -1026,84 +1230,229 @@ namespace HMQService.Decode
         /// <param name="xmCode">项目编号</param>
         /// <param name="bStart">true--项目开始，false--项目结束</param>
         /// <returns></returns>
-        private int GetXmFlag(int xmCode, bool bStart)
+        private uint GetXmFlag(int xmCode, bool bStart)
         {
-            int nRet = 0;
+            uint nRet = 0;
 
-            //当前科目二的项目编号为6位数字，如 201510，前3位201表示“倒车入库项目”，后3位表示不同的车库
-            //只需要前3位即可判断具体的项目
-            int xmType = xmCode / 1000;
-
-            if (bStart)
+            #region 科目二
+            if (BaseDefine.CONFIG_VALUE_KSKM_2 == m_kskm)   //科目二
             {
-                if (BaseDefine.XMBH_201 == xmType)
+                //当前科目二的项目编号为6位数字，如 201510，前3位201表示“倒车入库项目”，后3位表示不同的车库
+                //只需要前3位即可判断具体的项目
+                xmCode = xmCode / 1000;
+
+                if (bStart)
                 {
-                    nRet = BaseDefine.EXAM_STATE_START_DCRK;
+                    if (BaseDefine.XMBH_201 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_DCRK;
+                    }
+                    else if (BaseDefine.XMBH_204 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_CFTC;
+                    }
+                    else if (BaseDefine.XMBH_203 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_DDPQ;
+                    }
+                    else if (BaseDefine.XMBH_206 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_QXXS;
+                    }
+                    else if (BaseDefine.XMBH_207 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_ZJZW;
+                    }
+                    else if (BaseDefine.XMBH_214 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_MNSD;
+                    }
+                    else if (BaseDefine.XMBH_215 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_YWSH;
+                    }
+                    else if (BaseDefine.XMBH_216 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_YWSH;
+                    }
                 }
-                else if (BaseDefine.XMBH_204 == xmType)
+                else
                 {
-                    nRet = BaseDefine.EXAM_STATE_START_CFTC;
-                }
-                else if (BaseDefine.XMBH_203 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_START_DDPQ;
-                }
-                else if (BaseDefine.XMBH_206 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_START_QXXS;
-                }
-                else if (BaseDefine.XMBH_207 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_START_ZJZW;
-                }
-                else if (BaseDefine.XMBH_214 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_START_MNSD;
-                }
-                else if (BaseDefine.XMBH_215 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_START_YWSH;
-                }
-                else if (BaseDefine.XMBH_216 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_START_YWSH;
+                    if (BaseDefine.XMBH_201 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_DCRK;
+                    }
+                    else if (BaseDefine.XMBH_204 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_CFTC;
+                    }
+                    else if (BaseDefine.XMBH_203 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_DDPQ;
+                    }
+                    else if (BaseDefine.XMBH_206 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_QXXS;
+                    }
+                    else if (BaseDefine.XMBH_207 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_ZJZW;
+                    }
+                    else if (BaseDefine.XMBH_214 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_MNSD;
+                    }
+                    else if (BaseDefine.XMBH_215 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_YWSH;
+                    }
+                    else if (BaseDefine.XMBH_216 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_YWSH;
+                    }
                 }
             }
-            else
+            #endregion
+
+            #region 科目三
+            if (BaseDefine.CONFIG_VALUE_KSKM_3 == m_kskm)   //科目三
             {
-                if (BaseDefine.XMBH_201 == xmType)
+                if (bStart)
                 {
-                    nRet = BaseDefine.EXAM_STATE_END_DCRK;
+                    if (BaseDefine.XMBH_201 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_SC;
+                    }
+                    else if (BaseDefine.XMBH_202 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_QB;
+                    }
+                    else if (BaseDefine.XMBH_203 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_ZHIXIAN;
+                    }
+                    else if (BaseDefine.XMBH_204 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_BG;
+                    }
+                    else if (BaseDefine.XMBH_206 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_RX;
+                    }
+                    else if (BaseDefine.XMBH_207 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_XX;
+                    }
+                    else if (BaseDefine.XMBH_208 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_CZ;
+                    }
+                    else if (BaseDefine.XMBH_209 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_HC;
+                    }
+                    else if (BaseDefine.XMBH_210 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_CC;
+                    }
+                    else if (BaseDefine.XMBH_211 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_KB;
+                    }
+                    else if (BaseDefine.XMBH_212 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_DT;
+                    }
+                    else if (BaseDefine.XMBH_213 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_YJ;
+                    }
+                    else if (BaseDefine.XMBH_214 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_ZZ;
+                    }
+                    else if (BaseDefine.XMBH_215 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_YZ;
+                    }
+                    else if (BaseDefine.XMBH_216 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_ZHIXING;
+                    }
+                    else if (BaseDefine.XMBH_217 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_START_JJ;
+                    }
                 }
-                else if (BaseDefine.XMBH_204 == xmType)
+                else
                 {
-                    nRet = BaseDefine.EXAM_STATE_END_CFTC;
-                }
-                else if (BaseDefine.XMBH_203 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_END_DDPQ;
-                }
-                else if (BaseDefine.XMBH_206 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_END_QXXS;
-                }
-                else if (BaseDefine.XMBH_207 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_END_ZJZW;
-                }
-                else if (BaseDefine.XMBH_214 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_END_MNSD;
-                }
-                else if (BaseDefine.XMBH_215 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_END_YWSH;
-                }
-                else if (BaseDefine.XMBH_216 == xmType)
-                {
-                    nRet = BaseDefine.EXAM_STATE_END_YWSH;
+                    if (BaseDefine.XMBH_201 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_SC;
+                    }
+                    else if (BaseDefine.XMBH_202 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_QB;
+                    }
+                    else if (BaseDefine.XMBH_203 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_ZHIXIAN;
+                    }
+                    else if (BaseDefine.XMBH_204 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_BG;
+                    }
+                    else if (BaseDefine.XMBH_206 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_RX;
+                    }
+                    else if (BaseDefine.XMBH_207 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_XX;
+                    }
+                    else if (BaseDefine.XMBH_208 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_CZ;
+                    }
+                    else if (BaseDefine.XMBH_209 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_HC;
+                    }
+                    else if (BaseDefine.XMBH_210 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_CC;
+                    }
+                    else if (BaseDefine.XMBH_211 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_KB;
+                    }
+                    else if (BaseDefine.XMBH_212 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_DT;
+                    }
+                    else if (BaseDefine.XMBH_213 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_YJ;
+                    }
+                    else if (BaseDefine.XMBH_214 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_ZZ;
+                    }
+                    else if (BaseDefine.XMBH_215 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_YZ;
+                    }
+                    else if (BaseDefine.XMBH_216 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_ZHIXING;
+                    }
+                    else if (BaseDefine.XMBH_217 == xmCode)
+                    {
+                        nRet = BaseDefine.EXAM_STATE_END_JJ;
+                    }
                 }
             }
+            #endregion
 
             return nRet;
         }
