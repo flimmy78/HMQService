@@ -5,6 +5,8 @@ using HMQService.Common;
 using HMQService.Server;
 using HMQService.Decode;
 using System.Net;
+using System.Configuration.Install;
+using System.Reflection;
 
 namespace HMQService
 {
@@ -33,21 +35,47 @@ namespace HMQService
         /// <summary>
         /// The Main Thread: This is where your Service is Run.
         /// </summary>
-        static void Main()
+        static void Main(string[] args)
         {
-            Log.GetLogger().InfoFormat("HMQService Main");
+            //if (System.Environment.UserInteractive)
+            //{
+            //    string parameter = string.Concat(args);
+            //    switch (parameter)
+            //    {
+            //        case "--install":
+            //        case "-install":
+            //        case "/install":
+            //            {
+            //                Log.GetLogger().InfoFormat("install service");
+            //                ManagedInstallerClass.InstallHelper(new string[] { Assembly.GetExecutingAssembly().Location });
+            //            }
+            //            break;
+            //        case "--uninstall":
+            //        case "-uninstall":
+            //        case "/uninstall":
+            //            {
+            //                Log.GetLogger().InfoFormat("uninstall service");
+            //                ManagedInstallerClass.InstallHelper(new string[] { "/u", Assembly.GetExecutingAssembly().Location });
+            //            }
+            //            break;
+            //    }
+            //}
+            //else
+            {
+                Log.GetLogger().InfoFormat("HMQService Main");
 
-            System.ServiceProcess.ServiceBase[] ServicesToRun;
+                System.ServiceProcess.ServiceBase[] ServicesToRun;
 
-            // More than one user Service may run within the same process. To add
-            // another service to this process, change the following line to
-            // create a second service object. For example,
-            //
-            //   ServicesToRun = new System.ServiceProcess.ServiceBase[] {new TCPService(), new MySecondUserService()};
-            //
-            ServicesToRun = new System.ServiceProcess.ServiceBase[] { new HMQService() };
+                // More than one user Service may run within the same process. To add
+                // another service to this process, change the following line to
+                // create a second service object. For example,
+                //
+                //   ServicesToRun = new System.ServiceProcess.ServiceBase[] {new TCPService(), new MySecondUserService()};
+                //
+                ServicesToRun = new System.ServiceProcess.ServiceBase[] { new HMQService() };
+                System.ServiceProcess.ServiceBase.Run(ServicesToRun);
+            }
 
-            System.ServiceProcess.ServiceBase.Run(ServicesToRun);
         }
 
         /// <summary> 
