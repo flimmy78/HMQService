@@ -471,12 +471,19 @@ namespace HMQService.Decode
                             graphics.DrawString(m_studentInfo.Jxmc, font, brush, new Rectangle(90, 220, 350, 250));
                             graphics.DrawString(examReason, font, brush, new Rectangle(90, 255, 350, 285));
 
-                            Stream streamZp = new MemoryStream(m_studentInfo.ArrayZp);
-                            Stream streamMjzp = new MemoryStream(m_studentInfo.ArrayMjzp);
-                            Image imgZp = Image.FromStream(streamZp);
-                            Image imgMjzp = Image.FromStream(streamMjzp);
-                            graphics.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
-                            graphics.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
+                            if (null != m_studentInfo.ArrayZp)
+                            {
+                                Stream streamZp = new MemoryStream(m_studentInfo.ArrayZp);
+                                Image imgZp = Image.FromStream(streamZp);
+                                graphics.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
+                            }
+                            
+                            if (null != m_studentInfo.ArrayMjzp)
+                            {
+                                Stream streamMjzp = new MemoryStream(m_studentInfo.ArrayMjzp);
+                                Image imgMjzp = Image.FromStream(streamMjzp);
+                                graphics.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
+                            }
                         }
 
                         if (m_bFinish)
