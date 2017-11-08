@@ -87,6 +87,7 @@ namespace HMQService.Common
         public static readonly int INTERFACE_FIELD_COUNT_KM3 = 10;  //接口字段数量（科目三），如果后续接口调整，这里需要修改
 
         //配置文件
+        public static readonly string CONFIG_FILE_PATH_ENV = @".\conf\HS_CONF_ENV.ini";
         public static readonly string CONFIG_FILE_PATH_CONFIG = @".\config.ini";
         public static readonly string CONFIG_FILE_PATH_ZZIPChannel = @".\ZZIPChannel.dat";
         public static readonly string CONFIG_FILE_PATH_MAP = @".\MAP.cfg";

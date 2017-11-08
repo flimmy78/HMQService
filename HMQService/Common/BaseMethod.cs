@@ -11,23 +11,6 @@ namespace HMQService.Common
 {
     public class BaseMethod
     {
-        //[DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        //public static extern void TFInit(int ikch, int str);
-        //[DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        //public static extern void TFPassiveHandle(int lPassHandle, int ikch, int itf);
-        //[DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        //public static extern void TF17C51(int ikch, string zkzm, int ikscs, int idrcs);
-        //[DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        //public static extern void TF17C52(int ikch, string zkzm, int ic, string msgz);
-        //[DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        //public static extern void TF17C53(int ikch, string timestr, string msgz, int ikcfs);
-        //[DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        //public static extern void TF17C54(int ikch, IntPtr msgz);
-        //[DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        //public static extern void TF17C55(int ikch, int ic, string msgz);
-        //[DllImport("CYuvToH264T.dll", CharSet = CharSet.Auto)]
-        //public static extern void TF17C56(int ikch, int itype, int ikscj);
-
         //字符串分割
         public static string[] SplitString(string data, char cOperator, out string errorMsg)
         {

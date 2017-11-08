@@ -111,7 +111,7 @@ namespace HMQService.Decode
             m_thirdPassiveHandle = thirdPH;
             m_fourthPassiveHandle = fourthPH;
 
-            m_kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+            m_kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, BaseDefine.CONFIG_VALUE_KSKM_2);
 
             //开启 ThirdPic 刷新线程
@@ -352,7 +352,7 @@ namespace HMQService.Decode
 
         private bool InitFourthPic()
         {
-            int nLoadMap = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nLoadMap = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_LOADMAP, 0);
             if (1 == nLoadMap)
             {
@@ -415,7 +415,7 @@ namespace HMQService.Decode
                 m_zoomIn = BaseMethod.INIGetDoubleValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
                     BaseDefine.CONFIG_KEY_ZOOMIN, 0.0);
 
-                int nDrawCar = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+                int nDrawCar = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                     BaseDefine.CONFIG_KEY_DRAWCAR, 0);
                 if (1 == nDrawCar)
                 {
@@ -471,12 +471,19 @@ namespace HMQService.Decode
                             graphics.DrawString(m_studentInfo.Jxmc, font, brush, new Rectangle(90, 220, 350, 250));
                             graphics.DrawString(examReason, font, brush, new Rectangle(90, 255, 350, 285));
 
-                            Stream streamZp = new MemoryStream(m_studentInfo.ArrayZp);
-                            Stream streamMjzp = new MemoryStream(m_studentInfo.ArrayMjzp);
-                            Image imgZp = Image.FromStream(streamZp);
-                            Image imgMjzp = Image.FromStream(streamMjzp);
-                            graphics.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
-                            graphics.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
+                            if (null != m_studentInfo.ArrayZp)
+                            {
+                                Stream streamZp = new MemoryStream(m_studentInfo.ArrayZp);
+                                Image imgZp = Image.FromStream(streamZp);
+                                graphics.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
+                            }
+                            
+                            if (null != m_studentInfo.ArrayMjzp)
+                            {
+                                Stream streamMjzp = new MemoryStream(m_studentInfo.ArrayMjzp);
+                                Image imgMjzp = Image.FromStream(streamMjzp);
+                                graphics.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
+                            }
                         }
 
                         if (m_bFinish)
@@ -648,7 +655,7 @@ namespace HMQService.Decode
 
                         graphics.DrawImage(imgMark, new Rectangle(0, 0, 352, 288)); //遮罩
 
-                        int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+                        int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                             BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
 
                         //绘制实时状态信息

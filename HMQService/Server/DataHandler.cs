@@ -353,7 +353,7 @@ namespace HMQService.Server
             string strErrrorCode = strArray[1];
             int xmCode = string.IsNullOrEmpty(strXmCode) ? 0 : int.Parse(strXmCode);
 
-            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, 0); //考试科目
             string xmName = string.Empty;   //项目名称
             if (BaseDefine.CONFIG_VALUE_KSKM_3 == kskm) //科目三
@@ -510,7 +510,7 @@ namespace HMQService.Server
             int xmBeginCode = string.IsNullOrEmpty(strXmbh) ? 0 : int.Parse(strXmbh);
             int xmEndCode = 0;
 
-            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, 0); //考试科目
             if (BaseDefine.CONFIG_VALUE_KSKM_3 == kskm) //科目三
             {
@@ -587,7 +587,7 @@ namespace HMQService.Server
             }
             ExamProcedure examPorcedure = m_dicExamProcedures[kch];
 
-            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+            int kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, 0); //考试科目
             if (BaseDefine.CONFIG_VALUE_KSKM_3 == kskm) //科目三
             {
@@ -726,17 +726,17 @@ namespace HMQService.Server
                     arrayZp = (Byte[])ds.Tables[0].Rows[0][0];
                     arrayMjzp = (Byte[])ds.Tables[0].Rows[0][1];
 
-                    if (null == arrayZp || null == arrayMjzp || 0==arrayZp.Length || 0==arrayMjzp.Length)
-                    {
-                        Log.GetLogger().ErrorFormat("查询 StudentPhoto 表值为空，sql={0}", sql);
-                        return false;
-                    }
+                    //if (null == arrayZp || null == arrayMjzp || 0==arrayZp.Length || 0==arrayMjzp.Length)
+                    //{
+                    //    Log.GetLogger().ErrorFormat("查询 StudentPhoto 表值为空，sql={0}", sql);
+                    //    return false;
+                    //}
                 }
             }
             catch(Exception e)
             {
                 Log.GetLogger().ErrorFormat("查询 StudentPhoto 表发生异常: {0}, zkzmbh={1}, sql = {2}", e.Message, zkzmbh, sql);
-                return false;
+                //return false;
             }
 
             Log.GetLogger().DebugFormat("HQW TEMP");
