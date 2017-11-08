@@ -43,19 +43,20 @@ Source: "./3rd-party/mencoder.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "./3rd-party/HKLib/*"; DestDir: "{app}/bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "../HMQService/bin/Release/*"; DestDir: "{app}"; Flags: ignoreversion
 
-
 ;一些通用的资源文件和配置文件
-Source: "./res/通用/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "./res/Common/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ;科目二项目牌模式
-Source: "./res/科目二项目牌/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsKm2AndMap 
+Source: "./res/km2Xm/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsKm2AndXm 
 
 ;科目二地图模式
+Source: "./res/km2Map/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsKm2AndMap
 
 ;科目三项目牌模式
+Source: "./res/km3Xm/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsKm3AndXm
 
 ;科目三地图模式
-
+Source: "./res/km3Map/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsKm3AndMap
 
 [Run]
 ;安装服务
