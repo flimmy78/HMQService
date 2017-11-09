@@ -23,7 +23,7 @@ DefaultDirName={pf}\{#MyAppName}
 ;DisableDirPage=yes
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
-OutputBaseFilename=HMQService
+OutputBaseFilename=HMQServiceSetup
 Compression=lzma
 SolidCompression=yes
 ;要求管理员权限
@@ -394,6 +394,9 @@ if CurStep=ssDone then
         SetIniString('CONFIG', 'LOADMAP', '0', confPath);
         SetIniString('CONFIG', 'DRAWCAR', '0', confPath);
     end;
+
+    //安装服务
+    //Exec(ExpandConstant('{sys}\sc.exe'), 'create hhhh binPath = "D:\Program Files (x86)\HMQService\HMQService.exe"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
   end;  
 end;
