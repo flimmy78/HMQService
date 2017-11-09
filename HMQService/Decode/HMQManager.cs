@@ -462,7 +462,7 @@ namespace HMQService.Decode
                     Log.GetLogger().ErrorFormat("合码器配置错误，请检查配置文件。section = {0}, key = {1}", BaseDefine.CONFIG_SECTION_JMQ, i.ToString());
                     return false;
                 }
-                Log.GetLogger().InfoFormat("准备对合码器 {0} 进行初始化，ip={0}, port={1}, user={2}, password={3}", i, port, user, password);
+                Log.GetLogger().InfoFormat("准备对合码器 {0} 进行初始化，ip={1}, port={2}, user={3}, password={4}", i, ipAddress, port, user, password);
 
                 //登录设备
                 if (!InitHMQ(ipAddress, user, password, port))
@@ -470,9 +470,12 @@ namespace HMQService.Decode
                     return false;
                 }
 
+                int displayChanCount = (1 == nHMQ) ? m_struDecAbility.struDviInfo.byChanNums : m_struDecAbility.struBncInfo.byChanNums;
                 string sectionJMQ = string.Format("JMQ{0}", i);
-                for (int j  = 0; j < m_struDecAbility.struDviInfo.byChanNums; j++)  //DVI 个数循环
+                for (int j  = 0; j < displayChanCount; j++)  //DVI、BNC 个数循环
                 {
+                    Log.TempDebugFormat("1");
+
                     if ((1 == nEven) && (j % 2 == 1))
                     {
                         continue;
@@ -486,9 +489,13 @@ namespace HMQService.Decode
                         continue; 
                     }
 
+                    Log.TempDebugFormat("2");
+
                     //检查通道配置及初始化
                     if (1 == nHMQ)
                     {
+                        Log.TempDebugFormat("3");
+
                         if (!CheckDVIChan(nKch, j)) //合码器
                         {
                             Log.GetLogger().ErrorFormat("通道检测及初始化错误，考车号={0}，DVI={1}", nKch, j);
@@ -496,6 +503,8 @@ namespace HMQService.Decode
                     }
                     else
                     {
+                        Log.TempDebugFormat("4");
+
                         if (!CheckBNCChan(nKch, j)) //解码器
                         {
                             Log.GetLogger().ErrorFormat("通道检测及初始化错误，考车号={0}，BNC={1}", nKch, j);
@@ -584,7 +593,7 @@ namespace HMQService.Decode
 
             //显示通道检测
             CHCNetSDK.NET_DVR_MATRIX_VOUTCFG m_DispChanCfg = new CHCNetSDK.NET_DVR_MATRIX_VOUTCFG();
-            uint dwDispChan = (uint)(m_struDecAbility.struDviInfo.byStartChan + bnc);
+            uint dwDispChan = (uint)(m_struDecAbility.struBncInfo.byStartChan + bnc);
             if (!CHCNetSDK.NET_DVR_MatrixGetDisplayCfg_V41(m_userId, dwDispChan, ref m_DispChanCfg))
             {
                 m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();

@@ -426,11 +426,11 @@ namespace HMQService.Decode
                         m_kch.ToString(), 0);
                     if (0 == skinNo)
                     {
-                        carSkinPath = string.Format(@".\Car.skin");
+                        carSkinPath = string.Format(BaseDefine.IMG_PATH_SINGLE_CAR);
                     }
                     else
                     {
-                        carSkinPath = string.Format(@".\Car{0}.skin", skinNo);
+                        carSkinPath = string.Format(BaseDefine.IMG_PATH_MULTI_CAR, skinNo);
                     }
 
                     imgCar = Image.FromFile(carSkinPath);
@@ -655,9 +655,6 @@ namespace HMQService.Decode
 
                         graphics.DrawImage(imgMark, new Rectangle(0, 0, 352, 288)); //遮罩
 
-                        int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
-                            BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
-
                         //绘制实时状态信息
                         if (!string.IsNullOrEmpty(m_strCurrentState))
                         {
@@ -676,11 +673,21 @@ namespace HMQService.Decode
                             string score = string.Format("成绩:{0}", m_CurrentScore);
                             string time = string.Format("时长:{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
 
-                            graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(72, 8, 348, 30));
+                            
                             graphics.DrawString(speed, font, brush, new Rectangle(0, 240, 98, 262));
                             graphics.DrawString(mileage, font, brush, new Rectangle(0, 265, 98, 288));
                             graphics.DrawString(score, font, brush, new Rectangle(263, 240, 350, 262));
                             graphics.DrawString(time, font, brush, new Rectangle(263, 265, 350, 288));
+
+                            //绘制第四画面标题栏，如果是科目三，需要在左边预留一块用于展示项目图标
+                            if (BaseDefine.CONFIG_VALUE_KSKM_2 == m_kskm)
+                            {
+                                graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(0, 8, 348, 30));
+                            }
+                            else
+                            {
+                                graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(72, 8, 348, 30));
+                            }
                         }
 
                         //绘制科目三考试项目牌
@@ -1125,7 +1132,7 @@ namespace HMQService.Decode
                 aviFilePath,
                 yuvFilePath);
             startInfo.CreateNoWindow = true;
-            startInfo.FileName = @".\mencoder.exe";
+            startInfo.FileName = BaseDefine.STRING_FILE_PATH_MENCODER;
             var process = Process.Start(startInfo);
             process.WaitForExit(5000);
 

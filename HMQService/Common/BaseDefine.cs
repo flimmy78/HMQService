@@ -17,6 +17,7 @@ namespace HMQService.Common
         public static readonly string STRING_EXAM_TIME_AND_SCORE = "时长:{0} 成绩:{1}";
         public static readonly string STRING_CAR_SPEED = "速度: {0} km/h";
         public static readonly string STRING_EXAM_START_TIME = "开始时间：{0}";
+        public static readonly string STRING_FILE_PATH_MENCODER = @".\3rd\mencoder.exe";
 
         //考试所处阶段
         //科目二
@@ -177,14 +178,16 @@ namespace HMQService.Common
         public static readonly string DB_VALUE_KSYYWZ = "考试原因：未知";
 
         //背景图片
-        public static readonly string IMG_PATH_TBK = @".\tbk.skin";
-        public static readonly string IMG_PATH_HGORBHG = @".\hgorbhg.skin";
-        public static readonly string IMG_PATH_PASS = @".\pass.skin";
-        public static readonly string IMG_PATH_NOTPASS = @".\notpass.skin";
-        public static readonly string IMG_PATH_MARK = @".\mark.skin";
-        public static readonly string IMG_PATH_TIME= @".\time.skin";
-        public static readonly string IMG_PATH_XMP = @".\xmp.skin";
-        public static readonly string IMG_PATH_MAPN = @".\MAPN.skin";
+        public static readonly string IMG_PATH_TBK = @".\res\tbk.skin";
+        public static readonly string IMG_PATH_HGORBHG = @".\res\hgorbhg.skin";
+        public static readonly string IMG_PATH_PASS = @".\res\pass.skin";
+        public static readonly string IMG_PATH_NOTPASS = @".\res\notpass.skin";
+        public static readonly string IMG_PATH_MARK = @".\res\mark.skin";
+        public static readonly string IMG_PATH_TIME= @".\res\time.skin";
+        public static readonly string IMG_PATH_XMP = @".\res\xmp.skin";
+        public static readonly string IMG_PATH_MAPN = @".\res\MAPN.skin";
+        public static readonly string IMG_PATH_SINGLE_CAR = @".\res\Car.skin";
+        public static readonly string IMG_PATH_MULTI_CAR = @".\res\Car{0}.skin";
 
         //项目编号
         public const int XMBH_201 = 201;

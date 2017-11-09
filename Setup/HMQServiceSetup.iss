@@ -33,47 +33,50 @@ PrivilegesRequired=admin
 ;安装完成要求重启
 AlwaysRestart=yes
 ;不允许卸载
-Uninstallable=false
+;Uninstallable=false
 
 [Languages]
 Name: "chinesesimp"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "./3rd-party/vcredist.exe"; DestDir: "{app}"; Flags: onlyifdoesntexist ignoreversion
+Source: "./3rd-party/vcredist.exe"; DestDir: "{app}/3rd"; Flags: onlyifdoesntexist ignoreversion
 Source: "./3rd-party/{#DotNetFile}"; DestDir: "{tmp}"; Flags: onlyifdoesntexist ignoreversion deleteafterinstall; AfterInstall: InstallFramework; Check: FrameworkIsNotInstalled
-Source: "./3rd-party/mencoder.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "./3rd-party/mencoder.exe"; DestDir: "{app}/3rd"; Flags: ignoreversion
 Source: "./3rd-party/HKLib/*"; DestDir: "{app}/bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "../HMQService/bin/Release/*"; DestDir: "{app}"; Flags: ignoreversion
 
-Source: "./InstallService.bat"; DestDir: "{app}"; Flags: ignoreversion
-Source: "./UninstallService.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "./batch/InstallService.bat"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
+Source: "./batch/UninstallService.bat"; DestDir: "{app}/batch"; Flags: ignoreversion
+Source: "./batch/StartService.bat"; DestDir: "{app}/batch"; Flags: ignoreversion
+Source: "./batch/StopService.bat"; DestDir: "{app}/batch"; Flags: ignoreversion
+
+;配置文件
+Source: "./conf/*"; DestDir: "{app}/conf"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ;一些通用的资源文件和配置文件
-Source: "./res/Common/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "./res/Common/*"; DestDir: "{app}/res"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ;科目二项目牌模式
-Source: "./res/km2Xm/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsKm2AndXm 
+Source: "./res/km2Xm/*"; DestDir: "{app}/res"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsKm2AndXm 
 
 ;科目二地图模式
-Source: "./res/km2Map/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsKm2AndMap
+Source: "./res/km2Map/*"; DestDir: "{app}/res"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsKm2AndMap
 
 ;科目三项目牌模式
-Source: "./res/km3Xm/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsKm3AndXm
+Source: "./res/km3Xm/*"; DestDir: "{app}/res"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsKm3AndXm
 
 ;科目三地图模式
-Source: "./res/km3Map/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsKm3AndMap
+Source: "./res/km3Map/*"; DestDir: "{app}/res"; Flags: ignoreversion recursesubdirs createallsubdirs; Check: IsKm3AndMap
 
 [Run]
 ;安装服务
-;Filename: "{sys}\sc.exe"; Parameters: "create ttts DisplayName= ""ttts"" binPah= ""D:\Program Files (x86)\HMQService\HMQService.exe"""; Flags: runhidden waituntilterminated;;Filename: "{sys}\sc.exe"; Parameters: "create ""{#MyAppName}"" binPah= ""{app}\{#MyAppName}.exe"""; Flags: runhidden;
-;设置服务开机自启动
-;Filename: "{sys}\sc.exe"; Parameters: "config ttts start=AUTO"; Flags: runhidden waituntilterminated;
-;Filename: "{sys}\cmd.exe"; Parameters: "sc config ""{#MyAppName}"" start=AUTO"; Flags: runhidden;
-;Filename: "{app}\HMQService.exe"; Parameters: "-install"; Flags: runhidden;
-Filename: "{app}\InstallService.bat"; Parameters: ""; Flags: runhidden;
+Filename: "{app}\InstallService.bat"; Parameters: ""; Flags: runhidden;
+
+[UninstallRun]
+;卸载服务
+Filename: "{app}\batch\UninstallService.bat"; Parameters: ""; Flags: runhidden;
 
 [code]
-
 var
   lbl,lb2,lb3,lb4,lb5:TLabel;
   jmsbPage,kskmPage,dbPage,mapPage,carPage:TwizardPage;
@@ -322,9 +325,11 @@ begin
   if RegQueryStringValue(HKLM, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{473CDD01-B0B6-43AF-8534-74E1F1DFFFF4}_is1', 'UninstallString', uicmd) then
   begin
     //停止服务
-    Exec(ExpandConstant('c:\windows\system32\sc.exe'), 'stop "{#MyAppName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Exec(ExpandConstant('{sys}\sc.exe'), 'stop "{#MyAppName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    //杀进程
+    Exec(ExpandConstant('{sys}\taskkill.exe'), '/im {#MyAppName}.exe /f /t', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     //卸载服务
-    Exec(ExpandConstant('c:\windows\system32\sc.exe'), 'detele "{#MyAppName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Exec(ExpandConstant('{sys}\sc.exe'), 'delete "{#MyAppName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   end;
 
   Result:= True
@@ -349,7 +354,7 @@ end;
 procedure InstallFramework;
 var ResultCode: Integer;
 begin
-    Exec(ExpandConstant('{app}\vcredist.exe'), '/q /norestart', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+    Exec(ExpandConstant('{app}\3rd\vcredist.exe'), '/q /norestart', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
     if FrameworkIsNotInstalled() then
     begin
         Exec(ExpandConstant('{tmp}\{#DotNetFile}'), '/q /norestart', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
@@ -400,9 +405,6 @@ if CurStep=ssDone then
         SetIniString('CONFIG', 'LOADMAP', '0', confPath);
         SetIniString('CONFIG', 'DRAWCAR', '0', confPath);
     end;
-
-    //安装服务
-    //Exec(ExpandConstant('{sys}\sc.exe'), 'create hhhh binPath = "D:\Program Files (x86)\HMQService\HMQService.exe"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
   end;  
 end;
