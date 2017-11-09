@@ -186,6 +186,8 @@ namespace HMQService.Common
         public static readonly string IMG_PATH_TIME= @".\res\time.skin";
         public static readonly string IMG_PATH_XMP = @".\res\xmp.skin";
         public static readonly string IMG_PATH_MAPN = @".\res\MAPN.skin";
+        public static readonly string IMG_PATH_SINGLE_CAR = @".\res\Car.skin";
+        public static readonly string IMG_PATH_MULTI_CAR = @".\res\Car{0}.skin";
 
         //项目编号
         public const int XMBH_201 = 201;

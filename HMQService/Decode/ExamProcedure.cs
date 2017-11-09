@@ -426,11 +426,11 @@ namespace HMQService.Decode
                         m_kch.ToString(), 0);
                     if (0 == skinNo)
                     {
-                        carSkinPath = string.Format(@".\Car.skin");
+                        carSkinPath = string.Format(BaseDefine.IMG_PATH_SINGLE_CAR);
                     }
                     else
                     {
-                        carSkinPath = string.Format(@".\Car{0}.skin", skinNo);
+                        carSkinPath = string.Format(BaseDefine.IMG_PATH_MULTI_CAR, skinNo);
                     }
 
                     imgCar = Image.FromFile(carSkinPath);
