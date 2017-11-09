@@ -4,8 +4,10 @@
 #define MyAppName "HMQService"
 #define MyAppVersion "1.0.0"
 #define MyAppPublisher "福州北科大舟宇电子有限公司"
+#define MyAppBuildID GetDateTimeString('yyyymmdd','','');
 #define MyAppURL "http://www.bekzoyo.com.cn/"
 #define DotNetFile "NDP451-KB2858728-x86-x64-AllOS-ENU.exe"
+
 
 [Setup]
 ; 注: AppId的值为单独标识该应用程序。
@@ -23,7 +25,7 @@ DefaultDirName={pf}\{#MyAppName}
 ;DisableDirPage=yes
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
-OutputBaseFilename=HMQService
+OutputBaseFilename={#MyAppName}_{#MyAppVersion}_Build_{#MyAppBuildID}
 Compression=lzma
 SolidCompression=yes
 ;要求管理员权限
@@ -42,6 +44,9 @@ Source: "./3rd-party/{#DotNetFile}"; DestDir: "{tmp}"; Flags: onlyifdoesntexist 
 Source: "./3rd-party/mencoder.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "./3rd-party/HKLib/*"; DestDir: "{app}/bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "../HMQService/bin/Release/*"; DestDir: "{app}"; Flags: ignoreversion
+
+Source: "./InstallService.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "./UninstallService.bat"; DestDir: "{app}"; Flags: ignoreversion
 
 ;一些通用的资源文件和配置文件
 Source: "./res/Common/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -65,6 +70,7 @@ Source: "./res/km3Map/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 ;Filename: "{sys}\sc.exe"; Parameters: "config ttts start=AUTO"; Flags: runhidden waituntilterminated;
 ;Filename: "{sys}\cmd.exe"; Parameters: "sc config ""{#MyAppName}"" start=AUTO"; Flags: runhidden;
 ;Filename: "{app}\HMQService.exe"; Parameters: "-install"; Flags: runhidden;
+Filename: "{app}\InstallService.bat"; Parameters: ""; Flags: runhidden;
 
 [code]
 
@@ -394,6 +400,9 @@ if CurStep=ssDone then
         SetIniString('CONFIG', 'LOADMAP', '0', confPath);
         SetIniString('CONFIG', 'DRAWCAR', '0', confPath);
     end;
+
+    //安装服务
+    //Exec(ExpandConstant('{sys}\sc.exe'), 'create hhhh binPath = "D:\Program Files (x86)\HMQService\HMQService.exe"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
   end;  
 end;

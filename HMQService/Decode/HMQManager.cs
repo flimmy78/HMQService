@@ -432,6 +432,8 @@ namespace HMQService.Decode
                 BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
             int nWnd2 = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_WND2, 0);    //画面二状态
+            int nHMQ = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_HMQ, 0);  //配置的是合码器还是解码器
             if (0 == nNum)
             {
                 Log.GetLogger().ErrorFormat("合码器数量为0，请检查配置文件");
@@ -462,7 +464,7 @@ namespace HMQService.Decode
                 }
                 Log.GetLogger().InfoFormat("准备对合码器 {0} 进行初始化，ip={0}, port={1}, user={2}, password={3}", i, port, user, password);
 
-                //初始化合码器
+                //登录设备
                 if (!InitHMQ(ipAddress, user, password, port))
                 {
                     return false;
@@ -484,10 +486,20 @@ namespace HMQService.Decode
                         continue; 
                     }
 
-                    //检查通道配置
-                    if (!CheckBNCChan(nKch, j))
+                    //检查通道配置及初始化
+                    if (1 == nHMQ)
                     {
-                        Log.GetLogger().ErrorFormat("通道检测及初始化错误，考车号={0}，BNC={1}", nKch, j);
+                        if (!CheckDVIChan(nKch, j)) //合码器
+                        {
+                            Log.GetLogger().ErrorFormat("通道检测及初始化错误，考车号={0}，DVI={1}", nKch, j);
+                        }
+                    }
+                    else
+                    {
+                        if (!CheckBNCChan(nKch, j)) //解码器
+                        {
+                            Log.GetLogger().ErrorFormat("通道检测及初始化错误，考车号={0}，BNC={1}", nKch, j);
+                        }
                     }
                 }
 
@@ -496,7 +508,7 @@ namespace HMQService.Decode
             return true;
         }
 
-        //初始化合码器
+        //登录设备
         private bool InitHMQ(string ip, string user, string pwd, string port)
         {
             try
@@ -540,7 +552,7 @@ namespace HMQService.Decode
         }
 
         /// <summary>
-        /// 通道检测及初始化
+        /// 解码器通道检测及初始化
         /// </summary>
         /// <param name="kch">考车号</param>
         /// <param name="bnc">BNC 编号</param>
@@ -592,13 +604,95 @@ namespace HMQService.Decode
                 m_DispChanCfg.byJoinDecChan[3] = byDecChan[m_dispalyShow[3]];
                 m_DispChanCfg.byAudio = 1;  //开启音频
                 m_DispChanCfg.byAudioWindowIdx = (byte)m_dispalyShow[4];  //音频子窗口 1
-                m_DispChanCfg.byVedioFormat = 1;    //视频制式，1-NTSC，2-PAL
-                m_DispChanCfg.dwResolution = 67207228;
+                m_DispChanCfg.byVedioFormat = 2;    //视频制式，1-NTSC，2-PAL //该项配置与合码器不同
+                m_DispChanCfg.dwResolution = 0; //该项配置与合码器不同
                 m_DispChanCfg.dwWindowMode = 4;
                 m_DispChanCfg.byScale = 0;  //真实
 
                 //解码器设置显示通道配置
                 if(!CHCNetSDK.NET_DVR_MatrixSetDisplayCfg_V41(m_userId, dwDispChan, ref m_DispChanCfg))
+                {
+                    m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();
+                    if (29 == m_iErrorCode)
+                    {
+                        Log.GetLogger().ErrorFormat("错误29:设备操作失败,请将合码器完全恢复下.设备管理=>恢复默认参数=>完成恢复");
+                    }
+                    Log.GetLogger().ErrorFormat("NET_DVR_MatrixSetDisplayCfg_V41 failed, error code = {0}，设置显示通道配置失败", m_iErrorCode);
+                    return false;
+                }
+            }
+
+            //考车初始化
+            CarManager car = new CarManager();
+            car.InitCar(kch, m_userId, byDecChan);
+            if (!dicCars.ContainsKey(kch))
+            {
+                dicCars.Add(kch, car);
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// 合码器通道检测及初始化
+        /// </summary>
+        /// <param name="kch">考车号</param>
+        /// <param name="dvi">dvi 编号</param>
+        /// <returns></returns>
+        private bool CheckDVIChan(int kch, int dvi)
+        {
+            uint lpdwEnable = 0;
+            uint dwDecChanNum = 0;
+            byte[] byDecChan = new byte[4];
+
+            //解码通道检测
+            for (int i = 0; i < 4; i++)
+            {
+                byDecChan[i] = (byte)(m_struDecAbility.byStartChan + dvi * 4 + i);
+                dwDecChanNum = byDecChan[i];
+                if (CHCNetSDK.NET_DVR_MatrixGetDecChanEnable(m_userId, dwDecChanNum, ref lpdwEnable))
+                {
+                    if (0 == lpdwEnable)    //取出的值为 0 表示关闭。
+                    {
+                        if (!CHCNetSDK.NET_DVR_MatrixSetDecChanEnable(m_userId, dwDecChanNum, 1))    //打开通道
+                        {
+                            m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();
+                            Log.GetLogger().ErrorFormat("NET_DVR_MatrixSetDecChanEnable failed, error code = {0}，打开通道失败", m_iErrorCode);
+                            return false;
+                        }
+                    }
+                }
+            }
+
+            //显示通道检测
+            CHCNetSDK.NET_DVR_MATRIX_VOUTCFG m_DispChanCfg = new CHCNetSDK.NET_DVR_MATRIX_VOUTCFG();
+            uint dwDispChan = (uint)(m_struDecAbility.struDviInfo.byStartChan + dvi);
+            if (!CHCNetSDK.NET_DVR_MatrixGetDisplayCfg_V41(m_userId, dwDispChan, ref m_DispChanCfg))
+            {
+                m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();
+                Log.GetLogger().ErrorFormat("NET_DVR_MatrixGetDisplayCfg_V41 failed, error code = {0}，获取显示通道配置失败", m_iErrorCode);
+                return false;
+            }
+
+            if (m_DispChanCfg.dwWindowMode != 4
+                || m_DispChanCfg.byJoinDecChan[0] != byDecChan[m_dispalyShow[0]]
+                || m_DispChanCfg.byJoinDecChan[1] != byDecChan[m_dispalyShow[1]]
+                || m_DispChanCfg.byJoinDecChan[2] != byDecChan[m_dispalyShow[2]]
+                || m_DispChanCfg.byJoinDecChan[3] != byDecChan[m_dispalyShow[3]])   //显示通道不是四分割输出
+            {
+                m_DispChanCfg.byJoinDecChan[0] = byDecChan[m_dispalyShow[0]];
+                m_DispChanCfg.byJoinDecChan[1] = byDecChan[m_dispalyShow[1]];
+                m_DispChanCfg.byJoinDecChan[2] = byDecChan[m_dispalyShow[2]];
+                m_DispChanCfg.byJoinDecChan[3] = byDecChan[m_dispalyShow[3]];
+                m_DispChanCfg.byAudio = 1;  //开启音频
+                m_DispChanCfg.byAudioWindowIdx = (byte)m_dispalyShow[4];  //音频子窗口 1
+                m_DispChanCfg.byVedioFormat = 1;    //视频制式，1-NTSC，2-PAL //该项配置与合码器不同
+                m_DispChanCfg.dwResolution = 67207228;  //该项配置与合码器不同
+                m_DispChanCfg.dwWindowMode = 4;
+                m_DispChanCfg.byScale = 0;  //真实
+
+                //解码器设置显示通道配置
+                if (!CHCNetSDK.NET_DVR_MatrixSetDisplayCfg_V41(m_userId, dwDispChan, ref m_DispChanCfg))
                 {
                     m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();
                     if (29 == m_iErrorCode)

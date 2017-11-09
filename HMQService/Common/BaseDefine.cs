@@ -92,7 +92,7 @@ namespace HMQService.Common
         public static readonly string CONFIG_FILE_PATH_ZZIPChannel = @".\ZZIPChannel.dat";
         public static readonly string CONFIG_FILE_PATH_MAP = @".\MAP.cfg";
         public static readonly string CONFIG_SECTION_CONFIG = "CONFIG";
-        public static readonly string CONFIG_SECTION_SQLLINK = "SQLLINK";
+        public static readonly string CONFIG_SECTION_SQLLINK = "SQLLINK";  
         public static readonly string CONFIG_SECTION_JMQ = "JMQ";
         public static readonly string CONFIG_SECTION_Q = "Q";
         public static readonly string CONFIG_SECTION_MAPCONFIG = "MAPCONFIG";
@@ -120,6 +120,7 @@ namespace HMQService.Common
         public static readonly string CONFIG_KEY_YC = "YC";
         public static readonly string CONFIG_KEY_DRAWCAR = "DrawCar";
         public static readonly string CONFIG_KEY_DITUPY = "DITUPY";
+        public static readonly string CONFIG_KEY_HMQ = "HMQ";
 
         public static readonly int CONFIG_VALUE_KSKM_2 = 2;     //考试科目为科目2
         public static readonly int CONFIG_VALUE_KSKM_3 = 3;     //考试科目为科目3
