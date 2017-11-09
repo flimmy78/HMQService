@@ -12,6 +12,7 @@ namespace HMQService.Common
         public static readonly int LISTENING_PORT_UDP = 6709;   //UDP 监听端口号
         public static readonly int VIDEO_FRAME_RATE = 1;    // BitMap 转成 视频码流的每秒帧数
 
+        public static readonly string STRING_KM2_PUBLIC_VIDEO = @"10086_1"; //科目二场地远景摄像头编号
         public static readonly string STRING_TIME_FORMAT = "HH:mm:ss";
         public static readonly string STRING_INIT_CAR = "正在初始化考车 {0} ...";
         public static readonly string STRING_EXAM_TIME_AND_SCORE = "时长:{0} 成绩:{1}";
