@@ -1125,7 +1125,7 @@ namespace HMQService.Decode
                 aviFilePath,
                 yuvFilePath);
             startInfo.CreateNoWindow = true;
-            startInfo.FileName = @".\mencoder.exe";
+            startInfo.FileName = BaseDefine.STRING_FILE_PATH_MENCODER;
             var process = Process.Start(startInfo);
             process.WaitForExit(5000);
 

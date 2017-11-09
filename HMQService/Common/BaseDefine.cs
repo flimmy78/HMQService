@@ -17,6 +17,7 @@ namespace HMQService.Common
         public static readonly string STRING_EXAM_TIME_AND_SCORE = "时长:{0} 成绩:{1}";
         public static readonly string STRING_CAR_SPEED = "速度: {0} km/h";
         public static readonly string STRING_EXAM_START_TIME = "开始时间：{0}";
+        public static readonly string STRING_FILE_PATH_MENCODER = @".\3rd\mencoder.exe";
 
         //考试所处阶段
         //科目二
