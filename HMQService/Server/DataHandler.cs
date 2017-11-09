@@ -236,22 +236,22 @@ namespace HMQService.Server
                 CameraConf camera = m_dicCameras[key];
                 m_dicCars[kch].StartDynamicDecode(camera, 1);   //第二画面进项目
 
-                //处理定点
-                //半坡停车时，车载会发 15010 摄像头编号过来，切换摄像头后，另外开一个线程，休眠几秒时间后，切换为原来的摄像头
-                if ((BaseDefine.XMBH_15010 == xmCode) || (BaseDefine.XMBH_15020 == xmCode) || (BaseDefine.XMBH_15030 == xmCode))
-                {
-                    Log.GetLogger().InfoFormat("定点：{0}", xmCode);
+                ////处理定点
+                ////半坡停车时，车载会发 15010 摄像头编号过来，切换摄像头后，另外开一个线程，休眠几秒时间后，切换为原来的摄像头
+                //if ((BaseDefine.XMBH_15010 == xmCode) || (BaseDefine.XMBH_15020 == xmCode) || (BaseDefine.XMBH_15030 == xmCode))
+                //{
+                //    Log.GetLogger().InfoFormat("定点：{0}", xmCode);
 
-                    if (BaseMethod.IsExistFile(BaseDefine.CONFIG_FILE_PATH_ZZIPChannel))
-                    {
-                        XmInfo xmInfo = new XmInfo(kch, xmCode);
+                //    if (BaseMethod.IsExistFile(BaseDefine.CONFIG_FILE_PATH_ZZIPChannel))
+                //    {
+                //        XmInfo xmInfo = new XmInfo(kch, xmCode);
 
-                        Thread QHThread = new Thread(new ParameterizedThreadStart(QHThreadProc));
-                        QHThread.Start(xmInfo);
-                    }
+                //        Thread QHThread = new Thread(new ParameterizedThreadStart(QHThreadProc));
+                //        QHThread.Start(xmInfo);
+                //    }
 
-                    return true;
-                }
+                //    return true;
+                //}
             }
 
             //项目编号转换，科目二专用，数据库升级后可以不需要这段代码
@@ -545,6 +545,19 @@ namespace HMQService.Server
                 //e.g. 201500 --> 201990
                 // 201500 先除以 1000，得到 201。再乘以 1000，得到 201000。再加上 990，得到 201990。
                 xmEndCode = (xmBeginCode / 1000) * 1000 + 990;
+
+                //科目二切换到场地远景视频 
+                string key = BaseDefine.STRING_KM2_PUBLIC_VIDEO;
+                if (!m_dicCameras.ContainsKey(key))
+                {
+                    Log.GetLogger().ErrorFormat("找不到 {0} 摄像头配置，请检查配置", key);
+                    //return false;
+                }
+                else
+                {
+                    CameraConf camera = m_dicCameras[key];
+                    m_dicCars[kch].StartDynamicDecode(camera, 1);  
+                }
             }
 
             //获取项目类型
