@@ -39,9 +39,9 @@ AlwaysRestart=yes
 Name: "chinesesimp"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "./3rd-party/vcredist.exe"; DestDir: "{app}"; Flags: onlyifdoesntexist ignoreversion
+Source: "./3rd-party/vcredist.exe"; DestDir: "{app}/3rd"; Flags: onlyifdoesntexist ignoreversion
 Source: "./3rd-party/{#DotNetFile}"; DestDir: "{tmp}"; Flags: onlyifdoesntexist ignoreversion deleteafterinstall; AfterInstall: InstallFramework; Check: FrameworkIsNotInstalled
-Source: "./3rd-party/mencoder.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "./3rd-party/mencoder.exe"; DestDir: "{app}/3rd"; Flags: ignoreversion
 Source: "./3rd-party/HKLib/*"; DestDir: "{app}/bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "../HMQService/bin/Release/*"; DestDir: "{app}"; Flags: ignoreversion
 
@@ -354,7 +354,7 @@ end;
 procedure InstallFramework;
 var ResultCode: Integer;
 begin
-    Exec(ExpandConstant('{app}\vcredist.exe'), '/q /norestart', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
+    Exec(ExpandConstant('{app}\3rd\vcredist.exe'), '/q /norestart', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
     if FrameworkIsNotInstalled() then
     begin
         Exec(ExpandConstant('{tmp}\{#DotNetFile}'), '/q /norestart', '', SW_SHOW, ewWaitUntilTerminated, ResultCode);
@@ -405,9 +405,6 @@ if CurStep=ssDone then
         SetIniString('CONFIG', 'LOADMAP', '0', confPath);
         SetIniString('CONFIG', 'DRAWCAR', '0', confPath);
     end;
-
-    //安装服务
-    //Exec(ExpandConstant('{sys}\sc.exe'), 'create hhhh binPath = "D:\Program Files (x86)\HMQService\HMQService.exe"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
 
   end;  
 end;
