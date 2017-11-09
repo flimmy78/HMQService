@@ -33,7 +33,7 @@ PrivilegesRequired=admin
 ;安装完成要求重启
 AlwaysRestart=yes
 ;不允许卸载
-Uninstallable=false
+;Uninstallable=false
 
 [Languages]
 Name: "chinesesimp"; MessagesFile: "compiler:Default.isl"
@@ -45,8 +45,10 @@ Source: "./3rd-party/mencoder.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "./3rd-party/HKLib/*"; DestDir: "{app}/bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "../HMQService/bin/Release/*"; DestDir: "{app}"; Flags: ignoreversion
 
-Source: "./InstallService.bat"; DestDir: "{app}"; Flags: ignoreversion
-Source: "./UninstallService.bat"; DestDir: "{app}"; Flags: ignoreversion
+Source: "./batch/InstallService.bat"; DestDir: "{app}"; Flags: ignoreversion deleteafterinstall
+Source: "./batch/UninstallService.bat"; DestDir: "{app}/batch"; Flags: ignoreversion
+Source: "./batch/StartService.bat"; DestDir: "{app}/batch"; Flags: ignoreversion
+Source: "./batch/StopService.bat"; DestDir: "{app}/batch"; Flags: ignoreversion
 
 ;一些通用的资源文件和配置文件
 Source: "./res/Common/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -65,15 +67,13 @@ Source: "./res/km3Map/*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs 
 
 [Run]
 ;安装服务
-;Filename: "{sys}\sc.exe"; Parameters: "create ttts DisplayName= ""ttts"" binPah= ""D:\Program Files (x86)\HMQService\HMQService.exe"""; Flags: runhidden waituntilterminated;;Filename: "{sys}\sc.exe"; Parameters: "create ""{#MyAppName}"" binPah= ""{app}\{#MyAppName}.exe"""; Flags: runhidden;
-;设置服务开机自启动
-;Filename: "{sys}\sc.exe"; Parameters: "config ttts start=AUTO"; Flags: runhidden waituntilterminated;
-;Filename: "{sys}\cmd.exe"; Parameters: "sc config ""{#MyAppName}"" start=AUTO"; Flags: runhidden;
-;Filename: "{app}\HMQService.exe"; Parameters: "-install"; Flags: runhidden;
-Filename: "{app}\InstallService.bat"; Parameters: ""; Flags: runhidden;
+Filename: "{app}\InstallService.bat"; Parameters: ""; Flags: runhidden;
+
+[UninstallRun]
+;卸载服务
+Filename: "{app}\batch\UninstallService.bat"; Parameters: ""; Flags: runhidden;
 
 [code]
-
 var
   lbl,lb2,lb3,lb4,lb5:TLabel;
   jmsbPage,kskmPage,dbPage,mapPage,carPage:TwizardPage;
@@ -322,9 +322,11 @@ begin
   if RegQueryStringValue(HKLM, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{473CDD01-B0B6-43AF-8534-74E1F1DFFFF4}_is1', 'UninstallString', uicmd) then
   begin
     //停止服务
-    Exec(ExpandConstant('c:\windows\system32\sc.exe'), 'stop "{#MyAppName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Exec(ExpandConstant('{sys}\sc.exe'), 'stop "{#MyAppName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    //杀进程
+    Exec(ExpandConstant('{sys}\taskkill.exe'), '/im {#MyAppName}.exe /f /t', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     //卸载服务
-    Exec(ExpandConstant('c:\windows\system32\sc.exe'), 'detele "{#MyAppName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Exec(ExpandConstant('{sys}\sc.exe'), 'delete "{#MyAppName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   end;
 
   Result:= True
