@@ -1,4 +1,6 @@
-﻿namespace HMQConfig
+﻿using System.Windows.Forms;
+
+namespace HMQConfig
 {
     partial class Form1
     {
@@ -28,6 +30,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.StartPosition = FormStartPosition.CenterScreen;
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.comboDBInstance = new System.Windows.Forms.ComboBox();
             this.textDBPassword = new System.Windows.Forms.TextBox();
