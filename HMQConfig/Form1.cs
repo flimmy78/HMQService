@@ -9,6 +9,10 @@ using System.Windows.Forms;
 using BekUtils.Database;
 using BekUtils.Util;
 using log4net;
+using NPOI.HSSF.UserModel;
+using NPOI.SS.UserModel;
+using NPOI.XSSF.UserModel;
+using System.IO;
 
 namespace HMQConfig
 {
@@ -144,6 +148,142 @@ namespace HMQConfig
             string base64Instance = Base64Util.Base64Encode(m_dbInstance);
             INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DB, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_INSTANCE, base64Instance);
+        }
+
+        private void btnSelectFile_Click(object sender, EventArgs e)
+        {
+            //选择 Excel
+            string excelFilePath = string.Empty;
+            OpenFileDialog fd = new OpenFileDialog();
+            fd.Filter = @"Excel Files (*.xlsx)|*.xlsx";
+            if (DialogResult.OK == fd.ShowDialog())
+            {
+                excelFilePath = fd.FileName;
+            }
+            else
+            {
+                return;
+            }
+
+            //解析 Excel
+            string errorMsg = string.Empty;
+            Dictionary<string, HMQConf> dicHmq = new Dictionary<string, HMQConf>();
+            bool bRet = ReadFromExcel(excelFilePath, ref dicHmq, out errorMsg);
+            if (!bRet)
+            {
+                Log.GetLogger().ErrorFormat(errorMsg);
+                MessageBox.Show(errorMsg);
+            }
+
+        }
+
+        private bool ReadFromExcel(string filePath, ref Dictionary<string, HMQConf> dicHmq, out string errorMsg)
+        {
+            errorMsg = string.Empty;
+
+            try
+            {
+                //加载 excel
+                XSSFWorkbook wk = null;
+                using (FileStream fs = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    wk = new XSSFWorkbook(fs);
+                    fs.Close();
+                }
+                if (null == wk)
+                {
+                    errorMsg = string.Format("加载文件 {0} 失败，请检查 excel 文件。", filePath);
+                    goto END;
+                }
+
+                #region 读取考车配置
+                string sheetName = BaseDefine.EXCEL_SHEET_NAME_CAR;
+                ISheet sheet = wk.GetSheet(sheetName);
+                if (null == sheet)
+                {
+                    errorMsg = string.Format("找不到名称为 {0} 的 Sheet 页，请检查 excel 文件。", sheetName);
+                    goto END;
+                }
+                if (sheet.LastRowNum <= 1)
+                {
+                    errorMsg = string.Format("Sheet 页 : {0} 的行数为 {1}，请检查 excel 文件。", sheetName, sheet.LastRowNum);
+                    goto END;
+                }
+                for (int i = 1; i <= sheet.LastRowNum; i++)  //跳过第一行
+                {
+                    IRow row = sheet.GetRow(i);
+                    if (null == row)
+                    {
+                        errorMsg = string.Format("读取 Sheet 页 : {0} 的第 {1} 行时发生错误，请检查 excel 文件。", sheetName, i + 1);
+                        goto END;
+                    }
+
+                    try
+                    {
+                        string hmqIp = row.GetCell(0).StringCellValue;  //合码器IP
+                        double hmqPort = row.GetCell(1).NumericCellValue;   //合码器端口
+                        string hmqUsername = row.GetCell(2).StringCellValue;    //合码器用户名
+                        string hmqPassword = row.GetCell(3).StringCellValue;    //合码器密码
+                        double hmqTranNo = row.GetCell(4).NumericCellValue; //合码器通道号
+                        double carNo = row.GetCell(5).NumericCellValue; //考车号
+
+                        int nPort = (int)hmqPort;
+                        int nTranNo = (int)hmqTranNo;
+                        int nCarNo = (int)carNo;
+
+                        if (nPort <= 0 || nTranNo <= 0 || nCarNo <= 0 || string.IsNullOrEmpty(hmqIp) || string.IsNullOrEmpty(hmqUsername)
+                            || string.IsNullOrEmpty(hmqPassword))
+                        {
+                            errorMsg = string.Format("Sheet 页 : {0} 的第 {1} 行存在错误数据，请检查 excel 文件。", sheetName, i + 1);
+                            goto END;
+                        }
+
+                        if (!dicHmq.ContainsKey(hmqIp))
+                        {
+                            Dictionary<int, int> dicTrans = new Dictionary<int, int>();
+                            dicTrans.Add(nTranNo, nCarNo);
+
+                            HMQConf hmqConf = new HMQConf(hmqIp, nPort, hmqUsername, hmqPassword, dicTrans);
+
+                            dicHmq.Add(hmqIp, hmqConf);
+                        }
+                        else
+                        {
+                            if (!dicHmq[hmqIp].AddItem(nTranNo, nCarNo))
+                            {
+                                errorMsg = string.Format("Sheet 页 : {0} 的第 {1} 行错误，存在重复的通道号，请检查 excel 文件。", sheetName, i + 1);
+                                goto END;
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        errorMsg = string.Format("Sheet 页 : {0} 的第 {1} 行存在错误数据，请检查 excel 文件。", sheetName, i + 1);
+                        goto END;
+                    }
+                }
+                #endregion
+
+                #region 读取摄像头配置
+
+                #endregion
+
+            }
+            catch (Exception e)
+            {
+                errorMsg = string.Format("读取文件 {0} 失败，error = {1}", filePath, e.Message);
+                goto END;
+            }
+
+            END:
+            {
+                if (!string.IsNullOrEmpty(errorMsg))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
     }
 }

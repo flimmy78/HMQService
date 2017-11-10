@@ -30,7 +30,6 @@ namespace HMQConfig
         /// </summary>
         private void InitializeComponent()
         {
-            this.StartPosition = FormStartPosition.CenterScreen;
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.comboDBInstance = new System.Windows.Forms.ComboBox();
             this.textDBPassword = new System.Windows.Forms.TextBox();
@@ -41,7 +40,10 @@ namespace HMQConfig
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.btnDBLogin = new System.Windows.Forms.Button();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.btn_SelectFile = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox1
@@ -57,7 +59,7 @@ namespace HMQConfig
             this.groupBox1.Controls.Add(this.btnDBLogin);
             this.groupBox1.Location = new System.Drawing.Point(12, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(302, 193);
+            this.groupBox1.Size = new System.Drawing.Size(388, 193);
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "数据库配置";
@@ -67,7 +69,7 @@ namespace HMQConfig
             this.comboDBInstance.FormattingEnabled = true;
             this.comboDBInstance.Location = new System.Drawing.Point(97, 156);
             this.comboDBInstance.Name = "comboDBInstance";
-            this.comboDBInstance.Size = new System.Drawing.Size(199, 20);
+            this.comboDBInstance.Size = new System.Drawing.Size(285, 20);
             this.comboDBInstance.TabIndex = 4;
             this.comboDBInstance.SelectedIndexChanged += new System.EventHandler(this.comboDBInstance_SelectedIndexChanged);
             // 
@@ -76,21 +78,21 @@ namespace HMQConfig
             this.textDBPassword.Location = new System.Drawing.Point(97, 80);
             this.textDBPassword.Name = "textDBPassword";
             this.textDBPassword.PasswordChar = '*';
-            this.textDBPassword.Size = new System.Drawing.Size(199, 21);
+            this.textDBPassword.Size = new System.Drawing.Size(285, 21);
             this.textDBPassword.TabIndex = 2;
             // 
             // textDBUsername
             // 
             this.textDBUsername.Location = new System.Drawing.Point(97, 53);
             this.textDBUsername.Name = "textDBUsername";
-            this.textDBUsername.Size = new System.Drawing.Size(199, 21);
+            this.textDBUsername.Size = new System.Drawing.Size(285, 21);
             this.textDBUsername.TabIndex = 1;
             // 
             // textDBIP
             // 
             this.textDBIP.Location = new System.Drawing.Point(97, 24);
             this.textDBIP.Name = "textDBIP";
-            this.textDBIP.Size = new System.Drawing.Size(199, 21);
+            this.textDBIP.Size = new System.Drawing.Size(285, 21);
             this.textDBIP.TabIndex = 0;
             // 
             // label4
@@ -139,16 +141,39 @@ namespace HMQConfig
             this.btnDBLogin.UseVisualStyleBackColor = true;
             this.btnDBLogin.Click += new System.EventHandler(this.btnDBLogin_Click);
             // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.btn_SelectFile);
+            this.groupBox2.Location = new System.Drawing.Point(12, 224);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(388, 70);
+            this.groupBox2.TabIndex = 1;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "考车配置";
+            // 
+            // btn_SelectFile
+            // 
+            this.btn_SelectFile.Location = new System.Drawing.Point(6, 29);
+            this.btn_SelectFile.Name = "btn_SelectFile";
+            this.btn_SelectFile.Size = new System.Drawing.Size(75, 23);
+            this.btn_SelectFile.TabIndex = 0;
+            this.btn_SelectFile.Text = "导入Excel";
+            this.btn_SelectFile.UseVisualStyleBackColor = true;
+            this.btn_SelectFile.Click += new System.EventHandler(this.btnSelectFile_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(326, 410);
+            this.ClientSize = new System.Drawing.Size(412, 410);
+            this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
             this.Name = "Form1";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "合码器配置";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -165,6 +190,8 @@ namespace HMQConfig
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox comboDBInstance;
+        private GroupBox groupBox2;
+        private Button btn_SelectFile;
     }
 }
 

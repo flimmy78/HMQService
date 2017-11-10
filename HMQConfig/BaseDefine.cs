@@ -18,5 +18,8 @@ namespace HMQConfig
         public static readonly string CONFIG_KEY_PASSWORD = @"PASSWORD";
         public static readonly string CONFIG_KEY_DBADDRESS = @"DBADDRESS";
         public static readonly string CONFIG_KEY_INSTANCE = @"INSTANCE";
+
+        public static readonly string EXCEL_SHEET_NAME_CAR = @"考车配置";
+        public static readonly string EXCEL_SHEET_NAME_CAMERA = @"摄像头配置";
     }
 }
