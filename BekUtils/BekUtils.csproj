@@ -48,6 +48,7 @@
     <Compile Include="Database\IDataProvider.cs" />
     <Compile Include="Database\OracleDataProvider.cs" />
     <Compile Include="Database\SqlDataProvider.cs" />
+    <Compile Include="Util\Base64Util.cs" />
     <Compile Include="Util\INIOperator.cs" />
     <Compile Include="Util\Log.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

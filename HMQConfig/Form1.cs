@@ -104,12 +104,15 @@ namespace HMQConfig
             else
             {
                 //将数据库配置写入配置文件
+                string base64DbAddress = Base64Util.Base64Encode(m_dbAddress);
+                string base64DbUserName = Base64Util.Base64Encode(m_dbUsername);
+                string base64DbPassword = Base64Util.Base64Encode(m_dbPassword);
                 INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DB, BaseDefine.CONFIG_SECTION_CONFIG,
-                    BaseDefine.CONFIG_KEY_DBADDRESS, m_dbAddress);
+                    BaseDefine.CONFIG_KEY_DBADDRESS, base64DbAddress);
                 INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DB, BaseDefine.CONFIG_SECTION_CONFIG,
-                    BaseDefine.CONFIG_KEY_USERNAME, m_dbUsername);
+                    BaseDefine.CONFIG_KEY_USERNAME, base64DbUserName);
                 INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DB, BaseDefine.CONFIG_SECTION_CONFIG,
-                    BaseDefine.CONFIG_KEY_PASSWORD, m_dbPassword);
+                    BaseDefine.CONFIG_KEY_PASSWORD, base64DbPassword);
 
                 //更新数据库实例下拉框
                 comboDBInstance.BeginUpdate();
@@ -118,7 +121,6 @@ namespace HMQConfig
                     comboDBInstance.Items.Add(dbName);
                 }
                 comboDBInstance.EndUpdate();
-
 
                 MessageBox.Show("数据库连接成功，请选择一个数据库实例。");
             }
@@ -138,8 +140,10 @@ namespace HMQConfig
             Log.GetLogger().DebugFormat("选择数据库实例：{0}", comboDBInstance.Text);
 
             m_dbInstance = comboDBInstance.Text;
+
+            string base64Instance = Base64Util.Base64Encode(m_dbInstance);
             INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DB, BaseDefine.CONFIG_SECTION_CONFIG,
-                BaseDefine.CONFIG_KEY_INSTANCE, m_dbInstance);
+                BaseDefine.CONFIG_KEY_INSTANCE, base64Instance);
         }
     }
 }
