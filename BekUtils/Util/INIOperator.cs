@@ -321,6 +321,42 @@ namespace BekUtils.Util
             return INIOperator.WritePrivateProfileSection(section, string.Empty, iniFile);
         }
 
+        //从INI配置文件取值，返回int类型
+        public static int INIGetIntValue(string iniFile, string section, string key, int defaultValue)
+        {
+            int nRet = defaultValue;
+
+            try
+            {
+                string retStr = INIOperator.INIGetStringValue(iniFile, section, key, string.Empty);
+
+                nRet = string.IsNullOrEmpty(retStr) ? defaultValue : int.Parse(retStr);
+            }
+            catch (Exception e)
+            {
+            }
+
+            return nRet;
+        }
+
+        //从INI配置文件取值，返回double类型
+        public static double INIGetDoubleValue(string iniFile, string section, string key, double defaultValue)
+        {
+            double dRet = defaultValue;
+
+            try
+            {
+                string retStr = INIOperator.INIGetStringValue(iniFile, section, key, string.Empty);
+
+                dRet = string.IsNullOrEmpty(retStr) ? defaultValue : double.Parse(retStr);
+            }
+            catch (Exception e)
+            {
+            }
+
+            return dRet;
+        }
+
 
         private void TestIniINIOperation()
         {
