@@ -90,7 +90,6 @@ namespace HMQService.Server
             string strXmbh = retArray[5];   //项目编号
             string strZkzh = retArray[6];   //准考证号
             string strTime = retArray[7];   //时间
-            string score = retArray[8]; //得分
 
             if (!m_dicCars.ContainsKey(nKch))
             {
@@ -98,8 +97,8 @@ namespace HMQService.Server
                 return;
             }
             Log.GetLogger().InfoFormat(
-                "接收到车载接口信息，考车号={0}, 类型={1}, 项目编号={2}, 准考证号={3}, 时间={4}, 得分={5}",
-                nKch, nType, strXmbh, strZkzh, strTime, score);
+                "接收到车载接口信息，考车号={0}, 类型={1}, 项目编号={2}, 准考证号={3}, 时间={4}",
+                nKch, nType, strXmbh, strZkzh, strTime);
 
             switch (nType)
             {
@@ -130,11 +129,14 @@ namespace HMQService.Server
                     break;
                 case BaseDefine.PACK_TYPE_M17C56:   //考试完成
                     {
+                        string score = retArray[5]; //17C56时该字段为考试成绩
                         int kscj = string.IsNullOrEmpty(score) ? 0 : int.Parse(score);
-                        if (0 == kscj)
+
+                        Log.GetLogger().InfoFormat("车载传过来的考试成绩为：{0}", kscj);
+                        
+                        if (kscj < 0)
                         {
-                            errorMsg = string.Format("车载接口传的考试成绩为 {0}", score);
-                            goto END;
+                            kscj = 0;
                         }
 
                         HandleM17C56(nKch, kscj);
