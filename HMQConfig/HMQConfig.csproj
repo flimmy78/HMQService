@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseDefine.cs" />
+    <Compile Include="CameraConf.cs" />
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
