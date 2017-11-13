@@ -16,6 +16,7 @@ namespace HMQConfig
         public static readonly string DB_FIELD_MM = "密码";
         public static readonly string DB_FIELD_DKH = "端口号";
         public static readonly string DB_FIELD_TDH = "通道号";
+        public static readonly string DB_FIELD_BZ = "备注";
         public static readonly string DB_FIELD_TRANSMODE = "TransMode";
         public static readonly string DB_FIELD_MEDIAIP = "MediaIP";
         public static readonly string DB_FIELD_NID = "Nid";

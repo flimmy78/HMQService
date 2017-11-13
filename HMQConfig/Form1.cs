@@ -63,6 +63,7 @@ namespace HMQConfig
             comboDBInstance.DataSource = null;
             comboDBInstance.Text = "";
             comboDBInstance.EndUpdate();
+            labelState.Text = string.Empty;
 
             List<string> dbNames = new List<string>();
             string connStr = string.Format(BaseDefine.DB_CONN_FORMAT, textDBIP.Text,
@@ -157,6 +158,15 @@ namespace HMQConfig
 
         private void btnSelectFile_Click(object sender, EventArgs e)
         {
+            if (string.IsNullOrEmpty(m_dbAddress) || string.IsNullOrEmpty(m_dbUsername) || 
+                string.IsNullOrEmpty(m_dbPassword) || string.IsNullOrEmpty(m_dbInstance))
+            {
+                MessageBox.Show("请先配置数据库连接。");
+                return;
+            }
+
+            labelState.Text = string.Empty;
+
             //选择 Excel
             string excelFilePath = string.Empty;
             OpenFileDialog fd = new OpenFileDialog();
@@ -199,6 +209,10 @@ namespace HMQConfig
                 MessageBox.Show(errorMsg);
                 return;
             }
+
+            labelState.Text = string.Format("成功导入 {0}", excelFilePath);
+            Log.GetLogger().InfoFormat("导入Excel配置成功");
+            MessageBox.Show("导入Excel配置成功");
         }
 
         private bool ReadFromExcel(string filePath, ref Dictionary<string, HMQConf> dicHmq, 
@@ -537,6 +551,7 @@ namespace HMQConfig
         {
             errorMsg = string.Empty;
 
+            IDataProvider sqlProvider = null;
             string connStr = string.Format(BaseDefine.DB_CONN_FORMAT, m_dbAddress,
                 m_dbInstance, m_dbUsername, m_dbPassword);
 
@@ -544,51 +559,82 @@ namespace HMQConfig
             {
                 if (1 == m_dbType)
                 {
-                    m_dbProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.SqlDataProvider, connStr);
+                    sqlProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.SqlDataProvider, connStr);
                 }
                 else
                 {
-                    m_dbProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.OracleDataProvider, connStr);
+                    sqlProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.OracleDataProvider, connStr);
+                }
+
+                if (null == sqlProvider)
+                {
+                    errorMsg = string.Format("连接数据库失败，connStr={0}", connStr);
+                    return false;
                 }
 
                 foreach(string key in dicCamera.Keys)
                 {
-                    string[] strArray = BaseMethod.SplitString(key, '_', out errorMsg);
-                    if (strArray.Length != 2)
+                    try
                     {
-                        errorMsg = string.Format("摄像头配置存在错误的键值:{0}", key);
-                        return false;
-                    }
+                        string[] strArray = BaseMethod.SplitString(key, '_', out errorMsg);
+                        if (strArray.Length != 2)
+                        {
+                            errorMsg = string.Format("摄像头配置存在错误的键值:{0}", key);
+                            return false;
+                        }
 
-                    string bh = strArray[0];
-                    string nid = strArray[1];
-                    if (string.IsNullOrEmpty(bh) || string.IsNullOrEmpty(nid))
+                        string bh = strArray[0];
+                        string nid = strArray[1];
+                        if (string.IsNullOrEmpty(bh) || string.IsNullOrEmpty(nid))
+                        {
+                            errorMsg = string.Format("摄像头配置存在错误的键值:{0}", key);
+                            return false;
+                        }
+
+                        CameraConf camera = dicCamera[key];
+
+                        //先删除旧记录
+                        string sql = string.Format("delete from {0} where {1}='{2}' and {3}='{4}';", BaseDefine.DB_TABLE_TBKVIDEO,
+                            BaseDefine.DB_FIELD_BH, bh, BaseDefine.DB_FIELD_NID, nid);
+                        int nRet = sqlProvider.ExecuteNonQuery(sql);
+                        if (nRet < 0)
+                        {
+                            Log.GetLogger().ErrorFormat("delete error，nRet = {0}, sql={1}", nRet, sql);
+                        }
+
+                        System.Threading.Thread.Sleep(10);
+
+                        //插入新记录
+                        sql = string.Format("insert into {0}('{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}') values('{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}');",
+                            BaseDefine.DB_TABLE_TBKVIDEO,
+                            BaseDefine.DB_FIELD_BH,
+                            BaseDefine.DB_FIELD_SBIP,
+                            BaseDefine.DB_FIELD_DKH,
+                            BaseDefine.DB_FIELD_YHM,
+                            BaseDefine.DB_FIELD_MM,
+                            BaseDefine.DB_FIELD_TDH,
+                            BaseDefine.DB_FIELD_BZ,
+                            BaseDefine.DB_FIELD_NID,
+                            BaseDefine.DB_FIELD_MEDIAIP,
+                            BaseDefine.DB_FIELD_TRANSMODE,
+                            bh, camera.CameraIP, camera.CameraPort, camera.RasUser,
+                            camera.RasPassword, camera.DwChannel, camera.Bz, nid, camera.MediaIP, camera.Mllx);
+                        nRet = sqlProvider.ExecuteNonQuery(sql);
+                        if (nRet != 1)
+                        {
+                            Log.GetLogger().ErrorFormat("insert error，nRet = {0}, sql={1}", nRet, sql);
+                        }
+
+                        //System.Threading.Thread.Sleep(1000);
+                    }
+                    catch(Exception e)
                     {
-                        errorMsg = string.Format("摄像头配置存在错误的键值:{0}", key);
-                        return false;
+                        Log.GetLogger().DebugFormat("execute sql catch an error, {0}", e.Message);
                     }
-
-                    CameraConf camera = dicCamera[key];
-
-                    //先删除旧记录
-                    string sql = string.Format("delete from {0} where {1}='{2}' and {3}='{4}';", BaseDefine.DB_TABLE_TBKVIDEO,
-                        BaseDefine.DB_FIELD_BH, bh, BaseDefine.DB_FIELD_NID, nid);
-                    int nRet = m_dbProvider.ExecuteNonQuery(sql);
-                    if (nRet < 0)
-                    {
-                        Log.GetLogger().ErrorFormat("delete error，nRet = {0}, sql={1}", nRet, sql);
-                    }
-
-                    //插入新记录
-                    sql = string.Format("insert into {0} values('{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}');",
-                        BaseDefine.DB_TABLE_TBKVIDEO, bh, camera.CameraIP, camera.CameraPort, camera.RasUser,
-                        camera.RasPassword, camera.DwChannel, camera.Bz, nid, camera.MediaIP, camera.Mllx);
-                    nRet = m_dbProvider.ExecuteNonQuery(sql);
-                    if (nRet != 1)
-                    {
-                        Log.GetLogger().ErrorFormat("insert error，nRet = {0}, sql={1}", nRet, sql);
-                    }
+                    
                 }
+
+                sqlProvider.Dispose();
             }
             catch (Exception e)
             {

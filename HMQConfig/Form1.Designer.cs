@@ -42,6 +42,7 @@ namespace HMQConfig
             this.btnDBLogin = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.btn_SelectFile = new System.Windows.Forms.Button();
+            this.labelState = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.SuspendLayout();
@@ -143,6 +144,7 @@ namespace HMQConfig
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.labelState);
             this.groupBox2.Controls.Add(this.btn_SelectFile);
             this.groupBox2.Location = new System.Drawing.Point(12, 224);
             this.groupBox2.Name = "groupBox2";
@@ -161,6 +163,14 @@ namespace HMQConfig
             this.btn_SelectFile.UseVisualStyleBackColor = true;
             this.btn_SelectFile.Click += new System.EventHandler(this.btnSelectFile_Click);
             // 
+            // labelState
+            // 
+            this.labelState.AutoSize = true;
+            this.labelState.Location = new System.Drawing.Point(97, 36);
+            this.labelState.Name = "labelState";
+            this.labelState.Size = new System.Drawing.Size(0, 12);
+            this.labelState.TabIndex = 1;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -174,6 +184,7 @@ namespace HMQConfig
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -192,6 +203,7 @@ namespace HMQConfig
         private System.Windows.Forms.ComboBox comboDBInstance;
         private GroupBox groupBox2;
         private Button btn_SelectFile;
+        private Label labelState;
     }
 }
 

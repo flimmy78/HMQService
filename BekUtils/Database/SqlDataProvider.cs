@@ -75,7 +75,7 @@ namespace BekUtils.Database
                     return -1;
                 int rv = -1;
 
-                SqlTransaction sqlTransaction = null;
+                //SqlTransaction sqlTransaction = null;
                 try
                 {
                     if (System.Data.ConnectionState.Closed == sqlConnection.State)
@@ -83,16 +83,21 @@ namespace BekUtils.Database
                         sqlConnection.Open();
                     }
 
-                    sqlCommand = new SqlCommand(sql, sqlConnection);
-                    sqlTransaction = sqlConnection.BeginTransaction();
-                    sqlCommand.Transaction = sqlTransaction;
+                    //sqlCommand = new SqlCommand(sql, sqlConnection);
+                    //sqlTransaction = sqlConnection.BeginTransaction();
+                    //sqlCommand.Transaction = sqlTransaction;
+                    //rv = sqlCommand.ExecuteNonQuery();
+                    //sqlTransaction.Commit();
 
+                    sqlCommand = new SqlCommand();
+                    sqlCommand.Connection = sqlConnection;
+                    sqlCommand.CommandType = CommandType.Text;
+                    sqlCommand.CommandText = sql;
                     rv = sqlCommand.ExecuteNonQuery();
-                    sqlTransaction.Commit();
                 }
                 catch(Exception e)
                 {
-                    sqlTransaction.Rollback();
+                    //sqlTransaction.Rollback();
                     rv = -1;
                 }
 
