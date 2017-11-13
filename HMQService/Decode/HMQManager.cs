@@ -213,31 +213,65 @@ namespace HMQService.Decode
         {
             string retConnectionStr = string.Empty;
 
+            //try
+            //{
+            //    string configStr = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_SQLLINK,
+            //        BaseDefine.CONFIG_KEY_ServerPZ, string.Empty);
+            //    if (!string.IsNullOrEmpty(configStr))
+            //    {
+            //        foreach (char c in configStr.ToCharArray())
+            //        {
+            //            int nC = (int)c;
+            //            retConnectionStr = (char)(nC - 1) + retConnectionStr;
+            //        }
+            //    }
+            //}
+            //catch(Exception e)
+            //{
+            //    Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+            //}
+            //Log.GetLogger().InfoFormat("connection string after decode : {0}", retConnectionStr);
+            ////配置文件里的数据库连接字符串包含"Provider=SQLOLEDB;"，这在C#代码中不适用，这里去除该字段
+            //if (0 == retConnectionStr.IndexOf("Provider=SQLOLEDB;"))
+            //{
+            //    retConnectionStr = retConnectionStr.Substring(18);
+            //}
+            //Log.GetLogger().InfoFormat("connection string after delete : {0}", retConnectionStr);
+
             try
             {
-                string configStr = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_SQLLINK,
-                    BaseDefine.CONFIG_KEY_ServerPZ, string.Empty);
-                if (!string.IsNullOrEmpty(configStr))
+                string encodeAddress = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_DB,
+                    BaseDefine.CONFIG_SECTION_CONFIG, BaseDefine.CONFIG_KEY_DBADDRESS, "");
+                string encodeUsername = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_DB,
+                    BaseDefine.CONFIG_SECTION_CONFIG, BaseDefine.CONFIG_KEY_USERNAME, "");
+                string encodePassword = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_DB,
+                    BaseDefine.CONFIG_SECTION_CONFIG, BaseDefine.CONFIG_KEY_PASSWORD, "");
+                string encodeInstance = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_DB,
+                    BaseDefine.CONFIG_SECTION_CONFIG, BaseDefine.CONFIG_KEY_INSTANCE, "");
+                if (string.IsNullOrEmpty(encodeAddress) || string.IsNullOrEmpty(encodeUsername) || string.IsNullOrEmpty(encodePassword)
+                    || string.IsNullOrEmpty(encodeInstance))
                 {
-                    foreach (char c in configStr.ToCharArray())
-                    {
-                        int nC = (int)c;
-                        retConnectionStr = (char)(nC - 1) + retConnectionStr;
-                    }
+                    Log.GetLogger().ErrorFormat("数据库配置存在异常");
+                    return retConnectionStr;
                 }
+
+                string dbAddress = BekUtils.Util.Base64Util.Base64Decode(encodeAddress);
+                string dbUsername = BekUtils.Util.Base64Util.Base64Decode(encodeUsername);
+                string dbPassword = BekUtils.Util.Base64Util.Base64Decode(encodePassword);
+                string dbInstance = BekUtils.Util.Base64Util.Base64Decode(encodeInstance);
+                if (string.IsNullOrEmpty(dbAddress) || string.IsNullOrEmpty(dbUsername) || string.IsNullOrEmpty(dbPassword)
+                    || string.IsNullOrEmpty(dbInstance))
+                {
+                    Log.GetLogger().ErrorFormat("数据库配置存在异常");
+                    return retConnectionStr;
+                }
+
+                retConnectionStr = string.Format(BaseDefine.DB_CONN_FORMAT, dbAddress, dbInstance, dbUsername, dbPassword);
             }
             catch(Exception e)
             {
                 Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
             }
-            Log.GetLogger().InfoFormat("connection string after decode : {0}", retConnectionStr);
-
-            //配置文件里的数据库连接字符串包含"Provider=SQLOLEDB;"，这在C#代码中不适用，这里去除该字段
-            if (0 == retConnectionStr.IndexOf("Provider=SQLOLEDB;"))
-            {
-                retConnectionStr = retConnectionStr.Substring(18);
-            }
-            Log.GetLogger().InfoFormat("connection string after delete : {0}", retConnectionStr);
 
             return retConnectionStr;
         }
@@ -401,12 +435,12 @@ namespace HMQService.Decode
             int kch = 0;
             int count = 4;
             string key = string.Empty;
-            m_dispalyShow[4] = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+            m_dispalyShow[4] = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_VIDEOWND, 1);
             for (int i = 0; i < count; i++)
             {
                 key = string.Format("{0}{1}", BaseDefine.CONFIG_KEY_DISPLAY, i + 1);
-                m_dispalyShow[i] = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+                m_dispalyShow[i] = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                     key, i);
                 kch += m_dispalyShow[i];
             }
@@ -416,7 +450,7 @@ namespace HMQService.Decode
                 {
                     key = string.Format("{0}{1}", BaseDefine.CONFIG_KEY_DISPLAY, i + 1);
                     string value = i.ToString();
-                    INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG, key, value);
+                    INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG, key, value);
                     m_dispalyShow[i] = i;
                 }
             }
@@ -424,13 +458,13 @@ namespace HMQService.Decode
                 m_dispalyShow[2], m_dispalyShow[3], m_dispalyShow[4]);
 
             //合码器初始化
-            int nNum = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_JMQ,
+            int nNum = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_JMQ,
                 BaseDefine.CONFIG_KEY_NUM, 0);    //合码器数量
             int nEven = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_EVEN, 0);    //是否隔行合码
             int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
-            int nWnd2 = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nWnd2 = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_WND2, 0);    //画面二状态
             int nHMQ = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_HMQ, 0);  //配置的是合码器还是解码器
@@ -444,7 +478,7 @@ namespace HMQService.Decode
             string errorMsg = string.Empty;
             for (int i = 1; i <= nNum; i++)
             {
-                string strConf = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_JMQ,
+                string strConf = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_JMQ,
                     i.ToString(), string.Empty);
                 string[] confArray = BaseMethod.SplitString(strConf, BaseDefine.SPLIT_CHAR_COMMA, out errorMsg);
                 if (!string.IsNullOrEmpty(errorMsg) || confArray.Length != 4)
@@ -482,7 +516,7 @@ namespace HMQService.Decode
                     }
 
                     string keyBNC = string.Format("BNC{0}", j + 1); //从 1 开始
-                    int nKch = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, sectionJMQ, keyBNC, -1);
+                    int nKch = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CAR, sectionJMQ, keyBNC, -1);
                     if (-1 == nKch)  //没有配置
                     {
                         Log.GetLogger().InfoFormat("合码器 JMQ{0} 的 BNC 通道 {1} 处于空闲，可以配置。", i, keyBNC);

@@ -221,11 +221,11 @@ namespace HMQService.Server
         private bool HandleM17C52(int kch, string zkzmbh, string xmbh)
         {
             int xmCode = string.IsNullOrEmpty(xmbh) ? 0 : int.Parse(xmbh);
-            int nWnd2 = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nWnd2 = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_WND2, 0);    //画面二状态
             Log.GetLogger().DebugFormat("nWnd2 = {0}", nWnd2);
 
-            if (nWnd2 != 1)
+            if (nWnd2 != 1)     //此值为1值，画面二不需要动态切换
             {
                 string key = string.Format("{0}_1", xmbh);
                 Log.GetLogger().DebugFormat("camera key = {0}", key);

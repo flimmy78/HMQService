@@ -106,6 +106,10 @@
       <Project>{abb32a29-af50-47fa-b243-5fd75a5aba54}</Project>
       <Name>AviFile</Name>
     </ProjectReference>
+    <ProjectReference Include="..\BekUtils\BekUtils.csproj">
+      <Project>{b23c52c0-63c4-4cfe-bcd1-978402c2b709}</Project>
+      <Name>BekUtils</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

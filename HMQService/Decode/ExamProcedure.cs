@@ -422,7 +422,7 @@ namespace HMQService.Decode
                     m_bDrawCar = true;
 
                     string carSkinPath = string.Empty;
-                    int skinNo = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CARSKIN,
+                    int skinNo = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CARSKIN,
                         m_kch.ToString(), 0);
                     if (0 == skinNo)
                     {
@@ -436,7 +436,7 @@ namespace HMQService.Decode
                     imgCar = Image.FromFile(carSkinPath);
                 }
 
-                m_mapPy = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CONFIG, BaseDefine.CONFIG_SECTION_CONFIG,
+                m_mapPy = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                     BaseDefine.CONFIG_KEY_DITUPY, 1);
             }  
         }
