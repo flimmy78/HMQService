@@ -37,6 +37,40 @@ namespace HMQConfig
             log4net.Config.XmlConfigurator.Configure();
 
             InitializeComponent();
+
+            //读取初始配置
+            int nDisplay1 = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_DISPLAY1, 0);
+            int nDisplay2 = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_DISPLAY2, 1);
+            int nDisplay3 = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_DISPLAY3, 2);
+            int nDisplay4 = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_DISPLAY4, 3);
+            int nVideoWnd = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_VIDEOWND, 1);
+            int nEven = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_EVEN, 0);
+
+            textBoxDisplay1.Text = nDisplay1.ToString();
+            textBoxDisplay2.Text = nDisplay2.ToString();
+            textBoxDisplay3.Text = nDisplay3.ToString();
+            textBoxDisplay4.Text = nDisplay4.ToString();
+            textBoxVideoWnd.Text = nVideoWnd.ToString();
+
+            comboBoxEven.BeginUpdate();
+            comboBoxEven.Items.Add(BaseDefine.STRING_EVEN_NO);
+            comboBoxEven.Items.Add(BaseDefine.STRING_EVEN_YES);
+            if (1 == nEven)
+            {
+                comboBoxEven.SelectedIndex = 1;
+            }
+            else
+            {
+                comboBoxEven.SelectedIndex = 0;
+            }
+            comboBoxEven.EndUpdate();
+
         }
 
         private void btnDBLogin_Click(object sender, EventArgs e)
@@ -643,6 +677,43 @@ namespace HMQConfig
             }
 
             return true;
+        }
+
+        private void btnSaveDisplayConf_Click(object sender, EventArgs e)
+        {
+            string strDisplay1 = textBoxDisplay1.Text;
+            string strDisplay2 = textBoxDisplay2.Text;
+            string strDisplay3 = textBoxDisplay3.Text;
+            string strDisplay4 = textBoxDisplay4.Text;
+            string strVideoWnd = textBoxVideoWnd.Text;
+            string strEven = comboBoxEven.Text;
+
+            INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_DISPLAY1, strDisplay1);
+            INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_DISPLAY2, strDisplay2);
+            INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_DISPLAY3, strDisplay3);
+            INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_DISPLAY4, strDisplay4);
+            INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_VIDEOWND, strVideoWnd);
+
+            //是否隔行解码
+            if (BaseDefine.STRING_EVEN_YES == strEven)
+            {
+                INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_EVEN, "1");
+            }
+            else
+            {
+                INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_EVEN, "0");
+            }
+
+            Log.GetLogger().InfoFormat("保存配置成功，display1={0}, display2={1}, display3={2}, display4={3}, videownd={4}, even={5}",
+                strDisplay1, strDisplay2, strDisplay3, strDisplay4, strVideoWnd, strEven);
+            MessageBox.Show("保存配置成功");
         }
     }
 }

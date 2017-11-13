@@ -23,6 +23,7 @@ namespace HMQConfig
 
         public static readonly string CONFIG_FILE_PATH_ENV = @".\conf\HS_CONF_ENV.ini";
         public static readonly string CONFIG_FILE_PATH_DB = @".\conf\HS_CONF_DB.ini";
+        public static readonly string CONFIG_FILE_PATH_DISPLAY = @".\conf\HS_CONF_DISPLAY.ini";
         public static readonly string CONFIG_FILE_PATH_CAR = @".\conf\HS_CONF_CAR.ini";
         public static readonly string CONFIG_SECTION_CONFIG = @"CONFIG";
         public static readonly string CONFIG_SECTION_JMQ = @"JMQ";
@@ -33,6 +34,13 @@ namespace HMQConfig
         public static readonly string CONFIG_KEY_INSTANCE = @"INSTANCE";
         public static readonly string CONFIG_KEY_NUM = @"NUM";
         public static readonly string CONFIG_KEY_BNC = @"BNC";
+        public static readonly string CONFIG_KEY_EVEN = "EVEN";
+        public static readonly string CONFIG_KEY_DISPLAY = "DISPLAY";
+        public static readonly string CONFIG_KEY_DISPLAY1 = "DISPLAY1";
+        public static readonly string CONFIG_KEY_DISPLAY2 = "DISPLAY2";
+        public static readonly string CONFIG_KEY_DISPLAY3 = "DISPLAY3";
+        public static readonly string CONFIG_KEY_DISPLAY4 = "DISPLAY4";
+        public static readonly string CONFIG_KEY_VIDEOWND = "VIDEOWND";
 
         public static readonly string EXCEL_SHEET_NAME_CONF_TRANS = @"通道配置";
         public static readonly string EXCEL_SHEET_NAME_CONF_CAMERA_CAR = @"车载摄像头";
@@ -40,5 +48,7 @@ namespace HMQConfig
 
         public static readonly string STRING_BITSTREAM_MASTER = @"主码流";
         public static readonly string STRING_BITSTREAM_SUB = @"子码流";
+        public static readonly string STRING_EVEN_YES = @"是";
+        public static readonly string STRING_EVEN_NO = @"否";
     }
 }

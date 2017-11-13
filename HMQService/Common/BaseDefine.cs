@@ -90,6 +90,9 @@ namespace HMQService.Common
 
         //配置文件
         public static readonly string CONFIG_FILE_PATH_ENV = @".\conf\HS_CONF_ENV.ini";
+        public static readonly string CONFIG_FILE_PATH_DB = @".\conf\HS_CONF_DB.ini";
+        public static readonly string CONFIG_FILE_PATH_DISPLAY = @".\conf\HS_CONF_DISPLAY.ini";
+        public static readonly string CONFIG_FILE_PATH_CAR = @".\conf\HS_CONF_CAR.ini";
         public static readonly string CONFIG_FILE_PATH_CONFIG = @".\config.ini";
         public static readonly string CONFIG_FILE_PATH_ZZIPChannel = @".\ZZIPChannel.dat";
         public static readonly string CONFIG_FILE_PATH_MAP = @".\MAP.cfg";
