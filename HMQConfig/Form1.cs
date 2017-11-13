@@ -279,7 +279,7 @@ namespace HMQConfig
                     errorMsg = string.Format("找不到名称为 {0} 的 Sheet 页，请检查 excel 文件。", sheetName);
                     goto END;
                 }
-                if (sheet.LastRowNum <= 1)
+                if (sheet.LastRowNum < 1)
                 {
                     errorMsg = string.Format("Sheet 页 : {0} 的行数为 {1}，请检查 excel 文件。", sheetName, sheet.LastRowNum);
                     goto END;
@@ -342,7 +342,7 @@ namespace HMQConfig
                     errorMsg = string.Format("找不到名称为 {0} 的 Sheet 页，请检查 excel 文件。", sheetName);
                     goto END;
                 }
-                if (sheet.LastRowNum <= 1)
+                if (sheet.LastRowNum < 1)
                 {
                     errorMsg = string.Format("Sheet 页 : {0} 的行数为 {1}，请检查 excel 文件。", sheetName, sheet.LastRowNum);
                     goto END;
@@ -414,7 +414,7 @@ namespace HMQConfig
                     errorMsg = string.Format("找不到名称为 {0} 的 Sheet 页，请检查 excel 文件。", sheetName);
                     goto END;
                 }
-                if (sheet.LastRowNum <= 1)
+                if (sheet.LastRowNum < 1)
                 {
                     errorMsg = string.Format("Sheet 页 : {0} 的行数为 {1}，请检查 excel 文件。", sheetName, sheet.LastRowNum);
                     goto END;

@@ -39,8 +39,7 @@ AlwaysRestart=yes
 Name: "chinesesimp"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "./3rd-party/vcredist.exe"; DestDir: "{app}/3rd"; Flags: onlyifdoesntexist ignoreversion
-;Source: "./3rd-party/{#DotNetFile}"; DestDir: "{tmp}"; Flags: onlyifdoesntexist ignoreversion deleteafterinstall; AfterInstall: InstallFramework; Check: FrameworkIsNotInstalled
+Source: "./3rd-party/vcredist.exe"; DestDir: "{app}/3rd"; Flags: onlyifdoesntexist ignoreversionSource: "./3rd-party/{#DotNetFile}"; DestDir: "{tmp}"; Flags: onlyifdoesntexist ignoreversion deleteafterinstall; AfterInstall: InstallFramework; Check: FrameworkIsNotInstalled
 Source: "./3rd-party/mencoder.exe"; DestDir: "{app}/3rd"; Flags: ignoreversion
 Source: "./3rd-party/HKLib/*"; DestDir: "{app}/bin"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "../HMQService/bin/Release/*"; DestDir: "{app}"; Flags: ignoreversion
