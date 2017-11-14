@@ -792,6 +792,122 @@ namespace HMQConfig
             return true;
         }
 
+        private bool ReadCameraConfFromDB(out Dictionary<string, CameraConf> dicCamera, out string errorMsg)
+        {
+            dicCamera = new Dictionary<string, CameraConf>();
+            errorMsg = string.Empty;
+
+            IDataProvider sqlProvider = null;
+            string connStr = string.Format(BaseDefine.DB_CONN_FORMAT, m_dbAddress,
+                m_dbInstance, m_dbUsername, m_dbPassword);
+
+            try
+            {
+                if (1 == m_dbType)
+                {
+                    sqlProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.SqlDataProvider, connStr);
+                }
+                else
+                {
+                    sqlProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.OracleDataProvider, connStr);
+                }
+
+                if (null == sqlProvider)
+                {
+                    errorMsg = string.Format("连接数据库失败，connStr={0}", connStr);
+                    return false;
+                }
+
+                string sql = string.Format("select {0},{1},{2},{3},{4},{5},{6},{7},{8},{9} from {10};", 
+                    BaseDefine.DB_FIELD_BH,
+                    BaseDefine.DB_FIELD_SBIP,
+                    BaseDefine.DB_FIELD_DKH,
+                    BaseDefine.DB_FIELD_YHM,
+                    BaseDefine.DB_FIELD_MM,
+                    BaseDefine.DB_FIELD_TDH,
+                    BaseDefine.DB_FIELD_BZ,
+                    BaseDefine.DB_FIELD_NID,
+                    BaseDefine.DB_FIELD_MEDIAIP,
+                    BaseDefine.DB_FIELD_TRANSMODE,
+                    BaseDefine.DB_TABLE_TBKVIDEO);
+                DataSet ds = sqlProvider.RetriveDataSet(sql);
+                if (null != ds)
+                {
+                    for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
+                    {
+                        DataRow row = ds.Tables[0].Rows[i];
+
+                        string bh = GetDataColumnStringValue(row, 0);
+                        string sbip = GetDataColumnStringValue(row, 1);
+                        int dkh = GetDataColumnIntValue(row, 2);
+                        string yhm = GetDataColumnStringValue(row, 3);
+                        string mm = GetDataColumnStringValue(row, 4);
+                        int tdh = GetDataColumnIntValue(row, 5);
+                        string bz = GetDataColumnStringValue(row, 6);
+                        string nid = GetDataColumnStringValue(row, 7);
+                        string mediaIp = GetDataColumnStringValue(row, 8);
+                        int transmode = GetDataColumnIntValue(row, 9);
+                        if (string.IsNullOrEmpty(bh) || string.IsNullOrEmpty(sbip) || string.IsNullOrEmpty(yhm) || string.IsNullOrEmpty(mm)
+                            || string.IsNullOrEmpty(nid) || 0==dkh || 0==tdh)
+                        {
+                            Log.GetLogger().InfoFormat("数据库存在错误数据，bh={0}, nid={1}", bh, nid);
+                            continue;
+                        }
+
+                        string key = bh + "_" + nid;
+                        if (!dicCamera.ContainsKey(key))
+                        {
+                            CameraConf camera = new CameraConf(bh, sbip, yhm, mm, mediaIp, dkh, tdh, transmode, bz);
+                            dicCamera.Add(key, camera);
+                        }
+
+                    }
+                }
+
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+                return false;
+            }
+
+            return true;
+        }
+
+        private string GetDataColumnStringValue(DataRow row, int index)
+        {
+            string retStr = string.Empty;
+            if (null == row || index < 0)
+            {
+                return retStr;
+            }
+
+            try
+            {
+                retStr = row[index].ToString();
+            }
+            catch(Exception e)
+            {
+            }
+
+            return retStr;
+        }
+
+        private int GetDataColumnIntValue(DataRow row, int index)
+        {
+            int nRet = 0;
+
+            string strRet = GetDataColumnStringValue(row, index);
+            try
+            {
+                nRet = string.IsNullOrEmpty(strRet) ? 0 : int.Parse(strRet);
+            }
+            catch(Exception e)
+            { }
+
+            return nRet;
+        }
+
         private void btnSaveDisplayConf_Click(object sender, EventArgs e)
         {
             string strDisplay1 = textBoxDisplay1.Text;
@@ -880,8 +996,15 @@ namespace HMQConfig
                 Log.GetLogger().InfoFormat("从配置文件读取合码器通道配置失败");
             }
 
+
             //从数据库读取摄像头配置
-            int kkk = 0;
+            Dictionary<string, CameraConf> dicCamera = new Dictionary<string, CameraConf>();
+            if (!ReadCameraConfFromDB(out dicCamera, out errorMsg))
+            {
+                Log.GetLogger().InfoFormat("从数据库读取摄像头配置失败");
+            }
+
+            int k = 0;
 
         }
     }
