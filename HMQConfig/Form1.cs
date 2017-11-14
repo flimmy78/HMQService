@@ -965,12 +965,12 @@ namespace HMQConfig
         /// <param name="e"></param>
         private void btnExportTemplate_Click(object sender, EventArgs e)
         {
-            //if (string.IsNullOrEmpty(m_dbAddress) || string.IsNullOrEmpty(m_dbUsername) ||
-            //    string.IsNullOrEmpty(m_dbPassword) || string.IsNullOrEmpty(m_dbInstance))
-            //{
-            //    MessageBox.Show("请先配置数据库连接。");
-            //    return;
-            //}
+            if (string.IsNullOrEmpty(m_dbAddress) || string.IsNullOrEmpty(m_dbUsername) ||
+                string.IsNullOrEmpty(m_dbPassword) || string.IsNullOrEmpty(m_dbInstance))
+            {
+                MessageBox.Show("请先配置数据库连接。");
+                return;
+            }
 
             labelState.Text = string.Empty;
 
@@ -981,7 +981,7 @@ namespace HMQConfig
             folderDlg.Description = @"请选择 Excel 模板存放目录";
             if (DialogResult.OK == folderDlg.ShowDialog())
             {
-                excelFilePath = folderDlg.SelectedPath + BaseDefine.STRING_EXCEL_TEMPLATE;
+                excelFilePath = folderDlg.SelectedPath + @"\" + BaseDefine.STRING_EXCEL_TEMPLATE;
             }
             if (File.Exists(excelFilePath))
             {
@@ -1004,8 +1004,275 @@ namespace HMQConfig
                 Log.GetLogger().InfoFormat("从数据库读取摄像头配置失败");
             }
 
-            int k = 0;
-
+            //生成 excel 模板
+            if (!ExportExcelTemplate(excelFilePath, dicHmq, dicCamera))
+            {
+                Log.GetLogger().ErrorFormat("导出excel失败");
+                MessageBox.Show("导出excel失败");
+            }
+            else
+            {
+                MessageBox.Show("导出excel模板成功");
+            }
+          
         }
+
+        private bool ExportExcelTemplate(string filePath, Dictionary<string, HMQConf> dicHmq, Dictionary<string, CameraConf> dicCamera)
+        {
+            string errorMsg = string.Empty;
+
+            try
+            {
+                XSSFWorkbook wk = new XSSFWorkbook();
+
+                #region 创建模板(sheet页、第一行)
+                if (!CreateExcelTemplate(wk))
+                {
+                    errorMsg = string.Format("创建sheet页、行失败。filePath={0}", filePath);
+                    goto END;
+                }
+                #endregion
+
+                #region 写入通道配置
+                int rowNum = 1;
+                string sheetName = BaseDefine.EXCEL_SHEET_NAME_CONF_TRANS;
+                ISheet sheetTrans = wk.GetSheet(sheetName);
+                if (null == sheetTrans)
+                {
+                    errorMsg = string.Format("读取名为 {0} 的 sheet 页失败，filePath={1}", sheetTrans, filePath);
+                    goto END;
+                }
+                foreach(string key in dicHmq.Keys)
+                {
+                    HMQConf hmqConf = dicHmq[key];
+
+                    string ip = hmqConf.Ip;
+                    double port = (double)hmqConf.Port;
+                    string user = hmqConf.Username;
+                    string password = hmqConf.Password;
+                    Dictionary<int, int> dicTrans = hmqConf.DicTran2Car;
+
+                    foreach(int tranNo in dicTrans.Keys)
+                    {
+                        int kch = dicTrans[tranNo];
+
+                        double dTran = (double)tranNo;
+                        double dKch = (double)kch;
+
+                        IRow row = sheetTrans.CreateRow(rowNum++);    //创建新行
+
+                        CreateStringCell(row, 0, ip);
+                        CreateNumbericCell(row, 1, port);
+                        CreateStringCell(row, 2, user);
+                        CreateStringCell(row, 3, password);
+                        CreateNumbericCell(row, 4, dTran);
+                        CreateNumbericCell(row, 5, dKch);
+                    }
+                }
+                #endregion
+
+                #region 写入摄像头配置
+                int rowCar = 1;
+                int rowXm = 1;
+                string sheetCarName = BaseDefine.EXCEL_SHEET_NAME_CONF_CAMERA_CAR;
+                string sheetXmName = BaseDefine.EXCEL_SHEET_NAME_CONF_CAMERA_XM;
+                ISheet sheetCar = wk.GetSheet(sheetCarName);
+                ISheet sheetXm = wk.GetSheet(sheetXmName);
+                if (null == sheetCar)
+                {
+                    errorMsg = string.Format("读取名为 {0} 的 sheet 页失败，filePath={1}", sheetCarName, filePath);
+                    goto END;
+                }
+                if (null == sheetXm)
+                {
+                    errorMsg = string.Format("读取名为 {0} 的 sheet 页失败，filePath={1}", sheetXmName, filePath);
+                    goto END;
+                }
+                foreach (string key in dicCamera.Keys)
+                {
+                    string[] strArray = BaseMethod.SplitString(key, '_', out errorMsg);
+                    if (null == strArray || strArray.Length != 2)
+                    {
+                        errorMsg = string.Format("数据库值存在异常，key={0}", key);
+                        goto END;
+                    }
+
+                    try
+                    {
+                        CameraConf camera = dicCamera[key];
+                        string bh = strArray[0];
+                        string nid = strArray[1];
+
+                        int nNid = string.IsNullOrEmpty(nid) ? 0 : int.Parse(nid);
+
+                        if (bh.Contains("考车"))
+                        {
+                            IRow row = sheetCar.CreateRow(rowCar++);
+
+                            bh = bh.Substring(2);
+                            int nBh = string.IsNullOrEmpty(bh) ? 0 : int.Parse(bh);
+                            string mllx = (0 == camera.Mllx) ? BaseDefine.STRING_BITSTREAM_MASTER : BaseDefine.STRING_BITSTREAM_SUB;
+
+                            CreateNumbericCell(row, 0, (double)nBh);
+                            CreateStringCell(row, 1, camera.CameraIP);
+                            CreateStringCell(row, 2, camera.RasUser);
+                            CreateStringCell(row, 3, camera.RasPassword);
+                            CreateNumbericCell(row, 4, (double)camera.CameraPort);
+                            CreateNumbericCell(row, 5, (double)camera.DwChannel);
+                            CreateNumbericCell(row, 6, (double)nNid);
+                            CreateStringCell(row, 7, mllx);
+                            CreateStringCell(row, 8, camera.MediaIP);
+                        }
+                        else
+                        {
+                            IRow row = sheetXm.CreateRow(rowXm++);
+
+                            int nBh = string.IsNullOrEmpty(bh) ? 0 : int.Parse(bh);
+                            string mllx = (0 == camera.Mllx) ? BaseDefine.STRING_BITSTREAM_MASTER : BaseDefine.STRING_BITSTREAM_SUB;
+
+                            CreateNumbericCell(row, 0, (double)nBh);
+                            CreateStringCell(row, 1, camera.Bz);
+                            CreateStringCell(row, 2, camera.CameraIP);
+                            CreateStringCell(row, 3, camera.RasUser);
+                            CreateStringCell(row, 4, camera.RasPassword);
+                            CreateNumbericCell(row, 5, (double)camera.CameraPort);
+                            CreateNumbericCell(row, 6, (double)camera.DwChannel);
+                            CreateStringCell(row, 7, mllx);
+                            CreateStringCell(row, 8, camera.MediaIP);
+                        }
+
+
+                    }
+                    catch(Exception e)
+                    {
+                    }
+                }
+                #endregion
+
+                using (FileStream fs = File.OpenWrite(filePath))
+                {
+                    wk.Write(fs);
+                    fs.Close();
+                }
+            }
+            catch (Exception e)
+            {
+                errorMsg = string.Format("catch an error : {0}", e.Message);
+            }
+
+            END:
+            {
+                if (!string.IsNullOrEmpty(errorMsg))
+                {
+                    Log.GetLogger().ErrorFormat(errorMsg);
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool CreateExcelTemplate(XSSFWorkbook wk)
+        {
+            try
+            {
+                //通道配置
+                string sheetName = BaseDefine.EXCEL_SHEET_NAME_CONF_TRANS;
+                ISheet sheetTrans = wk.CreateSheet(sheetName);
+                if (null != sheetTrans)
+                {
+                    IRow row = sheetTrans.CreateRow(0);
+
+                    CreateStringCell(row, 0, "合码器/解码器IP");
+                    CreateStringCell(row, 1, "合码器/解码器端口");
+                    CreateStringCell(row, 2, "合码器/解码器用户名");
+                    CreateStringCell(row, 3, "合码器/解码器密码");
+                    CreateStringCell(row, 4, "合码器/解码器通道号");
+                    CreateStringCell(row, 5, "对应考车号（阿拉伯数字）");
+                }
+
+                //车载摄像头
+                sheetName = BaseDefine.EXCEL_SHEET_NAME_CONF_CAMERA_CAR;
+                ISheet sheetCar = wk.CreateSheet(sheetName);
+                if (null != sheetCar)
+                {
+                    IRow row = sheetCar.CreateRow(0);
+
+                    CreateStringCell(row, 0, "考车号（阿拉伯数字）");
+                    CreateStringCell(row, 1, "设备IP");
+                    CreateStringCell(row, 2, "用户名");
+                    CreateStringCell(row, 3, "密码");
+                    CreateStringCell(row, 4, "端口号");
+                    CreateStringCell(row, 5, "通道号");
+                    CreateStringCell(row, 6, "摄像头编号");
+                    CreateStringCell(row, 7, "码流类型（主码流/子码流）");
+                    CreateStringCell(row, 8, "流媒体IP（可为空）");
+                }
+
+                //项目摄像头
+                sheetName = BaseDefine.EXCEL_SHEET_NAME_CONF_CAMERA_XM;
+                ISheet sheetXm = wk.CreateSheet(sheetName);
+                if (null != sheetXm)
+                {
+                    IRow row = sheetXm.CreateRow(0);
+
+                    CreateStringCell(row, 0, "项目编号");
+                    CreateStringCell(row, 1, "项目名称");
+                    CreateStringCell(row, 2, "设备IP");
+                    CreateStringCell(row, 3, "用户名");
+                    CreateStringCell(row, 4, "密码");
+                    CreateStringCell(row, 5, "端口号");
+                    CreateStringCell(row, 6, "通道号");
+                    CreateStringCell(row, 7, "码流类型（主码流/子码流）");
+                    CreateStringCell(row, 8, "流媒体IP（可为空）");
+                }
+            }
+            catch(Exception e)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        private bool CreateStringCell(IRow row, int cellIndex, string value)
+        {
+            if (null == row || cellIndex < 0)
+            {
+                return false;
+            }
+
+            try
+            {
+                ICell cell = row.CreateCell(cellIndex);
+                cell.SetCellValue(value);
+            }
+            catch(Exception e)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool CreateNumbericCell(IRow row, int cellIndex, double value)
+        {
+            if (null == row || cellIndex < 0)
+            {
+                return false;
+            }
+
+            try
+            {
+                ICell cell = row.CreateCell(cellIndex);
+                cell.SetCellValue(value);
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
     }
 }
