@@ -51,6 +51,8 @@ namespace HMQConfig
                 BaseDefine.CONFIG_KEY_VIDEOWND, 1);
             int nEven = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_EVEN, 0);
+            int nWnd2 = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_WND2, 1);
 
             textBoxDisplay1.Text = nDisplay1.ToString();
             textBoxDisplay2.Text = nDisplay2.ToString();
@@ -58,6 +60,7 @@ namespace HMQConfig
             textBoxDisplay4.Text = nDisplay4.ToString();
             textBoxVideoWnd.Text = nVideoWnd.ToString();
 
+            //是否隔行解码
             comboBoxEven.BeginUpdate();
             comboBoxEven.Items.Add(BaseDefine.STRING_EVEN_NO);
             comboBoxEven.Items.Add(BaseDefine.STRING_EVEN_YES);
@@ -70,6 +73,20 @@ namespace HMQConfig
                 comboBoxEven.SelectedIndex = 0;
             }
             comboBoxEven.EndUpdate();
+
+            //画面二是否自动切换项目
+            comboBoxWnd2.BeginUpdate();
+            comboBoxWnd2.Items.Add(BaseDefine.STRING_WND2_YES);
+            comboBoxWnd2.Items.Add(BaseDefine.STRING_WND2_NO);
+            if (1 == nWnd2)
+            {
+                comboBoxWnd2.SelectedIndex = 0;
+            }
+            else
+            {
+                comboBoxWnd2.SelectedIndex = 1;
+            }
+            comboBoxWnd2.EndUpdate();
 
         }
 
@@ -687,6 +704,7 @@ namespace HMQConfig
             string strDisplay4 = textBoxDisplay4.Text;
             string strVideoWnd = textBoxVideoWnd.Text;
             string strEven = comboBoxEven.Text;
+            string strWnd2 = comboBoxWnd2.Text;
 
             INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_DISPLAY1, strDisplay1);
@@ -703,12 +721,24 @@ namespace HMQConfig
             if (BaseDefine.STRING_EVEN_YES == strEven)
             {
                 INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
-                BaseDefine.CONFIG_KEY_EVEN, "1");
+                    BaseDefine.CONFIG_KEY_EVEN, "1");
             }
             else
             {
                 INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
-                BaseDefine.CONFIG_KEY_EVEN, "0");
+                    BaseDefine.CONFIG_KEY_EVEN, "0");
+            }
+
+            //项目动态切换
+            if (BaseDefine.STRING_WND2_YES == strWnd2)
+            {
+                INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                    BaseDefine.CONFIG_KEY_WND2, "1");
+            }
+            else
+            {
+                INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                    BaseDefine.CONFIG_KEY_WND2, "0");
             }
 
             Log.GetLogger().InfoFormat("保存配置成功，display1={0}, display2={1}, display3={2}, display4={3}, videownd={4}, even={5}",

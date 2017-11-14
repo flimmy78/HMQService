@@ -222,10 +222,10 @@ namespace HMQService.Server
         {
             int xmCode = string.IsNullOrEmpty(xmbh) ? 0 : int.Parse(xmbh);
             int nWnd2 = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
-                BaseDefine.CONFIG_KEY_WND2, 0);    //画面二状态
+                BaseDefine.CONFIG_KEY_WND2, 1);    //画面二状态
             Log.GetLogger().DebugFormat("nWnd2 = {0}", nWnd2);
 
-            if (nWnd2 != 1)     //此值为1值，画面二不需要动态切换
+            if (1 == nWnd2)     //值为1时进行项目动态切换
             {
                 string key = string.Format("{0}_1", xmbh);
                 Log.GetLogger().DebugFormat("camera key = {0}", key);

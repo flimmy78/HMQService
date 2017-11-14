@@ -465,7 +465,7 @@ namespace HMQService.Decode
             int nKskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, 0);    //考试科目
             int nWnd2 = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
-                BaseDefine.CONFIG_KEY_WND2, 0);    //画面二状态
+                BaseDefine.CONFIG_KEY_WND2, 1);    //画面二状态
             int nHMQ = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_HMQ, 0);  //配置的是合码器还是解码器
             if (0 == nNum)
