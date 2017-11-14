@@ -639,7 +639,7 @@ namespace HMQConfig
                         System.Threading.Thread.Sleep(10);
 
                         //插入新记录
-                        sql = string.Format("insert into {0}('{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}') values('{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}');",
+                        sql = string.Format("insert into {0}({1},{2},{3},{4},{5},{6},{7},{8},{9},{10}) values('{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}');",
                             BaseDefine.DB_TABLE_TBKVIDEO,
                             BaseDefine.DB_FIELD_BH,
                             BaseDefine.DB_FIELD_SBIP,
