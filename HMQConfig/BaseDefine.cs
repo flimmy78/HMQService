@@ -47,6 +47,7 @@ namespace HMQConfig
         public static readonly string EXCEL_SHEET_NAME_CONF_CAMERA_CAR = @"车载摄像头";
         public static readonly string EXCEL_SHEET_NAME_CONF_CAMERA_XM = @"项目摄像头";
 
+        public static readonly string STRING_EXCEL_TEMPLATE = @"template.xlsx";
         public static readonly string STRING_BITSTREAM_MASTER = @"主码流";
         public static readonly string STRING_BITSTREAM_SUB = @"子码流";
         public static readonly string STRING_EVEN_YES = @"是";

@@ -59,6 +59,7 @@ namespace HMQConfig
             this.label5 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
             this.comboBoxWnd2 = new System.Windows.Forms.ComboBox();
+            this.btnExportTemplate = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -161,11 +162,12 @@ namespace HMQConfig
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.btnExportTemplate);
             this.groupBox2.Controls.Add(this.labelState);
             this.groupBox2.Controls.Add(this.btn_SelectFile);
             this.groupBox2.Location = new System.Drawing.Point(12, 433);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(388, 70);
+            this.groupBox2.Size = new System.Drawing.Size(388, 96);
             this.groupBox2.TabIndex = 1;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "考车配置";
@@ -173,18 +175,18 @@ namespace HMQConfig
             // labelState
             // 
             this.labelState.AutoSize = true;
-            this.labelState.Location = new System.Drawing.Point(97, 37);
+            this.labelState.Location = new System.Drawing.Point(15, 67);
             this.labelState.Name = "labelState";
             this.labelState.Size = new System.Drawing.Size(0, 12);
             this.labelState.TabIndex = 1;
             // 
             // btn_SelectFile
             // 
-            this.btn_SelectFile.Location = new System.Drawing.Point(6, 29);
+            this.btn_SelectFile.Location = new System.Drawing.Point(106, 29);
             this.btn_SelectFile.Name = "btn_SelectFile";
-            this.btn_SelectFile.Size = new System.Drawing.Size(75, 23);
-            this.btn_SelectFile.TabIndex = 0;
-            this.btn_SelectFile.Text = "导入Excel";
+            this.btn_SelectFile.Size = new System.Drawing.Size(87, 23);
+            this.btn_SelectFile.TabIndex = 6;
+            this.btn_SelectFile.Text = "导入配置";
             this.btn_SelectFile.UseVisualStyleBackColor = true;
             this.btn_SelectFile.Click += new System.EventHandler(this.btnSelectFile_Click);
             // 
@@ -218,14 +220,14 @@ namespace HMQConfig
             this.comboBoxEven.Location = new System.Drawing.Point(311, 87);
             this.comboBoxEven.Name = "comboBoxEven";
             this.comboBoxEven.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxEven.TabIndex = 11;
+            this.comboBoxEven.TabIndex = 12;
             // 
             // btnSaveDisplayConf
             // 
             this.btnSaveDisplayConf.Location = new System.Drawing.Point(8, 150);
             this.btnSaveDisplayConf.Name = "btnSaveDisplayConf";
             this.btnSaveDisplayConf.Size = new System.Drawing.Size(87, 23);
-            this.btnSaveDisplayConf.TabIndex = 12;
+            this.btnSaveDisplayConf.TabIndex = 14;
             this.btnSaveDisplayConf.Text = "保存配置";
             this.btnSaveDisplayConf.UseVisualStyleBackColor = true;
             this.btnSaveDisplayConf.Click += new System.EventHandler(this.btnSaveDisplayConf_Click);
@@ -235,28 +237,28 @@ namespace HMQConfig
             this.textBoxDisplay2.Location = new System.Drawing.Point(311, 24);
             this.textBoxDisplay2.Name = "textBoxDisplay2";
             this.textBoxDisplay2.Size = new System.Drawing.Size(71, 21);
-            this.textBoxDisplay2.TabIndex = 7;
+            this.textBoxDisplay2.TabIndex = 8;
             // 
             // textBoxDisplay4
             // 
             this.textBoxDisplay4.Location = new System.Drawing.Point(311, 55);
             this.textBoxDisplay4.Name = "textBoxDisplay4";
             this.textBoxDisplay4.Size = new System.Drawing.Size(71, 21);
-            this.textBoxDisplay4.TabIndex = 9;
+            this.textBoxDisplay4.TabIndex = 10;
             // 
             // textBoxVideoWnd
             // 
             this.textBoxVideoWnd.Location = new System.Drawing.Point(106, 87);
             this.textBoxVideoWnd.Name = "textBoxVideoWnd";
             this.textBoxVideoWnd.Size = new System.Drawing.Size(71, 21);
-            this.textBoxVideoWnd.TabIndex = 10;
+            this.textBoxVideoWnd.TabIndex = 11;
             // 
             // textBoxDisplay3
             // 
             this.textBoxDisplay3.Location = new System.Drawing.Point(106, 55);
             this.textBoxDisplay3.Name = "textBoxDisplay3";
             this.textBoxDisplay3.Size = new System.Drawing.Size(71, 21);
-            this.textBoxDisplay3.TabIndex = 8;
+            this.textBoxDisplay3.TabIndex = 9;
             // 
             // label8
             // 
@@ -272,7 +274,7 @@ namespace HMQConfig
             this.textBoxDisplay1.Location = new System.Drawing.Point(106, 24);
             this.textBoxDisplay1.Name = "textBoxDisplay1";
             this.textBoxDisplay1.Size = new System.Drawing.Size(71, 21);
-            this.textBoxDisplay1.TabIndex = 6;
+            this.textBoxDisplay1.TabIndex = 7;
             // 
             // label10
             // 
@@ -334,13 +336,23 @@ namespace HMQConfig
             this.comboBoxWnd2.Location = new System.Drawing.Point(106, 119);
             this.comboBoxWnd2.Name = "comboBoxWnd2";
             this.comboBoxWnd2.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxWnd2.TabIndex = 11;
+            this.comboBoxWnd2.TabIndex = 13;
+            // 
+            // btnExportTemplate
+            // 
+            this.btnExportTemplate.Location = new System.Drawing.Point(8, 29);
+            this.btnExportTemplate.Name = "btnExportTemplate";
+            this.btnExportTemplate.Size = new System.Drawing.Size(87, 23);
+            this.btnExportTemplate.TabIndex = 5;
+            this.btnExportTemplate.Text = "导出模板";
+            this.btnExportTemplate.UseVisualStyleBackColor = true;
+            this.btnExportTemplate.Click += new System.EventHandler(this.btnExportTemplate_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(412, 510);
+            this.ClientSize = new System.Drawing.Size(412, 534);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
@@ -388,6 +400,7 @@ namespace HMQConfig
         private Label label10;
         private ComboBox comboBoxWnd2;
         private Label label11;
+        private Button btnExportTemplate;
     }
 }
 

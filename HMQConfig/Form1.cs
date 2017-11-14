@@ -696,6 +696,42 @@ namespace HMQConfig
             return true;
         }
 
+        private bool ReadHMQConfFromIni(out Dictionary<string, HMQConf> dicHmq, out string errorMsg)
+        {
+            dicHmq = new Dictionary<string, HMQConf>();
+            errorMsg = string.Empty;
+
+            //读取合码器/解码器数量 
+            int nCount = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_NUM, 0);
+            if (0 == nCount)
+            {
+                Log.GetLogger().InfoFormat("读取到合码器数量为0");
+                return true;
+            }
+
+            for (int i = 1; i <= nCount; i++)
+            {
+                string hmqInfo = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_CONFIG,
+                    i.ToString(), "");
+                if (string.IsNullOrEmpty(hmqInfo))
+                {
+                    errorMsg = string.Format("读取合码器配置存在异常，key={0}", i);
+                    return false;
+                }
+                string[] strArray = BaseMethod.SplitString(hmqInfo, ',', out errorMsg);
+                if (!string.IsNullOrEmpty(errorMsg) || strArray.Length != 4)
+                {
+                    errorMsg = string.Format("读取合码器配置存在异常，key={0}, value={1}", i, hmqInfo);
+                    return false;
+                }
+
+                //登录合码器
+            }
+
+            return true;
+        }
+
         private void btnSaveDisplayConf_Click(object sender, EventArgs e)
         {
             string strDisplay1 = textBoxDisplay1.Text;
@@ -744,6 +780,38 @@ namespace HMQConfig
             Log.GetLogger().InfoFormat("保存配置成功，display1={0}, display2={1}, display3={2}, display4={3}, videownd={4}, even={5}",
                 strDisplay1, strDisplay2, strDisplay3, strDisplay4, strVideoWnd, strEven);
             MessageBox.Show("保存配置成功");
+        }
+
+        /// <summary>
+        /// 导出模板
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnExportTemplate_Click(object sender, EventArgs e)
+        {
+            //if (string.IsNullOrEmpty(m_dbAddress) || string.IsNullOrEmpty(m_dbUsername) ||
+            //    string.IsNullOrEmpty(m_dbPassword) || string.IsNullOrEmpty(m_dbInstance))
+            //{
+            //    MessageBox.Show("请先配置数据库连接。");
+            //    return;
+            //}
+
+            labelState.Text = string.Empty;
+
+            //选择目录
+            string excelFilePath = string.Empty;
+            FolderBrowserDialog folderDlg = new FolderBrowserDialog();
+            folderDlg.ShowNewFolderButton = true;
+            folderDlg.Description = @"请选择 Excel 模板存放目录";
+            if (DialogResult.OK == folderDlg.ShowDialog())
+            {
+                excelFilePath = folderDlg.SelectedPath + BaseDefine.STRING_EXCEL_TEMPLATE;
+            }
+            if (File.Exists(excelFilePath))
+            {
+                File.Delete(excelFilePath);
+            }
+
         }
     }
 }
