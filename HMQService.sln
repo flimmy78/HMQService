@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HMQConfig", "HMQConfig\HMQC
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BekUtils", "BekUtils\BekUtils.csproj", "{B23C52C0-63C4-4CFE-BCD1-978402C2B709}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HikUtils", "HikUtils\HikUtils.csproj", "{E199F364-C398-44D0-9EFA-1D63FFF54DDB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +63,14 @@ Global
 		{B23C52C0-63C4-4CFE-BCD1-978402C2B709}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B23C52C0-63C4-4CFE-BCD1-978402C2B709}.Release|x86.ActiveCfg = Release|Any CPU
 		{B23C52C0-63C4-4CFE-BCD1-978402C2B709}.Release|x86.Build.0 = Release|Any CPU
+		{E199F364-C398-44D0-9EFA-1D63FFF54DDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E199F364-C398-44D0-9EFA-1D63FFF54DDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E199F364-C398-44D0-9EFA-1D63FFF54DDB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E199F364-C398-44D0-9EFA-1D63FFF54DDB}.Debug|x86.Build.0 = Debug|Any CPU
+		{E199F364-C398-44D0-9EFA-1D63FFF54DDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E199F364-C398-44D0-9EFA-1D63FFF54DDB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E199F364-C398-44D0-9EFA-1D63FFF54DDB}.Release|x86.ActiveCfg = Release|Any CPU
+		{E199F364-C398-44D0-9EFA-1D63FFF54DDB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
