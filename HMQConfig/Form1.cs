@@ -36,6 +36,9 @@ namespace HMQConfig
             //初始化 log4net 配置信息
             log4net.Config.XmlConfigurator.Configure();
 
+            //初始化海康SDK
+            HikUtils.HikUtils.InitDevice();
+
             InitializeComponent();
 
             //读取初始配置
@@ -51,6 +54,8 @@ namespace HMQConfig
                 BaseDefine.CONFIG_KEY_VIDEOWND, 1);
             int nEven = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_EVEN, 0);
+            int nWnd2 = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_WND2, 1);
 
             textBoxDisplay1.Text = nDisplay1.ToString();
             textBoxDisplay2.Text = nDisplay2.ToString();
@@ -58,6 +63,7 @@ namespace HMQConfig
             textBoxDisplay4.Text = nDisplay4.ToString();
             textBoxVideoWnd.Text = nVideoWnd.ToString();
 
+            //是否隔行解码
             comboBoxEven.BeginUpdate();
             comboBoxEven.Items.Add(BaseDefine.STRING_EVEN_NO);
             comboBoxEven.Items.Add(BaseDefine.STRING_EVEN_YES);
@@ -70,6 +76,20 @@ namespace HMQConfig
                 comboBoxEven.SelectedIndex = 0;
             }
             comboBoxEven.EndUpdate();
+
+            //画面二是否自动切换项目
+            comboBoxWnd2.BeginUpdate();
+            comboBoxWnd2.Items.Add(BaseDefine.STRING_WND2_YES);
+            comboBoxWnd2.Items.Add(BaseDefine.STRING_WND2_NO);
+            if (1 == nWnd2)
+            {
+                comboBoxWnd2.SelectedIndex = 0;
+            }
+            else
+            {
+                comboBoxWnd2.SelectedIndex = 1;
+            }
+            comboBoxWnd2.EndUpdate();
 
         }
 
@@ -679,6 +699,215 @@ namespace HMQConfig
             return true;
         }
 
+        private bool ReadHMQConfFromIni(out Dictionary<string, HMQConf> dicHmq, out string errorMsg)
+        {
+            dicHmq = new Dictionary<string, HMQConf>();
+            errorMsg = string.Empty;
+
+            //读取解码设备数量 
+            int nCount = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_JMQ,
+                BaseDefine.CONFIG_KEY_NUM, 0);
+            if (0 == nCount)
+            {
+                Log.GetLogger().InfoFormat("读取到解码设备数量为0");
+                return true;
+            }
+
+            //获取解码设备类型
+            int nType = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_HMQ, 1);
+
+            for (int i = 1; i <= nCount; i++)
+            {
+                string hmqInfo = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_JMQ,
+                    i.ToString(), "");
+                if (string.IsNullOrEmpty(hmqInfo))
+                {
+                    errorMsg = string.Format("读取合码器配置存在异常，key={0}", i);
+                    return false;
+                }
+                string[] strArray = BaseMethod.SplitString(hmqInfo, ',', out errorMsg);
+                if (!string.IsNullOrEmpty(errorMsg) || strArray.Length != 4)
+                {
+                    errorMsg = string.Format("读取合码器配置存在异常，key={0}, value={1}", i, hmqInfo);
+                    return false;
+                }
+                string ip = strArray[0];
+                string username = strArray[1];
+                string password = strArray[2];
+                string port = strArray[3];
+                if (string.IsNullOrEmpty(ip) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(port))
+                {
+                    errorMsg = string.Format("读取合码器配置存在异常，key={0}, value={1}", i, hmqInfo);
+                    return false;
+                }
+
+                //登录合码器
+                int userId = -1;
+                int nPort = string.IsNullOrEmpty(port) ? 8000 : int.Parse(port);
+                if (!HikUtils.HikUtils.LoginHikDevice(ip, username, password, nPort, out userId))
+                {
+                    errorMsg = string.Format("合码器登录失败，key={0}, value={1}", i, hmqInfo);
+                    continue;
+                }
+
+                //获取设备能力集
+                HikUtils.CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41 struDecAbility = new HikUtils.CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41();
+                if (!HikUtils.HikUtils.GetDeviceAbility(userId, ref struDecAbility))
+                {
+                    errorMsg = string.Format("获取设备能力集失败，key={0}, value={1}", i, hmqInfo);
+                    continue;
+                }
+
+                int chanCount = 0;
+                if (1 == nType) //合码器
+                {
+                    chanCount = struDecAbility.struDviInfo.byChanNums;
+                }
+                else  //解码器
+                {
+                    chanCount = struDecAbility.struBncInfo.byChanNums;
+                }
+
+                Dictionary<int, int> dicTrans = new Dictionary<int, int>();
+                string section = string.Format("{0}{1}", BaseDefine.CONFIG_SECTION_JMQ, i); //JMQ1、JMQ2
+                for (int j = 1; j <= chanCount; j++)    //通道号
+                {
+                    string key = string.Format("{0}{1}", BaseDefine.CONFIG_KEY_BNC, j);     //BNC1、BNC2
+
+                    int kch = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CAR, section, key, 0);
+                    if (kch > 0 && !dicTrans.ContainsKey(j))
+                    {
+                        dicTrans.Add(j, kch);
+                    }
+                }
+
+                if (dicTrans.Count > 0 && !dicHmq.ContainsKey(ip))
+                {
+                    HMQConf hmq = new HMQConf(ip, nPort, username, password, dicTrans);
+                    dicHmq.Add(ip, hmq);
+                }
+            }
+
+            return true;
+        }
+
+        private bool ReadCameraConfFromDB(out Dictionary<string, CameraConf> dicCamera, out string errorMsg)
+        {
+            dicCamera = new Dictionary<string, CameraConf>();
+            errorMsg = string.Empty;
+
+            IDataProvider sqlProvider = null;
+            string connStr = string.Format(BaseDefine.DB_CONN_FORMAT, m_dbAddress,
+                m_dbInstance, m_dbUsername, m_dbPassword);
+
+            try
+            {
+                if (1 == m_dbType)
+                {
+                    sqlProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.SqlDataProvider, connStr);
+                }
+                else
+                {
+                    sqlProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.OracleDataProvider, connStr);
+                }
+
+                if (null == sqlProvider)
+                {
+                    errorMsg = string.Format("连接数据库失败，connStr={0}", connStr);
+                    return false;
+                }
+
+                string sql = string.Format("select {0},{1},{2},{3},{4},{5},{6},{7},{8},{9} from {10};", 
+                    BaseDefine.DB_FIELD_BH,
+                    BaseDefine.DB_FIELD_SBIP,
+                    BaseDefine.DB_FIELD_DKH,
+                    BaseDefine.DB_FIELD_YHM,
+                    BaseDefine.DB_FIELD_MM,
+                    BaseDefine.DB_FIELD_TDH,
+                    BaseDefine.DB_FIELD_BZ,
+                    BaseDefine.DB_FIELD_NID,
+                    BaseDefine.DB_FIELD_MEDIAIP,
+                    BaseDefine.DB_FIELD_TRANSMODE,
+                    BaseDefine.DB_TABLE_TBKVIDEO);
+                DataSet ds = sqlProvider.RetriveDataSet(sql);
+                if (null != ds)
+                {
+                    for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
+                    {
+                        DataRow row = ds.Tables[0].Rows[i];
+
+                        string bh = GetDataColumnStringValue(row, 0);
+                        string sbip = GetDataColumnStringValue(row, 1);
+                        int dkh = GetDataColumnIntValue(row, 2);
+                        string yhm = GetDataColumnStringValue(row, 3);
+                        string mm = GetDataColumnStringValue(row, 4);
+                        int tdh = GetDataColumnIntValue(row, 5);
+                        string bz = GetDataColumnStringValue(row, 6);
+                        string nid = GetDataColumnStringValue(row, 7);
+                        string mediaIp = GetDataColumnStringValue(row, 8);
+                        int transmode = GetDataColumnIntValue(row, 9);
+                        if (string.IsNullOrEmpty(bh) || string.IsNullOrEmpty(sbip) || string.IsNullOrEmpty(yhm) || string.IsNullOrEmpty(mm)
+                            || string.IsNullOrEmpty(nid) || 0==dkh || 0==tdh)
+                        {
+                            Log.GetLogger().InfoFormat("数据库存在错误数据，bh={0}, nid={1}", bh, nid);
+                            continue;
+                        }
+
+                        string key = bh + "_" + nid;
+                        if (!dicCamera.ContainsKey(key))
+                        {
+                            CameraConf camera = new CameraConf(bh, sbip, yhm, mm, mediaIp, dkh, tdh, transmode, bz);
+                            dicCamera.Add(key, camera);
+                        }
+
+                    }
+                }
+
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+                return false;
+            }
+
+            return true;
+        }
+
+        private string GetDataColumnStringValue(DataRow row, int index)
+        {
+            string retStr = string.Empty;
+            if (null == row || index < 0)
+            {
+                return retStr;
+            }
+
+            try
+            {
+                retStr = row[index].ToString();
+            }
+            catch(Exception e)
+            {
+            }
+
+            return retStr;
+        }
+
+        private int GetDataColumnIntValue(DataRow row, int index)
+        {
+            int nRet = 0;
+
+            string strRet = GetDataColumnStringValue(row, index);
+            try
+            {
+                nRet = string.IsNullOrEmpty(strRet) ? 0 : int.Parse(strRet);
+            }
+            catch(Exception e)
+            { }
+
+            return nRet;
+        }
+
         private void btnSaveDisplayConf_Click(object sender, EventArgs e)
         {
             string strDisplay1 = textBoxDisplay1.Text;
@@ -687,6 +916,7 @@ namespace HMQConfig
             string strDisplay4 = textBoxDisplay4.Text;
             string strVideoWnd = textBoxVideoWnd.Text;
             string strEven = comboBoxEven.Text;
+            string strWnd2 = comboBoxWnd2.Text;
 
             INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_DISPLAY1, strDisplay1);
@@ -703,17 +933,346 @@ namespace HMQConfig
             if (BaseDefine.STRING_EVEN_YES == strEven)
             {
                 INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
-                BaseDefine.CONFIG_KEY_EVEN, "1");
+                    BaseDefine.CONFIG_KEY_EVEN, "1");
             }
             else
             {
                 INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
-                BaseDefine.CONFIG_KEY_EVEN, "0");
+                    BaseDefine.CONFIG_KEY_EVEN, "0");
+            }
+
+            //项目动态切换
+            if (BaseDefine.STRING_WND2_YES == strWnd2)
+            {
+                INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                    BaseDefine.CONFIG_KEY_WND2, "1");
+            }
+            else
+            {
+                INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                    BaseDefine.CONFIG_KEY_WND2, "0");
             }
 
             Log.GetLogger().InfoFormat("保存配置成功，display1={0}, display2={1}, display3={2}, display4={3}, videownd={4}, even={5}",
                 strDisplay1, strDisplay2, strDisplay3, strDisplay4, strVideoWnd, strEven);
             MessageBox.Show("保存配置成功");
         }
+
+        /// <summary>
+        /// 导出模板
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnExportTemplate_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(m_dbAddress) || string.IsNullOrEmpty(m_dbUsername) ||
+                string.IsNullOrEmpty(m_dbPassword) || string.IsNullOrEmpty(m_dbInstance))
+            {
+                MessageBox.Show("请先配置数据库连接。");
+                return;
+            }
+
+            labelState.Text = string.Empty;
+
+            //选择目录
+            string excelFilePath = string.Empty;
+            FolderBrowserDialog folderDlg = new FolderBrowserDialog();
+            folderDlg.ShowNewFolderButton = true;
+            folderDlg.Description = @"请选择 Excel 模板存放目录";
+            if (DialogResult.OK == folderDlg.ShowDialog())
+            {
+                excelFilePath = folderDlg.SelectedPath + @"\" + BaseDefine.STRING_EXCEL_TEMPLATE;
+            }
+            if (File.Exists(excelFilePath))
+            {
+                File.Delete(excelFilePath);
+            }
+
+            //从配置文件读取合码器通道配置
+            string errorMsg = string.Empty;
+            Dictionary<string, HMQConf> dicHmq = new Dictionary<string, HMQConf>();
+            if (!ReadHMQConfFromIni(out dicHmq, out errorMsg))
+            {
+                Log.GetLogger().InfoFormat("从配置文件读取合码器通道配置失败");
+            }
+
+
+            //从数据库读取摄像头配置
+            Dictionary<string, CameraConf> dicCamera = new Dictionary<string, CameraConf>();
+            if (!ReadCameraConfFromDB(out dicCamera, out errorMsg))
+            {
+                Log.GetLogger().InfoFormat("从数据库读取摄像头配置失败");
+            }
+
+            //生成 excel 模板
+            if (!ExportExcelTemplate(excelFilePath, dicHmq, dicCamera))
+            {
+                Log.GetLogger().ErrorFormat("导出excel失败");
+                MessageBox.Show("导出excel失败");
+            }
+            else
+            {
+                MessageBox.Show("导出excel模板成功");
+            }
+          
+        }
+
+        private bool ExportExcelTemplate(string filePath, Dictionary<string, HMQConf> dicHmq, Dictionary<string, CameraConf> dicCamera)
+        {
+            string errorMsg = string.Empty;
+
+            try
+            {
+                XSSFWorkbook wk = new XSSFWorkbook();
+
+                #region 创建模板(sheet页、第一行)
+                if (!CreateExcelTemplate(wk))
+                {
+                    errorMsg = string.Format("创建sheet页、行失败。filePath={0}", filePath);
+                    goto END;
+                }
+                #endregion
+
+                #region 写入通道配置
+                int rowNum = 1;
+                string sheetName = BaseDefine.EXCEL_SHEET_NAME_CONF_TRANS;
+                ISheet sheetTrans = wk.GetSheet(sheetName);
+                if (null == sheetTrans)
+                {
+                    errorMsg = string.Format("读取名为 {0} 的 sheet 页失败，filePath={1}", sheetTrans, filePath);
+                    goto END;
+                }
+                foreach(string key in dicHmq.Keys)
+                {
+                    HMQConf hmqConf = dicHmq[key];
+
+                    string ip = hmqConf.Ip;
+                    double port = (double)hmqConf.Port;
+                    string user = hmqConf.Username;
+                    string password = hmqConf.Password;
+                    Dictionary<int, int> dicTrans = hmqConf.DicTran2Car;
+
+                    foreach(int tranNo in dicTrans.Keys)
+                    {
+                        int kch = dicTrans[tranNo];
+
+                        double dTran = (double)tranNo;
+                        double dKch = (double)kch;
+
+                        IRow row = sheetTrans.CreateRow(rowNum++);    //创建新行
+
+                        CreateStringCell(row, 0, ip);
+                        CreateNumbericCell(row, 1, port);
+                        CreateStringCell(row, 2, user);
+                        CreateStringCell(row, 3, password);
+                        CreateNumbericCell(row, 4, dTran);
+                        CreateNumbericCell(row, 5, dKch);
+                    }
+                }
+                #endregion
+
+                #region 写入摄像头配置
+                int rowCar = 1;
+                int rowXm = 1;
+                string sheetCarName = BaseDefine.EXCEL_SHEET_NAME_CONF_CAMERA_CAR;
+                string sheetXmName = BaseDefine.EXCEL_SHEET_NAME_CONF_CAMERA_XM;
+                ISheet sheetCar = wk.GetSheet(sheetCarName);
+                ISheet sheetXm = wk.GetSheet(sheetXmName);
+                if (null == sheetCar)
+                {
+                    errorMsg = string.Format("读取名为 {0} 的 sheet 页失败，filePath={1}", sheetCarName, filePath);
+                    goto END;
+                }
+                if (null == sheetXm)
+                {
+                    errorMsg = string.Format("读取名为 {0} 的 sheet 页失败，filePath={1}", sheetXmName, filePath);
+                    goto END;
+                }
+                foreach (string key in dicCamera.Keys)
+                {
+                    string[] strArray = BaseMethod.SplitString(key, '_', out errorMsg);
+                    if (null == strArray || strArray.Length != 2)
+                    {
+                        errorMsg = string.Format("数据库值存在异常，key={0}", key);
+                        goto END;
+                    }
+
+                    try
+                    {
+                        CameraConf camera = dicCamera[key];
+                        string bh = strArray[0];
+                        string nid = strArray[1];
+
+                        int nNid = string.IsNullOrEmpty(nid) ? 0 : int.Parse(nid);
+
+                        if (bh.Contains("考车"))
+                        {
+                            IRow row = sheetCar.CreateRow(rowCar++);
+
+                            bh = bh.Substring(2);
+                            int nBh = string.IsNullOrEmpty(bh) ? 0 : int.Parse(bh);
+                            string mllx = (0 == camera.Mllx) ? BaseDefine.STRING_BITSTREAM_MASTER : BaseDefine.STRING_BITSTREAM_SUB;
+
+                            CreateNumbericCell(row, 0, (double)nBh);
+                            CreateStringCell(row, 1, camera.CameraIP);
+                            CreateStringCell(row, 2, camera.RasUser);
+                            CreateStringCell(row, 3, camera.RasPassword);
+                            CreateNumbericCell(row, 4, (double)camera.CameraPort);
+                            CreateNumbericCell(row, 5, (double)camera.DwChannel);
+                            CreateNumbericCell(row, 6, (double)nNid);
+                            CreateStringCell(row, 7, mllx);
+                            CreateStringCell(row, 8, camera.MediaIP);
+                        }
+                        else
+                        {
+                            IRow row = sheetXm.CreateRow(rowXm++);
+
+                            int nBh = string.IsNullOrEmpty(bh) ? 0 : int.Parse(bh);
+                            string mllx = (0 == camera.Mllx) ? BaseDefine.STRING_BITSTREAM_MASTER : BaseDefine.STRING_BITSTREAM_SUB;
+
+                            CreateNumbericCell(row, 0, (double)nBh);
+                            CreateStringCell(row, 1, camera.Bz);
+                            CreateStringCell(row, 2, camera.CameraIP);
+                            CreateStringCell(row, 3, camera.RasUser);
+                            CreateStringCell(row, 4, camera.RasPassword);
+                            CreateNumbericCell(row, 5, (double)camera.CameraPort);
+                            CreateNumbericCell(row, 6, (double)camera.DwChannel);
+                            CreateStringCell(row, 7, mllx);
+                            CreateStringCell(row, 8, camera.MediaIP);
+                        }
+
+
+                    }
+                    catch(Exception e)
+                    {
+                    }
+                }
+                #endregion
+
+                using (FileStream fs = File.OpenWrite(filePath))
+                {
+                    wk.Write(fs);
+                    fs.Close();
+                }
+            }
+            catch (Exception e)
+            {
+                errorMsg = string.Format("catch an error : {0}", e.Message);
+            }
+
+            END:
+            {
+                if (!string.IsNullOrEmpty(errorMsg))
+                {
+                    Log.GetLogger().ErrorFormat(errorMsg);
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private bool CreateExcelTemplate(XSSFWorkbook wk)
+        {
+            try
+            {
+                //通道配置
+                string sheetName = BaseDefine.EXCEL_SHEET_NAME_CONF_TRANS;
+                ISheet sheetTrans = wk.CreateSheet(sheetName);
+                if (null != sheetTrans)
+                {
+                    IRow row = sheetTrans.CreateRow(0);
+
+                    CreateStringCell(row, 0, "合码器/解码器IP");
+                    CreateStringCell(row, 1, "合码器/解码器端口");
+                    CreateStringCell(row, 2, "合码器/解码器用户名");
+                    CreateStringCell(row, 3, "合码器/解码器密码");
+                    CreateStringCell(row, 4, "合码器/解码器通道号");
+                    CreateStringCell(row, 5, "对应考车号（阿拉伯数字）");
+                }
+
+                //车载摄像头
+                sheetName = BaseDefine.EXCEL_SHEET_NAME_CONF_CAMERA_CAR;
+                ISheet sheetCar = wk.CreateSheet(sheetName);
+                if (null != sheetCar)
+                {
+                    IRow row = sheetCar.CreateRow(0);
+
+                    CreateStringCell(row, 0, "考车号（阿拉伯数字）");
+                    CreateStringCell(row, 1, "设备IP");
+                    CreateStringCell(row, 2, "用户名");
+                    CreateStringCell(row, 3, "密码");
+                    CreateStringCell(row, 4, "端口号");
+                    CreateStringCell(row, 5, "通道号");
+                    CreateStringCell(row, 6, "摄像头编号");
+                    CreateStringCell(row, 7, "码流类型（主码流/子码流）");
+                    CreateStringCell(row, 8, "流媒体IP（可为空）");
+                }
+
+                //项目摄像头
+                sheetName = BaseDefine.EXCEL_SHEET_NAME_CONF_CAMERA_XM;
+                ISheet sheetXm = wk.CreateSheet(sheetName);
+                if (null != sheetXm)
+                {
+                    IRow row = sheetXm.CreateRow(0);
+
+                    CreateStringCell(row, 0, "项目编号");
+                    CreateStringCell(row, 1, "项目名称");
+                    CreateStringCell(row, 2, "设备IP");
+                    CreateStringCell(row, 3, "用户名");
+                    CreateStringCell(row, 4, "密码");
+                    CreateStringCell(row, 5, "端口号");
+                    CreateStringCell(row, 6, "通道号");
+                    CreateStringCell(row, 7, "码流类型（主码流/子码流）");
+                    CreateStringCell(row, 8, "流媒体IP（可为空）");
+                }
+            }
+            catch(Exception e)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        private bool CreateStringCell(IRow row, int cellIndex, string value)
+        {
+            if (null == row || cellIndex < 0)
+            {
+                return false;
+            }
+
+            try
+            {
+                ICell cell = row.CreateCell(cellIndex);
+                cell.SetCellValue(value);
+            }
+            catch(Exception e)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool CreateNumbericCell(IRow row, int cellIndex, double value)
+        {
+            if (null == row || cellIndex < 0)
+            {
+                return false;
+            }
+
+            try
+            {
+                ICell cell = row.CreateCell(cellIndex);
+                cell.SetCellValue(value);
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
     }
 }

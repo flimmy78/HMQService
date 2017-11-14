@@ -41,14 +41,19 @@ namespace HMQConfig
         public static readonly string CONFIG_KEY_DISPLAY3 = "DISPLAY3";
         public static readonly string CONFIG_KEY_DISPLAY4 = "DISPLAY4";
         public static readonly string CONFIG_KEY_VIDEOWND = "VIDEOWND";
+        public static readonly string CONFIG_KEY_WND2 = "WND2";
+        public static readonly string CONFIG_KEY_HMQ = "HMQ";
 
         public static readonly string EXCEL_SHEET_NAME_CONF_TRANS = @"通道配置";
         public static readonly string EXCEL_SHEET_NAME_CONF_CAMERA_CAR = @"车载摄像头";
         public static readonly string EXCEL_SHEET_NAME_CONF_CAMERA_XM = @"项目摄像头";
 
+        public static readonly string STRING_EXCEL_TEMPLATE = @"template.xlsx";
         public static readonly string STRING_BITSTREAM_MASTER = @"主码流";
         public static readonly string STRING_BITSTREAM_SUB = @"子码流";
         public static readonly string STRING_EVEN_YES = @"是";
         public static readonly string STRING_EVEN_NO = @"否";
+        public static readonly string STRING_WND2_YES = @"是";
+        public static readonly string STRING_WND2_NO = @"否";
     }
 }
