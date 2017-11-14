@@ -73,20 +73,26 @@ namespace BekUtils.Database
                 if (oracleConnection == null)
                     return -1;
                 int rv = -1;
-                OracleTransaction oracleTransaction = null;
+                //OracleTransaction oracleTransaction = null;
                 try
                 {
                     if (oracleConnection.State == System.Data.ConnectionState.Closed)
                         oracleConnection.Open();
-                    oracleCommand = new OracleCommand(sql, oracleConnection);
-                    oracleTransaction = oracleConnection.BeginTransaction();
-                    oracleCommand.Transaction = oracleTransaction;
+                    //oracleCommand = new OracleCommand(sql, oracleConnection);
+                    //oracleTransaction = oracleConnection.BeginTransaction();
+                    //oracleCommand.Transaction = oracleTransaction;
+                    //rv = oracleCommand.ExecuteNonQuery();
+                    //oracleTransaction.Commit();
+
+                    oracleCommand = new OracleCommand();
+                    oracleCommand.Connection = oracleConnection;
+                    oracleCommand.CommandType = CommandType.Text;
+                    oracleCommand.CommandText = sql;
                     rv = oracleCommand.ExecuteNonQuery();
-                    oracleTransaction.Commit();
                 }
                 catch (Exception ex)
                 {
-                    oracleTransaction.Rollback();
+                    //oracleTransaction.Rollback();
                     rv = -1;
                 }
                 return rv;

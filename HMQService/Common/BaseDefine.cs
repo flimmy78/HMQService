@@ -90,6 +90,9 @@ namespace HMQService.Common
 
         //配置文件
         public static readonly string CONFIG_FILE_PATH_ENV = @".\conf\HS_CONF_ENV.ini";
+        public static readonly string CONFIG_FILE_PATH_DB = @".\conf\HS_CONF_DB.ini";
+        public static readonly string CONFIG_FILE_PATH_DISPLAY = @".\conf\HS_CONF_DISPLAY.ini";
+        public static readonly string CONFIG_FILE_PATH_CAR = @".\conf\HS_CONF_CAR.ini";
         public static readonly string CONFIG_FILE_PATH_CONFIG = @".\config.ini";
         public static readonly string CONFIG_FILE_PATH_ZZIPChannel = @".\ZZIPChannel.dat";
         public static readonly string CONFIG_FILE_PATH_MAP = @".\MAP.cfg";
@@ -123,6 +126,10 @@ namespace HMQService.Common
         public static readonly string CONFIG_KEY_DRAWCAR = "DrawCar";
         public static readonly string CONFIG_KEY_DITUPY = "DITUPY";
         public static readonly string CONFIG_KEY_HMQ = "HMQ";
+        public static readonly string CONFIG_KEY_USERNAME = @"USERNAME";
+        public static readonly string CONFIG_KEY_PASSWORD = @"PASSWORD";
+        public static readonly string CONFIG_KEY_DBADDRESS = @"DBADDRESS";
+        public static readonly string CONFIG_KEY_INSTANCE = @"INSTANCE";
 
         public static readonly int CONFIG_VALUE_KSKM_2 = 2;     //考试科目为科目2
         public static readonly int CONFIG_VALUE_KSKM_3 = 3;     //考试科目为科目3
@@ -132,6 +139,7 @@ namespace HMQService.Common
         public static readonly int CONFIG_VALUE_ZERO_SCORE = 0;  //零分
 
         //数据库
+        public static readonly string DB_CONN_FORMAT = @"Data Source={0};Initial Catalog = {1};User ID = {2};PWD = {3}";
         public static readonly string DB_TABLE_TBKVIDEO = "TBKVideo";
         public static readonly string DB_TABLE_ERRORDATA = "ErrorData";
         public static readonly string DB_TABLE_STUDENTINFO = "StudentInfo";
