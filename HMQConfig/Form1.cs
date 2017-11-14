@@ -36,6 +36,9 @@ namespace HMQConfig
             //初始化 log4net 配置信息
             log4net.Config.XmlConfigurator.Configure();
 
+            //初始化海康SDK
+            HikUtils.HikUtils.InitDevice();
+
             InitializeComponent();
 
             //读取初始配置
@@ -701,18 +704,22 @@ namespace HMQConfig
             dicHmq = new Dictionary<string, HMQConf>();
             errorMsg = string.Empty;
 
-            //读取合码器/解码器数量 
-            int nCount = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_CONFIG,
+            //读取解码设备数量 
+            int nCount = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_JMQ,
                 BaseDefine.CONFIG_KEY_NUM, 0);
             if (0 == nCount)
             {
-                Log.GetLogger().InfoFormat("读取到合码器数量为0");
+                Log.GetLogger().InfoFormat("读取到解码设备数量为0");
                 return true;
             }
 
+            //获取解码设备类型
+            int nType = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_HMQ, 1);
+
             for (int i = 1; i <= nCount; i++)
             {
-                string hmqInfo = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_CONFIG,
+                string hmqInfo = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_JMQ,
                     i.ToString(), "");
                 if (string.IsNullOrEmpty(hmqInfo))
                 {
@@ -725,8 +732,61 @@ namespace HMQConfig
                     errorMsg = string.Format("读取合码器配置存在异常，key={0}, value={1}", i, hmqInfo);
                     return false;
                 }
+                string ip = strArray[0];
+                string username = strArray[1];
+                string password = strArray[2];
+                string port = strArray[3];
+                if (string.IsNullOrEmpty(ip) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(port))
+                {
+                    errorMsg = string.Format("读取合码器配置存在异常，key={0}, value={1}", i, hmqInfo);
+                    return false;
+                }
 
                 //登录合码器
+                int userId = -1;
+                int nPort = string.IsNullOrEmpty(port) ? 8000 : int.Parse(port);
+                if (!HikUtils.HikUtils.LoginHikDevice(ip, username, password, nPort, out userId))
+                {
+                    errorMsg = string.Format("合码器登录失败，key={0}, value={1}", i, hmqInfo);
+                    continue;
+                }
+
+                //获取设备能力集
+                HikUtils.CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41 struDecAbility = new HikUtils.CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41();
+                if (!HikUtils.HikUtils.GetDeviceAbility(userId, ref struDecAbility))
+                {
+                    errorMsg = string.Format("获取设备能力集失败，key={0}, value={1}", i, hmqInfo);
+                    continue;
+                }
+
+                int chanCount = 0;
+                if (1 == nType) //合码器
+                {
+                    chanCount = struDecAbility.struDviInfo.byChanNums;
+                }
+                else  //解码器
+                {
+                    chanCount = struDecAbility.struBncInfo.byChanNums;
+                }
+
+                Dictionary<int, int> dicTrans = new Dictionary<int, int>();
+                string section = string.Format("{0}{1}", BaseDefine.CONFIG_SECTION_JMQ, i); //JMQ1、JMQ2
+                for (int j = 1; j <= chanCount; j++)    //通道号
+                {
+                    string key = string.Format("{0}{1}", BaseDefine.CONFIG_KEY_BNC, j);     //BNC1、BNC2
+
+                    int kch = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CAR, section, key, 0);
+                    if (kch > 0 && !dicTrans.ContainsKey(j))
+                    {
+                        dicTrans.Add(j, kch);
+                    }
+                }
+
+                if (dicTrans.Count > 0 && !dicHmq.ContainsKey(ip))
+                {
+                    HMQConf hmq = new HMQConf(ip, nPort, username, password, dicTrans);
+                    dicHmq.Add(ip, hmq);
+                }
             }
 
             return true;
@@ -811,6 +871,17 @@ namespace HMQConfig
             {
                 File.Delete(excelFilePath);
             }
+
+            //从配置文件读取合码器通道配置
+            string errorMsg = string.Empty;
+            Dictionary<string, HMQConf> dicHmq = new Dictionary<string, HMQConf>();
+            if (!ReadHMQConfFromIni(out dicHmq, out errorMsg))
+            {
+                Log.GetLogger().InfoFormat("从配置文件读取合码器通道配置失败");
+            }
+
+            //从数据库读取摄像头配置
+            int kkk = 0;
 
         }
     }

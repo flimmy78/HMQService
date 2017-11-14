@@ -11,6 +11,27 @@ namespace HikUtils
     public class HikUtils
     {
         /// <summary>
+        /// 初始化海康设备
+        /// </summary>
+        /// <returns></returns>
+        public static bool InitDevice()
+        {
+            //SDK初始化
+            bool bRet = CHCNetSDK.NET_DVR_Init();
+            if (!bRet)
+            {
+                Log.GetLogger().ErrorFormat("Hik SDK 初始化失败.");
+            }
+            else
+            {
+                //保存SDK日志
+                CHCNetSDK.NET_DVR_SetLogToFile(3, @".\SdkLog\", true);
+            }
+
+            return bRet;
+        }
+        
+        /// <summary>
         /// 登录海康设备
         /// </summary>
         /// <param name="ip">设备IP</param>
@@ -19,11 +40,11 @@ namespace HikUtils
         /// <param name="port">端口</param>
         /// <param name="userId">输出参数，登录id</param>
         /// <returns></returns>
-        public static bool LoginHikDevice(string ip, string username, string password, string port, out int userId)
+        public static bool LoginHikDevice(string ip, string username, string password, int port, out int userId)
         {
             userId = -1;
             uint errorCode = 0;
-            if (string.IsNullOrEmpty(ip) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(port))
+            if (string.IsNullOrEmpty(ip) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password) || port <= 0)
             {
                 Log.GetLogger().ErrorFormat("LoginHikDevice fail，传入参数为空值");
                 return false;
@@ -31,9 +52,8 @@ namespace HikUtils
 
             try
             {
-                int nPort = string.IsNullOrEmpty(port) ? 8000 : int.Parse(port);
                 CHCNetSDK.NET_DVR_DEVICEINFO_V30 m_struDeviceInfo = new CHCNetSDK.NET_DVR_DEVICEINFO_V30();
-                userId = CHCNetSDK.NET_DVR_Login_V30(ip, nPort, username, password, ref m_struDeviceInfo);
+                userId = CHCNetSDK.NET_DVR_Login_V30(ip, port, username, password, ref m_struDeviceInfo);
                 if (-1 == userId)
                 {
                     errorCode = CHCNetSDK.NET_DVR_GetLastError();
