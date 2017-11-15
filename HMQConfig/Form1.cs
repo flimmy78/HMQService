@@ -42,26 +42,62 @@ namespace HMQConfig
             InitializeComponent();
 
             //读取初始配置
-            int nDisplay1 = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nCarVideo = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_DISPLAY1, 0);
-            int nDisplay2 = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nXmVideo = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_DISPLAY2, 1);
-            int nDisplay3 = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nStudentInfo = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_DISPLAY3, 2);
-            int nDisplay4 = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nExamInfo = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_DISPLAY4, 3);
-            int nVideoWnd = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nAudioWnd = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_VIDEOWND, 1);
             int nEven = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_EVEN, 0);
             int nWnd2 = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_WND2, 1);
 
-            textBoxDisplay1.Text = nDisplay1.ToString();
-            textBoxDisplay2.Text = nDisplay2.ToString();
-            textBoxDisplay3.Text = nDisplay3.ToString();
-            textBoxDisplay4.Text = nDisplay4.ToString();
-            textBoxVideoWnd.Text = nVideoWnd.ToString();
+            //车内视频位置
+            comboBoxCarVideo.BeginUpdate();
+            comboBoxCarVideo.Items.Add(BaseDefine.STRING_WND_LEFT_TOP);
+            comboBoxCarVideo.Items.Add(BaseDefine.STRING_WND_RIGHT_TOP);
+            comboBoxCarVideo.Items.Add(BaseDefine.STRING_WND_LEFT_BOTTOM);
+            comboBoxCarVideo.Items.Add(BaseDefine.STRING_WND_RIGHT_BOTTOM);
+            comboBoxCarVideo.SelectedIndex = nCarVideo;
+            comboBoxCarVideo.EndUpdate();
+            //车外视频位置
+            comboBoxXmVideo.BeginUpdate();
+            comboBoxXmVideo.Items.Add(BaseDefine.STRING_WND_LEFT_TOP);
+            comboBoxXmVideo.Items.Add(BaseDefine.STRING_WND_RIGHT_TOP);
+            comboBoxXmVideo.Items.Add(BaseDefine.STRING_WND_LEFT_BOTTOM);
+            comboBoxXmVideo.Items.Add(BaseDefine.STRING_WND_RIGHT_BOTTOM);
+            comboBoxXmVideo.SelectedIndex = nXmVideo;
+            comboBoxXmVideo.EndUpdate();
+            //考生信息画面
+            comboBoxStudentInfo.BeginUpdate();
+            comboBoxStudentInfo.Items.Add(BaseDefine.STRING_WND_LEFT_TOP);
+            comboBoxStudentInfo.Items.Add(BaseDefine.STRING_WND_RIGHT_TOP);
+            comboBoxStudentInfo.Items.Add(BaseDefine.STRING_WND_LEFT_BOTTOM);
+            comboBoxStudentInfo.Items.Add(BaseDefine.STRING_WND_RIGHT_BOTTOM);
+            comboBoxStudentInfo.SelectedIndex = nStudentInfo;
+            comboBoxStudentInfo.EndUpdate();
+            //考试实时信息画面
+            comboBoxExamInfo.BeginUpdate();
+            comboBoxExamInfo.Items.Add(BaseDefine.STRING_WND_LEFT_TOP);
+            comboBoxExamInfo.Items.Add(BaseDefine.STRING_WND_RIGHT_TOP);
+            comboBoxExamInfo.Items.Add(BaseDefine.STRING_WND_LEFT_BOTTOM);
+            comboBoxExamInfo.Items.Add(BaseDefine.STRING_WND_RIGHT_BOTTOM);
+            comboBoxExamInfo.SelectedIndex = nExamInfo;
+            comboBoxExamInfo.EndUpdate();
+
+            //音频窗口位置
+            comboBoxAudio.BeginUpdate();
+            comboBoxAudio.Items.Add(BaseDefine.STRING_WND_LEFT_TOP);
+            comboBoxAudio.Items.Add(BaseDefine.STRING_WND_RIGHT_TOP);
+            comboBoxAudio.Items.Add(BaseDefine.STRING_WND_LEFT_BOTTOM);
+            comboBoxAudio.Items.Add(BaseDefine.STRING_WND_RIGHT_BOTTOM);
+            comboBoxAudio.SelectedIndex = nAudioWnd - 1;    //音频窗口index 从 1 开始计数
+            comboBoxAudio.EndUpdate();
 
             //是否隔行解码
             comboBoxEven.BeginUpdate();
@@ -91,6 +127,52 @@ namespace HMQConfig
             }
             comboBoxWnd2.EndUpdate();
 
+        }
+
+        private int GetWndIndexByDes(string des)
+        {
+            int nRet = 0;
+            if (BaseDefine.STRING_WND_LEFT_TOP == des)
+            {
+                nRet = 0;
+            }
+            else if (BaseDefine.STRING_WND_RIGHT_TOP == des)
+            {
+                nRet = 1;
+            }
+            else if (BaseDefine.STRING_WND_LEFT_BOTTOM == des)
+            {
+                nRet = 2;
+            }
+            else if (BaseDefine.STRING_WND_RIGHT_BOTTOM == des)
+            {
+                nRet = 3;
+            }
+
+            return nRet;
+        }
+
+        private string GetWndDesByIndex(int index)
+        {
+            string retStr = BaseDefine.STRING_WND_LEFT_TOP;
+            if (0 == index)
+            {
+                retStr = BaseDefine.STRING_WND_LEFT_TOP;
+            }
+            else if (1 == index)
+            {
+                retStr = BaseDefine.STRING_WND_RIGHT_TOP;
+            }
+            else if (2 == index)
+            {
+                retStr = BaseDefine.STRING_WND_LEFT_BOTTOM;
+            }
+            else if (3 == index)
+            {
+                retStr = BaseDefine.STRING_WND_RIGHT_BOTTOM;
+            }
+
+            return retStr;
         }
 
         private void btnDBLogin_Click(object sender, EventArgs e)
@@ -910,24 +992,24 @@ namespace HMQConfig
 
         private void btnSaveDisplayConf_Click(object sender, EventArgs e)
         {
-            string strDisplay1 = textBoxDisplay1.Text;
-            string strDisplay2 = textBoxDisplay2.Text;
-            string strDisplay3 = textBoxDisplay3.Text;
-            string strDisplay4 = textBoxDisplay4.Text;
-            string strVideoWnd = textBoxVideoWnd.Text;
+            int nCarVideo = GetWndIndexByDes(comboBoxCarVideo.Text);
+            int nXmVideo = GetWndIndexByDes(comboBoxXmVideo.Text);
+            int nStudentInfo = GetWndIndexByDes(comboBoxStudentInfo.Text);
+            int nExamInfo = GetWndIndexByDes(comboBoxExamInfo.Text);
+            int nAudio = GetWndIndexByDes(comboBoxAudio.Text) + 1;      //音频窗口Index 从 1 开始
             string strEven = comboBoxEven.Text;
             string strWnd2 = comboBoxWnd2.Text;
 
             INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
-                BaseDefine.CONFIG_KEY_DISPLAY1, strDisplay1);
+                BaseDefine.CONFIG_KEY_DISPLAY1, nCarVideo.ToString());
             INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
-                BaseDefine.CONFIG_KEY_DISPLAY2, strDisplay2);
+                BaseDefine.CONFIG_KEY_DISPLAY2, nXmVideo.ToString());
             INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
-                BaseDefine.CONFIG_KEY_DISPLAY3, strDisplay3);
+                BaseDefine.CONFIG_KEY_DISPLAY3, nStudentInfo.ToString());
             INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
-                BaseDefine.CONFIG_KEY_DISPLAY4, strDisplay4);
+                BaseDefine.CONFIG_KEY_DISPLAY4, nExamInfo.ToString());
             INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
-                BaseDefine.CONFIG_KEY_VIDEOWND, strVideoWnd);
+                BaseDefine.CONFIG_KEY_VIDEOWND, nAudio.ToString());
 
             //是否隔行解码
             if (BaseDefine.STRING_EVEN_YES == strEven)
@@ -954,7 +1036,7 @@ namespace HMQConfig
             }
 
             Log.GetLogger().InfoFormat("保存配置成功，display1={0}, display2={1}, display3={2}, display4={3}, videownd={4}, even={5}",
-                strDisplay1, strDisplay2, strDisplay3, strDisplay4, strVideoWnd, strEven);
+                nCarVideo, nXmVideo, nStudentInfo, nExamInfo, nAudio, strEven);
             MessageBox.Show("保存配置成功");
         }
 

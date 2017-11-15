@@ -36,11 +36,11 @@ namespace HMQConfig
         public static readonly string CONFIG_KEY_BNC = @"BNC";
         public static readonly string CONFIG_KEY_EVEN = "EVEN";
         public static readonly string CONFIG_KEY_DISPLAY = "DISPLAY";
-        public static readonly string CONFIG_KEY_DISPLAY1 = "DISPLAY1";
-        public static readonly string CONFIG_KEY_DISPLAY2 = "DISPLAY2";
-        public static readonly string CONFIG_KEY_DISPLAY3 = "DISPLAY3";
-        public static readonly string CONFIG_KEY_DISPLAY4 = "DISPLAY4";
-        public static readonly string CONFIG_KEY_VIDEOWND = "VIDEOWND";
+        public static readonly string CONFIG_KEY_DISPLAY1 = "DISPLAY1";     //车内视频
+        public static readonly string CONFIG_KEY_DISPLAY2 = "DISPLAY2";     //车外视频
+        public static readonly string CONFIG_KEY_DISPLAY3 = "DISPLAY3";     //考生信息
+        public static readonly string CONFIG_KEY_DISPLAY4 = "DISPLAY4";     //实时信息
+        public static readonly string CONFIG_KEY_VIDEOWND = "VIDEOWND";     //音频窗口
         public static readonly string CONFIG_KEY_WND2 = "WND2";
         public static readonly string CONFIG_KEY_HMQ = "HMQ";
 
@@ -55,5 +55,9 @@ namespace HMQConfig
         public static readonly string STRING_EVEN_NO = @"否";
         public static readonly string STRING_WND2_YES = @"是";
         public static readonly string STRING_WND2_NO = @"否";
+        public static readonly string STRING_WND_LEFT_TOP = @"左上角";
+        public static readonly string STRING_WND_RIGHT_TOP = @"右上角";
+        public static readonly string STRING_WND_LEFT_BOTTOM = @"左下角";
+        public static readonly string STRING_WND_RIGHT_BOTTOM = @"右下角";
     }
 }
