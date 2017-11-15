@@ -41,9 +41,11 @@ namespace HMQConfig
             this.label1 = new System.Windows.Forms.Label();
             this.btnDBLogin = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.btnExportTemplate = new System.Windows.Forms.Button();
             this.labelState = new System.Windows.Forms.Label();
             this.btn_SelectFile = new System.Windows.Forms.Button();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.comboBoxWnd2 = new System.Windows.Forms.ComboBox();
             this.comboBoxEven = new System.Windows.Forms.ComboBox();
             this.btnSaveDisplayConf = new System.Windows.Forms.Button();
             this.textBoxDisplay2 = new System.Windows.Forms.TextBox();
@@ -53,13 +55,11 @@ namespace HMQConfig
             this.label8 = new System.Windows.Forms.Label();
             this.textBoxDisplay1 = new System.Windows.Forms.TextBox();
             this.label10 = new System.Windows.Forms.Label();
+            this.label11 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
-            this.label11 = new System.Windows.Forms.Label();
-            this.comboBoxWnd2 = new System.Windows.Forms.ComboBox();
-            this.btnExportTemplate = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -172,6 +172,16 @@ namespace HMQConfig
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "考车配置";
             // 
+            // btnExportTemplate
+            // 
+            this.btnExportTemplate.Location = new System.Drawing.Point(8, 29);
+            this.btnExportTemplate.Name = "btnExportTemplate";
+            this.btnExportTemplate.Size = new System.Drawing.Size(87, 23);
+            this.btnExportTemplate.TabIndex = 5;
+            this.btnExportTemplate.Text = "导出模板";
+            this.btnExportTemplate.UseVisualStyleBackColor = true;
+            this.btnExportTemplate.Click += new System.EventHandler(this.btnExportTemplate_Click);
+            // 
             // labelState
             // 
             this.labelState.AutoSize = true;
@@ -213,6 +223,14 @@ namespace HMQConfig
             this.groupBox3.TabIndex = 2;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "显示配置";
+            // 
+            // comboBoxWnd2
+            // 
+            this.comboBoxWnd2.FormattingEnabled = true;
+            this.comboBoxWnd2.Location = new System.Drawing.Point(106, 119);
+            this.comboBoxWnd2.Name = "comboBoxWnd2";
+            this.comboBoxWnd2.Size = new System.Drawing.Size(71, 20);
+            this.comboBoxWnd2.TabIndex = 13;
             // 
             // comboBoxEven
             // 
@@ -285,6 +303,15 @@ namespace HMQConfig
             this.label10.TabIndex = 1;
             this.label10.Text = "是否隔行解码：";
             // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(6, 122);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(89, 12);
+            this.label11.TabIndex = 1;
+            this.label11.Text = "项目动态切换：";
+            // 
             // label9
             // 
             this.label9.AutoSize = true;
@@ -321,33 +348,6 @@ namespace HMQConfig
             this.label5.TabIndex = 1;
             this.label5.Text = "画面一位置：";
             // 
-            // label11
-            // 
-            this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(6, 122);
-            this.label11.Name = "label11";
-            this.label11.Size = new System.Drawing.Size(89, 12);
-            this.label11.TabIndex = 1;
-            this.label11.Text = "项目动态切换：";
-            // 
-            // comboBoxWnd2
-            // 
-            this.comboBoxWnd2.FormattingEnabled = true;
-            this.comboBoxWnd2.Location = new System.Drawing.Point(106, 119);
-            this.comboBoxWnd2.Name = "comboBoxWnd2";
-            this.comboBoxWnd2.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxWnd2.TabIndex = 13;
-            // 
-            // btnExportTemplate
-            // 
-            this.btnExportTemplate.Location = new System.Drawing.Point(8, 29);
-            this.btnExportTemplate.Name = "btnExportTemplate";
-            this.btnExportTemplate.Size = new System.Drawing.Size(87, 23);
-            this.btnExportTemplate.TabIndex = 5;
-            this.btnExportTemplate.Text = "导出模板";
-            this.btnExportTemplate.UseVisualStyleBackColor = true;
-            this.btnExportTemplate.Click += new System.EventHandler(this.btnExportTemplate_Click);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
@@ -358,7 +358,7 @@ namespace HMQConfig
             this.Controls.Add(this.groupBox1);
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "合码器配置";
+            this.Text = "四合一配置";
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             this.groupBox2.ResumeLayout(false);
