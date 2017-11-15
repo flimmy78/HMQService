@@ -387,7 +387,7 @@ namespace HMQConfig
                         int nCameraNo = GetIntCellValue(row, 6); //摄像头编号
                         string bitStreamType = GetStringCellValue(row, 7);  //码流类型
                         string mediaIP = GetStringCellValue(row, 8);    //流媒体IP
-                        if (nCarNo <= 0 || nPort <= 0 || nTranNo <= 0 || nCameraNo<=0 || string.IsNullOrEmpty(deviceIP) || string.IsNullOrEmpty(username)
+                        if (nCarNo <= 0 || nPort <= 0 || nTranNo <= 0 || string.IsNullOrEmpty(deviceIP) || string.IsNullOrEmpty(username)
                             || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(bitStreamType))
                         {
                             errorMsg = string.Format("Sheet 页 : {0} 的第 {1} 行存在错误数据，请检查 excel 文件。", sheetName, i + 1);
@@ -1039,7 +1039,7 @@ namespace HMQConfig
                 ISheet sheetTrans = wk.GetSheet(sheetName);
                 if (null == sheetTrans)
                 {
-                    errorMsg = string.Format("读取名为 {0} 的 sheet 页失败，filePath={1}", sheetTrans, filePath);
+                    errorMsg = string.Format("读取名为 {0} 的 sheet 页失败，filePath={1}", sheetName, filePath);
                     goto END;
                 }
                 foreach(string key in dicHmq.Keys)
