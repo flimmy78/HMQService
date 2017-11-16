@@ -130,6 +130,7 @@ namespace HMQService.Common
         public static readonly string CONFIG_KEY_PASSWORD = @"PASSWORD";
         public static readonly string CONFIG_KEY_DBADDRESS = @"DBADDRESS";
         public static readonly string CONFIG_KEY_INSTANCE = @"INSTANCE";
+        public static readonly string CONFIG_KEY_SLEEP_TIME = @"SLEEPTIME";
 
         public static readonly int CONFIG_VALUE_KSKM_2 = 2;     //考试科目为科目2
         public static readonly int CONFIG_VALUE_KSKM_3 = 3;     //考试科目为科目3

@@ -56,6 +56,8 @@ namespace HMQConfig
                 BaseDefine.CONFIG_KEY_EVEN, 0);
             int nWnd2 = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_WND2, 1);
+            int nSleepTime = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_SLEEP_TIME, 1000);
 
             //车内视频位置
             comboBoxCarVideo.BeginUpdate();
@@ -126,6 +128,9 @@ namespace HMQConfig
                 comboBoxWnd2.SelectedIndex = 1;
             }
             comboBoxWnd2.EndUpdate();
+
+            //实时信息界面刷新间隔
+            textBoxSleepTime.Text = nSleepTime.ToString();
 
         }
 
@@ -999,6 +1004,7 @@ namespace HMQConfig
             int nAudio = GetWndIndexByDes(comboBoxAudio.Text) + 1;      //音频窗口Index 从 1 开始
             string strEven = comboBoxEven.Text;
             string strWnd2 = comboBoxWnd2.Text;
+            string strSleepTime = textBoxSleepTime.Text;
 
             INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_DISPLAY1, nCarVideo.ToString());
@@ -1010,6 +1016,8 @@ namespace HMQConfig
                 BaseDefine.CONFIG_KEY_DISPLAY4, nExamInfo.ToString());
             INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_VIDEOWND, nAudio.ToString());
+            INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_SLEEP_TIME, strSleepTime);
 
             //是否隔行解码
             if (BaseDefine.STRING_EVEN_YES == strEven)

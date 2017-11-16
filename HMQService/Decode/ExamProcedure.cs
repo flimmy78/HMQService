@@ -62,7 +62,8 @@ namespace HMQService.Decode
         private double m_mapX;
         private double m_mapY;
         private double m_zoomIn;
-        private int m_mapPy;    //地图飘移
+        private int m_mapPy;    //地图偏移  //不知道什么作用
+        private int m_sleepTime;
 
         public ExamProcedure()
         {
@@ -99,6 +100,7 @@ namespace HMQService.Decode
             m_mapPy = 0;
             m_carX = 0;
             m_carY = 0;
+            m_sleepTime = 1000;
         }
 
         ~ExamProcedure()
@@ -113,6 +115,9 @@ namespace HMQService.Decode
 
             m_kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, BaseDefine.CONFIG_VALUE_KSKM_2);
+
+            m_sleepTime = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_SLEEP_TIME, 1000);
 
             //开启 ThirdPic 刷新线程
             InitThirdPic(); 
@@ -615,7 +620,7 @@ namespace HMQService.Decode
                     Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
                 }
 
-                System.Threading.Thread.Sleep(1000);
+                System.Threading.Thread.Sleep(m_sleepTime);
 
                 autoEventFourthInfo.Set();   //触发事件
             }
@@ -730,7 +735,7 @@ namespace HMQService.Decode
                     Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
                 }
 
-                System.Threading.Thread.Sleep(1000);
+                System.Threading.Thread.Sleep(m_sleepTime);
 
                 autoEventFourthMap.Set();   //触发事件
             }

@@ -45,6 +45,11 @@ namespace HMQConfig
             this.labelState = new System.Windows.Forms.Label();
             this.btn_SelectFile = new System.Windows.Forms.Button();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.comboBoxXmVideo = new System.Windows.Forms.ComboBox();
+            this.comboBoxCarVideo = new System.Windows.Forms.ComboBox();
+            this.comboBoxStudentInfo = new System.Windows.Forms.ComboBox();
+            this.comboBoxExamInfo = new System.Windows.Forms.ComboBox();
+            this.comboBoxAudio = new System.Windows.Forms.ComboBox();
             this.comboBoxWnd2 = new System.Windows.Forms.ComboBox();
             this.comboBoxEven = new System.Windows.Forms.ComboBox();
             this.btnSaveDisplayConf = new System.Windows.Forms.Button();
@@ -55,11 +60,9 @@ namespace HMQConfig
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
-            this.comboBoxCarVideo = new System.Windows.Forms.ComboBox();
-            this.comboBoxXmVideo = new System.Windows.Forms.ComboBox();
-            this.comboBoxStudentInfo = new System.Windows.Forms.ComboBox();
-            this.comboBoxExamInfo = new System.Windows.Forms.ComboBox();
-            this.comboBoxAudio = new System.Windows.Forms.ComboBox();
+            this.label12 = new System.Windows.Forms.Label();
+            this.textBoxSleepTime = new System.Windows.Forms.TextBox();
+            this.label13 = new System.Windows.Forms.Label();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -202,6 +205,7 @@ namespace HMQConfig
             // 
             // groupBox3
             // 
+            this.groupBox3.Controls.Add(this.textBoxSleepTime);
             this.groupBox3.Controls.Add(this.comboBoxXmVideo);
             this.groupBox3.Controls.Add(this.comboBoxCarVideo);
             this.groupBox3.Controls.Add(this.comboBoxStudentInfo);
@@ -212,6 +216,8 @@ namespace HMQConfig
             this.groupBox3.Controls.Add(this.btnSaveDisplayConf);
             this.groupBox3.Controls.Add(this.label8);
             this.groupBox3.Controls.Add(this.label10);
+            this.groupBox3.Controls.Add(this.label13);
+            this.groupBox3.Controls.Add(this.label12);
             this.groupBox3.Controls.Add(this.label11);
             this.groupBox3.Controls.Add(this.label9);
             this.groupBox3.Controls.Add(this.label6);
@@ -223,6 +229,46 @@ namespace HMQConfig
             this.groupBox3.TabIndex = 2;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "显示配置";
+            // 
+            // comboBoxXmVideo
+            // 
+            this.comboBoxXmVideo.FormattingEnabled = true;
+            this.comboBoxXmVideo.Location = new System.Drawing.Point(311, 24);
+            this.comboBoxXmVideo.Name = "comboBoxXmVideo";
+            this.comboBoxXmVideo.Size = new System.Drawing.Size(71, 20);
+            this.comboBoxXmVideo.TabIndex = 8;
+            // 
+            // comboBoxCarVideo
+            // 
+            this.comboBoxCarVideo.FormattingEnabled = true;
+            this.comboBoxCarVideo.Location = new System.Drawing.Point(106, 24);
+            this.comboBoxCarVideo.Name = "comboBoxCarVideo";
+            this.comboBoxCarVideo.Size = new System.Drawing.Size(71, 20);
+            this.comboBoxCarVideo.TabIndex = 7;
+            // 
+            // comboBoxStudentInfo
+            // 
+            this.comboBoxStudentInfo.FormattingEnabled = true;
+            this.comboBoxStudentInfo.Location = new System.Drawing.Point(106, 55);
+            this.comboBoxStudentInfo.Name = "comboBoxStudentInfo";
+            this.comboBoxStudentInfo.Size = new System.Drawing.Size(71, 20);
+            this.comboBoxStudentInfo.TabIndex = 9;
+            // 
+            // comboBoxExamInfo
+            // 
+            this.comboBoxExamInfo.FormattingEnabled = true;
+            this.comboBoxExamInfo.Location = new System.Drawing.Point(311, 55);
+            this.comboBoxExamInfo.Name = "comboBoxExamInfo";
+            this.comboBoxExamInfo.Size = new System.Drawing.Size(71, 20);
+            this.comboBoxExamInfo.TabIndex = 10;
+            // 
+            // comboBoxAudio
+            // 
+            this.comboBoxAudio.FormattingEnabled = true;
+            this.comboBoxAudio.Location = new System.Drawing.Point(106, 87);
+            this.comboBoxAudio.Name = "comboBoxAudio";
+            this.comboBoxAudio.Size = new System.Drawing.Size(71, 20);
+            this.comboBoxAudio.TabIndex = 11;
             // 
             // comboBoxWnd2
             // 
@@ -245,7 +291,7 @@ namespace HMQConfig
             this.btnSaveDisplayConf.Location = new System.Drawing.Point(8, 150);
             this.btnSaveDisplayConf.Name = "btnSaveDisplayConf";
             this.btnSaveDisplayConf.Size = new System.Drawing.Size(87, 23);
-            this.btnSaveDisplayConf.TabIndex = 14;
+            this.btnSaveDisplayConf.TabIndex = 15;
             this.btnSaveDisplayConf.Text = "保存配置";
             this.btnSaveDisplayConf.UseVisualStyleBackColor = true;
             this.btnSaveDisplayConf.Click += new System.EventHandler(this.btnSaveDisplayConf_Click);
@@ -313,45 +359,30 @@ namespace HMQConfig
             this.label5.TabIndex = 1;
             this.label5.Text = "车内视频位置：";
             // 
-            // comboBoxCarVideo
+            // label12
             // 
-            this.comboBoxCarVideo.FormattingEnabled = true;
-            this.comboBoxCarVideo.Location = new System.Drawing.Point(106, 24);
-            this.comboBoxCarVideo.Name = "comboBoxCarVideo";
-            this.comboBoxCarVideo.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxCarVideo.TabIndex = 7;
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(206, 122);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(89, 12);
+            this.label12.TabIndex = 1;
+            this.label12.Text = "画面刷新间隔：";
             // 
-            // comboBoxXmVideo
+            // textBoxSleepTime
             // 
-            this.comboBoxXmVideo.FormattingEnabled = true;
-            this.comboBoxXmVideo.Location = new System.Drawing.Point(311, 24);
-            this.comboBoxXmVideo.Name = "comboBoxXmVideo";
-            this.comboBoxXmVideo.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxXmVideo.TabIndex = 8;
+            this.textBoxSleepTime.Location = new System.Drawing.Point(311, 119);
+            this.textBoxSleepTime.Name = "textBoxSleepTime";
+            this.textBoxSleepTime.Size = new System.Drawing.Size(48, 21);
+            this.textBoxSleepTime.TabIndex = 14;
             // 
-            // comboBoxStudentInfo
+            // label13
             // 
-            this.comboBoxStudentInfo.FormattingEnabled = true;
-            this.comboBoxStudentInfo.Location = new System.Drawing.Point(106, 55);
-            this.comboBoxStudentInfo.Name = "comboBoxStudentInfo";
-            this.comboBoxStudentInfo.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxStudentInfo.TabIndex = 9;
-            // 
-            // comboBoxExamInfo
-            // 
-            this.comboBoxExamInfo.FormattingEnabled = true;
-            this.comboBoxExamInfo.Location = new System.Drawing.Point(311, 55);
-            this.comboBoxExamInfo.Name = "comboBoxExamInfo";
-            this.comboBoxExamInfo.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxExamInfo.TabIndex = 10;
-            // 
-            // comboBoxAudio
-            // 
-            this.comboBoxAudio.FormattingEnabled = true;
-            this.comboBoxAudio.Location = new System.Drawing.Point(106, 87);
-            this.comboBoxAudio.Name = "comboBoxAudio";
-            this.comboBoxAudio.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxAudio.TabIndex = 11;
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(365, 122);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(17, 12);
+            this.label13.TabIndex = 1;
+            this.label13.Text = "ms";
             // 
             // Form1
             // 
@@ -406,6 +437,9 @@ namespace HMQConfig
         private ComboBox comboBoxStudentInfo;
         private ComboBox comboBoxExamInfo;
         private ComboBox comboBoxAudio;
+        private TextBox textBoxSleepTime;
+        private Label label13;
+        private Label label12;
     }
 }
 
