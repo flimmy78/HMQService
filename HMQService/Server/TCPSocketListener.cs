@@ -134,7 +134,7 @@ namespace HMQService.Server
         }
 
 		/// <summary>
-		/// Method that stops Client SocketListening Thread.
+		/// Method that stops Client SocketListening Thread.  
 		/// </summary>
 		public void StopSocketListener()
 		{

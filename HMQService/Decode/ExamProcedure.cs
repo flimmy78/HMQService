@@ -1159,7 +1159,7 @@ namespace HMQService.Decode
         {
             bool bRet = false;
 
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 3; i++)
             {
                 try
                 {
