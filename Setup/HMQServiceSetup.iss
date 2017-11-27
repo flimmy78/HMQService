@@ -6,7 +6,7 @@
 #define MyAppPublisher "福州北科大舟宇电子有限公司"
 #define MyAppBuildID GetDateTimeString('yyyymmdd','','');
 #define MyAppURL "http://www.bekzoyo.com.cn/"
-#define DotNetFile "NDP451-KB2858728-x86-x64-AllOS-ENU.exe"
+#define DotNetFile "en_.net_framework_4_full_x86_508939.exe"
 
 
 [Setup]
@@ -349,7 +349,7 @@ begin
     end;
 end;
 
-//安装.net 4.5.1
+//安装.net 4.0
 procedure InstallFramework;
 var ResultCode: Integer;
 begin
