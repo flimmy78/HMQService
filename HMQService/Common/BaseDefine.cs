@@ -11,6 +11,8 @@ namespace HMQService.Common
         public static readonly int LISTENING_PORT_TCP = 6708;   //TCP 监听端口号
         public static readonly int LISTENING_PORT_UDP = 6709;   //UDP 监听端口号
         public static readonly int VIDEO_FRAME_RATE = 1;    // BitMap 转成 视频码流的每秒帧数
+        public static readonly int VIDEO_WIDTH = 352;   //单画面宽度
+        public static readonly int VIDEO_HEIGHT = 288;  //单画面高度 
 
         public static readonly string STRING_KM2_PUBLIC_VIDEO = @"10086_1"; //科目二场地远景摄像头编号
         public static readonly string STRING_TIME_FORMAT = "HH:mm:ss";
@@ -195,6 +197,8 @@ namespace HMQService.Common
         public static readonly string IMG_PATH_MARK = @".\res\mark.skin";
         public static readonly string IMG_PATH_TIME= @".\res\time.skin";
         public static readonly string IMG_PATH_XMP = @".\res\xmp.skin";
+        public static readonly string IMG_PATH_XMICON = @".\res\xmIcon.skin";
+        public static readonly string IMG_PATH_XMPMARK = @".\res\xmpMark.skin";
         public static readonly string IMG_PATH_MAPN = @".\res\MAPN.skin";
         public static readonly string IMG_PATH_SINGLE_CAR = @".\res\Car.skin";
         public static readonly string IMG_PATH_MULTI_CAR = @".\res\Car{0}.skin";
