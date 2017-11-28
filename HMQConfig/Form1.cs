@@ -666,6 +666,11 @@ namespace HMQConfig
             int nCount = dicHmq.Count;
             bool bRet = INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_JMQ,
                 BaseDefine.CONFIG_KEY_NUM, nCount.ToString());
+            if (!bRet)
+            {
+                Log.GetLogger().ErrorFormat("WriteHMQConfToIni failed, section={0}, key={1},value={2}",
+                    BaseDefine.CONFIG_SECTION_JMQ, BaseDefine.CONFIG_KEY_NUM, nCount);
+            }
 
             int nIndex = 1;
             foreach(HMQConf hmq in dicHmq.Values)
@@ -673,6 +678,11 @@ namespace HMQConfig
                 string key = nIndex.ToString();
                 string value = string.Format("{0},{1},{2},{3}", hmq.Ip, hmq.Username, hmq.Password, hmq.Port);
                 bRet = INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_JMQ, key, value);
+                if (!bRet)
+                {
+                    Log.GetLogger().ErrorFormat("WriteHMQConfToIni failed, section={0}, key={1},value={2}",
+                        BaseDefine.CONFIG_SECTION_JMQ, key, value);
+                }
 
                 string section = string.Format("{0}{1}", BaseDefine.CONFIG_SECTION_JMQ, nIndex);    //JMQ1、JMQ2
                 foreach(int tranNo in hmq.DicTran2Car.Keys)
@@ -681,6 +691,11 @@ namespace HMQConfig
 
                     key = string.Format("{0}{1}", BaseDefine.CONFIG_KEY_BNC, tranNo);   //BNC1、BNC2
                     bRet = INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_CAR, section, key, CarNo.ToString());
+                    if (!bRet)
+                    {
+                        Log.GetLogger().ErrorFormat("WriteHMQConfToIni failed, section={0}, key={1},value={2}, file={3}",
+                            section, key, CarNo, BaseDefine.CONFIG_FILE_PATH_CAR);
+                    }
                 }
 
                 nIndex++;

@@ -49,8 +49,8 @@ Source: "./batch/UninstallService.bat"; DestDir: "{app}/batch"; Flags: ignorever
 Source: "./batch/StartService.bat"; DestDir: "{app}/batch"; Flags: ignoreversion
 Source: "./batch/StopService.bat"; DestDir: "{app}/batch"; Flags: ignoreversion
 
-;配置文件
-Source: "./conf/*"; DestDir: "{app}/conf"; Flags: ignoreversion recursesubdirs createallsubdirs
+;配置文件，如果已经存在，不覆盖
+Source: "./conf/*"; DestDir: "{app}/conf"; Flags: ignoreversion recursesubdirs createallsubdirs onlyifdoesntexist
 
 ;一些通用的资源文件和配置文件
 Source: "./res/Common/*"; DestDir: "{app}/res"; Flags: ignoreversion recursesubdirs createallsubdirs
