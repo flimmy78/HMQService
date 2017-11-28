@@ -168,6 +168,7 @@ namespace HMQConfig
             {
                 retStr = BaseDefine.STRING_WND_RIGHT_TOP;
             }
+
             else if (2 == index)
             {
                 retStr = BaseDefine.STRING_WND_LEFT_BOTTOM;

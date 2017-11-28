@@ -738,8 +738,22 @@ namespace HMQService.Server
                 DataSet ds = m_sqlDataProvider.RetriveDataSet(sql);
                 if (ds != null && ds.Tables[0] != null && ds.Tables[0].Rows != null)
                 {
-                    arrayZp = (Byte[])ds.Tables[0].Rows[0][0];
-                    arrayMjzp = (Byte[])ds.Tables[0].Rows[0][1];
+                    try
+                    {
+                        arrayZp = (Byte[])ds.Tables[0].Rows[0][0];
+                    }
+                    catch(Exception e)
+                    {
+                        Log.GetLogger().ErrorFormat("无法将照片转换为Byte[], {0}", e.Message);
+                    }
+                    try
+                    {
+                        arrayMjzp = (Byte[])ds.Tables[0].Rows[0][1];
+                    }
+                    catch (Exception e)
+                    {
+                        Log.GetLogger().ErrorFormat("无法将门禁照片转换为Byte[], {0}", e.Message);
+                    }
 
                     //if (null == arrayZp || null == arrayMjzp || 0==arrayZp.Length || 0==arrayMjzp.Length)
                     //{
