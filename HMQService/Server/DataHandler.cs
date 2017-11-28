@@ -454,7 +454,6 @@ namespace HMQService.Server
                     break;
             }
 
-
             return xmName;
         }
 
@@ -744,22 +743,17 @@ namespace HMQService.Server
                     }
                     catch(Exception e)
                     {
-                        Log.GetLogger().ErrorFormat("无法将照片转换为Byte[], {0}", e.Message);
+                        Log.GetLogger().InfoFormat("照片获取失败，{0}", e.Message);
                     }
+
                     try
                     {
                         arrayMjzp = (Byte[])ds.Tables[0].Rows[0][1];
                     }
-                    catch (Exception e)
+                    catch(Exception e)
                     {
-                        Log.GetLogger().ErrorFormat("无法将门禁照片转换为Byte[], {0}", e.Message);
+                        Log.GetLogger().InfoFormat("门禁照片获取失败，{0}", e.Message);
                     }
-
-                    //if (null == arrayZp || null == arrayMjzp || 0==arrayZp.Length || 0==arrayMjzp.Length)
-                    //{
-                    //    Log.GetLogger().ErrorFormat("查询 StudentPhoto 表值为空，sql={0}", sql);
-                    //    return false;
-                    //}
                 }
             }
             catch(Exception e)
