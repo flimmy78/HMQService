@@ -24,6 +24,11 @@ namespace HMQConfig
         private string m_dbPassword;
         private string m_dbInstance;
         private int m_dbType;
+        private string m_AppPath;
+        private string m_confPathDisplay;
+        private string m_confPathDB;
+        private string m_confPathENV;
+        private string m_confPathCar;
 
         public Form1()
         {
@@ -36,27 +41,35 @@ namespace HMQConfig
             //初始化 log4net 配置信息
             log4net.Config.XmlConfigurator.Configure();
 
+            //设置服务运行路径
+            System.IO.Directory.SetCurrentDirectory(System.AppDomain.CurrentDomain.BaseDirectory);
+            m_AppPath = System.AppDomain.CurrentDomain.BaseDirectory;
+            m_confPathCar = m_AppPath + BaseDefine.CONFIG_FILE_PATH_CAR;
+            m_confPathDB = m_AppPath + BaseDefine.CONFIG_FILE_PATH_DB;
+            m_confPathDisplay = m_AppPath + BaseDefine.CONFIG_FILE_PATH_DISPLAY;
+            m_confPathENV = m_AppPath + BaseDefine.CONFIG_FILE_PATH_ENV;
+
             //初始化海康SDK
             HikUtils.HikUtils.InitDevice();
 
             InitializeComponent();
 
             //读取初始配置
-            int nCarVideo = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nCarVideo = INIOperator.INIGetIntValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_DISPLAY1, 0);
-            int nXmVideo = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nXmVideo = INIOperator.INIGetIntValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_DISPLAY2, 1);
-            int nStudentInfo = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nStudentInfo = INIOperator.INIGetIntValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_DISPLAY3, 2);
-            int nExamInfo = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nExamInfo = INIOperator.INIGetIntValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_DISPLAY4, 3);
-            int nAudioWnd = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nAudioWnd = INIOperator.INIGetIntValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_VIDEOWND, 1);
-            int nEven = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nEven = INIOperator.INIGetIntValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_EVEN, 0);
-            int nWnd2 = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nWnd2 = INIOperator.INIGetIntValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_WND2, 1);
-            int nSleepTime = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nSleepTime = INIOperator.INIGetIntValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_SLEEP_TIME, 1000);
 
             //车内视频位置
@@ -214,7 +227,7 @@ namespace HMQConfig
             try
             {
                 //连接数据库
-                m_dbType = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
+                m_dbType = INIOperator.INIGetIntValue(m_confPathENV, BaseDefine.CONFIG_SECTION_CONFIG,
                     BaseDefine.CONFIG_KEY_DBADDRESS, 1);
                 if (1 == m_dbType)
                 {
@@ -259,11 +272,11 @@ namespace HMQConfig
                 string base64DbAddress = Base64Util.Base64Encode(m_dbAddress);
                 string base64DbUserName = Base64Util.Base64Encode(m_dbUsername);
                 string base64DbPassword = Base64Util.Base64Encode(m_dbPassword);
-                INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DB, BaseDefine.CONFIG_SECTION_CONFIG,
+                INIOperator.INIWriteValue(m_confPathDB, BaseDefine.CONFIG_SECTION_CONFIG,
                     BaseDefine.CONFIG_KEY_DBADDRESS, base64DbAddress);
-                INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DB, BaseDefine.CONFIG_SECTION_CONFIG,
+                INIOperator.INIWriteValue(m_confPathDB, BaseDefine.CONFIG_SECTION_CONFIG,
                     BaseDefine.CONFIG_KEY_USERNAME, base64DbUserName);
-                INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DB, BaseDefine.CONFIG_SECTION_CONFIG,
+                INIOperator.INIWriteValue(m_confPathDB, BaseDefine.CONFIG_SECTION_CONFIG,
                     BaseDefine.CONFIG_KEY_PASSWORD, base64DbPassword);
 
                 //更新数据库实例下拉框
@@ -294,7 +307,7 @@ namespace HMQConfig
             m_dbInstance = comboDBInstance.Text;
 
             string base64Instance = Base64Util.Base64Encode(m_dbInstance);
-            INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DB, BaseDefine.CONFIG_SECTION_CONFIG,
+            INIOperator.INIWriteValue(m_confPathDB, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_INSTANCE, base64Instance);
         }
 
@@ -658,13 +671,13 @@ namespace HMQConfig
         {
             errorMsg = string.Empty;
 
-            if (File.Exists(BaseDefine.CONFIG_FILE_PATH_CAR))
+            if (File.Exists(m_confPathCar))
             {
-                File.Delete(BaseDefine.CONFIG_FILE_PATH_CAR);
+                File.Delete(m_confPathCar);
             }
 
             int nCount = dicHmq.Count;
-            bool bRet = INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_JMQ,
+            bool bRet = INIOperator.INIWriteValue(m_confPathCar, BaseDefine.CONFIG_SECTION_JMQ,
                 BaseDefine.CONFIG_KEY_NUM, nCount.ToString());
             if (!bRet)
             {
@@ -677,7 +690,7 @@ namespace HMQConfig
             {
                 string key = nIndex.ToString();
                 string value = string.Format("{0},{1},{2},{3}", hmq.Ip, hmq.Username, hmq.Password, hmq.Port);
-                bRet = INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_JMQ, key, value);
+                bRet = INIOperator.INIWriteValue(m_confPathCar, BaseDefine.CONFIG_SECTION_JMQ, key, value);
                 if (!bRet)
                 {
                     Log.GetLogger().ErrorFormat("WriteHMQConfToIni failed, section={0}, key={1},value={2}",
@@ -690,7 +703,7 @@ namespace HMQConfig
                     int CarNo = hmq.DicTran2Car[tranNo];
 
                     key = string.Format("{0}{1}", BaseDefine.CONFIG_KEY_BNC, tranNo);   //BNC1、BNC2
-                    bRet = INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_CAR, section, key, CarNo.ToString());
+                    bRet = INIOperator.INIWriteValue(m_confPathCar, section, key, CarNo.ToString());
                     if (!bRet)
                     {
                         Log.GetLogger().ErrorFormat("WriteHMQConfToIni failed, section={0}, key={1},value={2}, file={3}",
@@ -808,7 +821,7 @@ namespace HMQConfig
             errorMsg = string.Empty;
 
             //读取解码设备数量 
-            int nCount = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_JMQ,
+            int nCount = INIOperator.INIGetIntValue(m_confPathCar, BaseDefine.CONFIG_SECTION_JMQ,
                 BaseDefine.CONFIG_KEY_NUM, 0);
             if (0 == nCount)
             {
@@ -817,12 +830,12 @@ namespace HMQConfig
             }
 
             //获取解码设备类型
-            int nType = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
+            int nType = INIOperator.INIGetIntValue(m_confPathENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_HMQ, 1);
 
             for (int i = 1; i <= nCount; i++)
             {
-                string hmqInfo = INIOperator.INIGetStringValue(BaseDefine.CONFIG_FILE_PATH_CAR, BaseDefine.CONFIG_SECTION_JMQ,
+                string hmqInfo = INIOperator.INIGetStringValue(m_confPathCar, BaseDefine.CONFIG_SECTION_JMQ,
                     i.ToString(), "");
                 if (string.IsNullOrEmpty(hmqInfo))
                 {
@@ -878,7 +891,7 @@ namespace HMQConfig
                 {
                     string key = string.Format("{0}{1}", BaseDefine.CONFIG_KEY_BNC, j);     //BNC1、BNC2
 
-                    int kch = INIOperator.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_CAR, section, key, 0);
+                    int kch = INIOperator.INIGetIntValue(m_confPathCar, section, key, 0);
                     if (kch > 0 && !dicTrans.ContainsKey(j))
                     {
                         dicTrans.Add(j, kch);
@@ -1022,40 +1035,40 @@ namespace HMQConfig
             string strWnd2 = comboBoxWnd2.Text;
             string strSleepTime = textBoxSleepTime.Text;
 
-            INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            INIOperator.INIWriteValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_DISPLAY1, nCarVideo.ToString());
-            INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            INIOperator.INIWriteValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_DISPLAY2, nXmVideo.ToString());
-            INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            INIOperator.INIWriteValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_DISPLAY3, nStudentInfo.ToString());
-            INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            INIOperator.INIWriteValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_DISPLAY4, nExamInfo.ToString());
-            INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            INIOperator.INIWriteValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_VIDEOWND, nAudio.ToString());
-            INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+            INIOperator.INIWriteValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_SLEEP_TIME, strSleepTime);
 
             //是否隔行解码
             if (BaseDefine.STRING_EVEN_YES == strEven)
             {
-                INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                INIOperator.INIWriteValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                     BaseDefine.CONFIG_KEY_EVEN, "1");
             }
             else
             {
-                INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                INIOperator.INIWriteValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                     BaseDefine.CONFIG_KEY_EVEN, "0");
             }
 
             //项目动态切换
             if (BaseDefine.STRING_WND2_YES == strWnd2)
             {
-                INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                INIOperator.INIWriteValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                     BaseDefine.CONFIG_KEY_WND2, "1");
             }
             else
             {
-                INIOperator.INIWriteValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                INIOperator.INIWriteValue(m_confPathDisplay, BaseDefine.CONFIG_SECTION_CONFIG,
                     BaseDefine.CONFIG_KEY_WND2, "0");
             }
 

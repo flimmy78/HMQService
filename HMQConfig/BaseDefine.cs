@@ -21,10 +21,10 @@ namespace HMQConfig
         public static readonly string DB_FIELD_MEDIAIP = "MediaIP";
         public static readonly string DB_FIELD_NID = "Nid";
 
-        public static readonly string CONFIG_FILE_PATH_ENV = @".\conf\HS_CONF_ENV.ini";
-        public static readonly string CONFIG_FILE_PATH_DB = @".\conf\HS_CONF_DB.ini";
-        public static readonly string CONFIG_FILE_PATH_DISPLAY = @".\conf\HS_CONF_DISPLAY.ini";
-        public static readonly string CONFIG_FILE_PATH_CAR = @".\conf\HS_CONF_CAR.ini";
+        public static readonly string CONFIG_FILE_PATH_ENV = @"conf\HS_CONF_ENV.ini";
+        public static readonly string CONFIG_FILE_PATH_DB = @"conf\HS_CONF_DB.ini";
+        public static readonly string CONFIG_FILE_PATH_DISPLAY = @"conf\HS_CONF_DISPLAY.ini";
+        public static readonly string CONFIG_FILE_PATH_CAR = @"conf\HS_CONF_CAR.ini";
         public static readonly string CONFIG_SECTION_CONFIG = @"CONFIG";
         public static readonly string CONFIG_SECTION_JMQ = @"JMQ";
         public static readonly string CONFIG_KEY_SQLORACLE = @"SQLORACLE";
