@@ -266,7 +266,18 @@ namespace HMQService.Decode
                     return retConnectionStr;
                 }
 
-                retConnectionStr = string.Format(BaseDefine.DB_CONN_FORMAT, dbAddress, dbInstance, dbUsername, dbPassword);
+                int dbType = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
+                    BaseDefine.CONFIG_KEY_SQLORACLE, 0);
+                if (1 == dbType)
+                {
+                    //SQL
+                    retConnectionStr = string.Format(BaseDefine.DB_CONN_FORMAT_SQL, dbAddress, dbInstance, dbUsername, dbPassword);
+                }
+                else
+                {
+                    //ORACLE
+                    retConnectionStr = string.Format(BaseDefine.DB_CONN_FORMAT_ORACLE, dbUsername, dbPassword, dbAddress, dbInstance);
+                }
             }
             catch(Exception e)
             {
@@ -309,7 +320,7 @@ namespace HMQService.Decode
         {
             dicCameras.Clear();
 
-            string sql = string.Format("select {0},{1},{2},{3},{4},{5},{6},{7},{8} from {9} order by {10};",
+            string sql = string.Format("select {0},{1},{2},{3},{4},{5},{6},{7},{8} from {9} order by {10}",
                 BaseDefine.DB_FIELD_BH,
                 BaseDefine.DB_FIELD_SBIP,
                 BaseDefine.DB_FIELD_YHM,

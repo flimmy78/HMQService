@@ -478,16 +478,30 @@ namespace HMQService.Decode
 
                             if (null != m_studentInfo.ArrayZp)
                             {
-                                Stream streamZp = new MemoryStream(m_studentInfo.ArrayZp);
-                                Image imgZp = Image.FromStream(streamZp);
-                                graphics.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
+                                try
+                                {
+                                    Stream streamZp = new MemoryStream(m_studentInfo.ArrayZp);
+                                    Image imgZp = Image.FromStream(streamZp);
+                                    graphics.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
+                                }
+                                catch(Exception e)
+                                {
+                                    Log.GetLogger().DebugFormat("考生照片存在问题, {0}", e.Message);
+                                }
                             }
                             
                             if (null != m_studentInfo.ArrayMjzp)
                             {
-                                Stream streamMjzp = new MemoryStream(m_studentInfo.ArrayMjzp);
-                                Image imgMjzp = Image.FromStream(streamMjzp);
-                                graphics.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
+                                try
+                                {
+                                    Stream streamMjzp = new MemoryStream(m_studentInfo.ArrayMjzp);
+                                    Image imgMjzp = Image.FromStream(streamMjzp);
+                                    graphics.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
+                                }
+                                catch (Exception e)
+                                {
+                                    Log.GetLogger().DebugFormat("考生门禁照片存在问题, {0}", e.Message);
+                                }
                             }
                         }
 

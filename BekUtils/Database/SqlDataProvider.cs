@@ -120,6 +120,10 @@ namespace BekUtils.Database
             {
                 if (sqlConnection == null)
                     return null;
+                if (System.Data.ConnectionState.Closed == sqlConnection.State)
+                {
+                    sqlConnection.Open();
+                }
                 using (SqlDataAdapter da = new SqlDataAdapter(sql, sqlConnection))
                 {
                     DataSet ds = new DataSet();

@@ -7,7 +7,8 @@ namespace HMQConfig
 {
     public class BaseDefine
     {
-        public static readonly string DB_CONN_FORMAT = @"Data Source={0};Initial Catalog = {1};User ID = {2};PWD = {3}";
+        public static readonly string DB_CONN_FORMAT_SQL = @"Data Source={0};Initial Catalog = {1};User ID = {2};PWD = {3}";
+        public static readonly string DB_CONN_FORMAT_ORACLE = @"user id = {0}; password={1};Data Source = (DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST ={2})(PORT=1521))(CONNECT_DATA=(SERVICE_NAME={3})));";
         public static readonly string DB_NAME_MASTER = @"master";
         public static readonly string DB_TABLE_TBKVIDEO = @"TBKVideo";
         public static readonly string DB_FIELD_BH = "编号";

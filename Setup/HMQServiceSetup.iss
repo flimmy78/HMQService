@@ -2,7 +2,7 @@
 ; 有关创建 Inno Setup 脚本文件的详细资料请查阅帮助文档！
 
 #define MyAppName "HMQService"
-#define MyAppVersion "2.0.1"
+#define MyAppVersion "2.0.2"
 #define MyAppPublisher "福州北科大舟宇电子有限公司"
 #define MyAppBuildID GetDateTimeString('yyyymmdd','','');
 #define MyAppURL "http://www.bekzoyo.com.cn/"
@@ -25,7 +25,7 @@ DefaultDirName={pf}\{#MyAppName}
 ;DisableDirPage=yes
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
-OutputBaseFilename={#MyAppName}_{#MyAppVersion}_Build_{#MyAppBuildID}
+OutputBaseFilename={#MyAppName}_{#MyAppVersion}_Build_{#MyAppBuildID}01
 Compression=lzma
 SolidCompression=yes
 ;要求管理员权限

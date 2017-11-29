@@ -205,52 +205,47 @@ namespace HMQConfig
             m_dbAddress = textDBIP.Text;
             m_dbUsername = textDBUsername.Text;
             m_dbPassword = textDBPassword.Text;
+            m_dbInstance = textDBInstance.Text;
 
             //禁用控件
             textDBIP.Enabled = false;
             textDBUsername.Enabled = false;
             textDBPassword.Enabled = false;
-            comboDBInstance.Enabled = false;
+            textDBInstance.Enabled = false;
 
-            //清空数据库实例
-            comboDBInstance.BeginUpdate();
-            comboDBInstance.Items.Clear();
-            comboDBInstance.DataSource = null;
-            comboDBInstance.Text = "";
-            comboDBInstance.EndUpdate();
-            labelState.Text = string.Empty;
-
-            List<string> dbNames = new List<string>();
-            string connStr = string.Format(BaseDefine.DB_CONN_FORMAT, textDBIP.Text,
-                BaseDefine.DB_NAME_MASTER, textDBUsername.Text, textDBPassword.Text);
-
+            int nCnt = 0;
             try
             {
                 //连接数据库
                 m_dbType = INIOperator.INIGetIntValue(m_confPathENV, BaseDefine.CONFIG_SECTION_CONFIG,
-                    BaseDefine.CONFIG_KEY_DBADDRESS, 1);
+                    BaseDefine.CONFIG_KEY_SQLORACLE, 1);
                 if (1 == m_dbType)
                 {
                     Log.GetLogger().InfoFormat("数据库类型为：SqlServer");
+                    string connStr = string.Format(BaseDefine.DB_CONN_FORMAT_SQL, m_dbAddress,
+                        m_dbInstance, m_dbUsername, m_dbPassword);
                     m_dbProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.SqlDataProvider, connStr);
                 }
                 else
                 {
                     Log.GetLogger().InfoFormat("数据库类型为：Oracle");
+                    string connStr = string.Format(BaseDefine.DB_CONN_FORMAT_ORACLE, 
+                         m_dbUsername, m_dbPassword, m_dbAddress, m_dbInstance);
                     m_dbProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.OracleDataProvider, connStr);
                 }
 
                 //遍历数据库实例名
-                DataSet ds = m_dbProvider.RetriveDataSet("select name from master.dbo.sysdatabases;");
+                string sql = "select 1 from errordata";
+                DataSet ds = m_dbProvider.RetriveDataSet(sql);
                 if (null != ds)
                 {
                     for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
                     {
-                        string dbName = ds.Tables[0].Rows[i][0].ToString();
-                        if (!string.IsNullOrEmpty(dbName))
+                        string strCnt = ds.Tables[0].Rows[i][0].ToString();
+                        if (!string.IsNullOrEmpty(strCnt))
                         {
-                            Log.GetLogger().DebugFormat("find database instance : {0}", dbName);
-                            dbNames.Add(dbName);
+                            int.TryParse(strCnt, out nCnt);
+                            break;
                         }
                     }
                 }
@@ -260,10 +255,9 @@ namespace HMQConfig
                 Log.GetLogger().ErrorFormat("catch an error : {0}", ex.Message);
             }
 
-            if (0 == dbNames.Count)
+            if (nCnt <= 0)
             {
-                Log.GetLogger().ErrorFormat("未能找到对应的数据库实例，请检查数据库配置。ip={0}, username={1}", textDBIP.Text, textDBUsername.Text);
-                MessageBox.Show("未能找到对应的数据库实例，请检查数据库配置。");
+                MessageBox.Show("数据库连接失败，请检查数据库配置。");
                 goto END;
             }
             else
@@ -272,22 +266,17 @@ namespace HMQConfig
                 string base64DbAddress = Base64Util.Base64Encode(m_dbAddress);
                 string base64DbUserName = Base64Util.Base64Encode(m_dbUsername);
                 string base64DbPassword = Base64Util.Base64Encode(m_dbPassword);
+                string base64DbInstance = Base64Util.Base64Encode(m_dbInstance);
                 INIOperator.INIWriteValue(m_confPathDB, BaseDefine.CONFIG_SECTION_CONFIG,
                     BaseDefine.CONFIG_KEY_DBADDRESS, base64DbAddress);
                 INIOperator.INIWriteValue(m_confPathDB, BaseDefine.CONFIG_SECTION_CONFIG,
                     BaseDefine.CONFIG_KEY_USERNAME, base64DbUserName);
                 INIOperator.INIWriteValue(m_confPathDB, BaseDefine.CONFIG_SECTION_CONFIG,
                     BaseDefine.CONFIG_KEY_PASSWORD, base64DbPassword);
+                INIOperator.INIWriteValue(m_confPathDB, BaseDefine.CONFIG_SECTION_CONFIG,
+                    BaseDefine.CONFIG_KEY_INSTANCE, base64DbInstance);
 
-                //更新数据库实例下拉框
-                comboDBInstance.BeginUpdate();
-                foreach (string dbName in dbNames)
-                {
-                    comboDBInstance.Items.Add(dbName);
-                }
-                comboDBInstance.EndUpdate();
-
-                MessageBox.Show("数据库连接成功，请选择一个数据库实例。");
+                MessageBox.Show("数据库登录成功");
             }
 
             END:
@@ -296,19 +285,8 @@ namespace HMQConfig
                 textDBIP.Enabled = true;
                 textDBUsername.Enabled = true;
                 textDBPassword.Enabled = true;
-                comboDBInstance.Enabled = true;
+                textDBInstance.Enabled = true;
             }
-        }
-
-        private void comboDBInstance_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            Log.GetLogger().DebugFormat("选择数据库实例：{0}", comboDBInstance.Text);
-
-            m_dbInstance = comboDBInstance.Text;
-
-            string base64Instance = Base64Util.Base64Encode(m_dbInstance);
-            INIOperator.INIWriteValue(m_confPathDB, BaseDefine.CONFIG_SECTION_CONFIG,
-                BaseDefine.CONFIG_KEY_INSTANCE, base64Instance);
         }
 
         private void btnSelectFile_Click(object sender, EventArgs e)
@@ -720,19 +698,21 @@ namespace HMQConfig
         private bool WriteCameraConfToDB(Dictionary<string, CameraConf> dicCamera, out string errorMsg)
         {
             errorMsg = string.Empty;
-
+            string connStr = string.Empty;
             IDataProvider sqlProvider = null;
-            string connStr = string.Format(BaseDefine.DB_CONN_FORMAT, m_dbAddress,
-                m_dbInstance, m_dbUsername, m_dbPassword);
-
+            
             try
             {
                 if (1 == m_dbType)
                 {
+                    connStr = string.Format(BaseDefine.DB_CONN_FORMAT_SQL, m_dbAddress,
+                        m_dbInstance, m_dbUsername, m_dbPassword);
                     sqlProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.SqlDataProvider, connStr);
                 }
                 else
                 {
+                    connStr = string.Format(BaseDefine.DB_CONN_FORMAT_ORACLE,
+                         m_dbUsername, m_dbPassword, m_dbAddress, m_dbInstance);
                     sqlProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.OracleDataProvider, connStr);
                 }
 
@@ -764,7 +744,7 @@ namespace HMQConfig
                         CameraConf camera = dicCamera[key];
 
                         //先删除旧记录
-                        string sql = string.Format("delete from {0} where {1}='{2}' and {3}='{4}';", BaseDefine.DB_TABLE_TBKVIDEO,
+                        string sql = string.Format("delete from {0} where {1}='{2}' and {3}='{4}'", BaseDefine.DB_TABLE_TBKVIDEO,
                             BaseDefine.DB_FIELD_BH, bh, BaseDefine.DB_FIELD_NID, nid);
                         int nRet = sqlProvider.ExecuteNonQuery(sql);
                         if (nRet < 0)
@@ -775,7 +755,7 @@ namespace HMQConfig
                         System.Threading.Thread.Sleep(10);
 
                         //插入新记录
-                        sql = string.Format("insert into {0}({1},{2},{3},{4},{5},{6},{7},{8},{9},{10}) values('{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}');",
+                        sql = string.Format("insert into {0}({1},{2},{3},{4},{5},{6},{7},{8},{9},{10}) values('{11}','{12}','{13}','{14}','{15}','{16}','{17}','{18}','{19}','{20}')",
                             BaseDefine.DB_TABLE_TBKVIDEO,
                             BaseDefine.DB_FIELD_BH,
                             BaseDefine.DB_FIELD_SBIP,
@@ -914,17 +894,19 @@ namespace HMQConfig
             errorMsg = string.Empty;
 
             IDataProvider sqlProvider = null;
-            string connStr = string.Format(BaseDefine.DB_CONN_FORMAT, m_dbAddress,
-                m_dbInstance, m_dbUsername, m_dbPassword);
-
+            string connStr = string.Empty; 
             try
             {
                 if (1 == m_dbType)
                 {
+                    connStr = string.Format(BaseDefine.DB_CONN_FORMAT_SQL, m_dbAddress,
+                        m_dbInstance, m_dbUsername, m_dbPassword);
                     sqlProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.SqlDataProvider, connStr);
                 }
                 else
                 {
+                    connStr = string.Format(BaseDefine.DB_CONN_FORMAT_ORACLE,
+                         m_dbUsername, m_dbPassword, m_dbAddress, m_dbInstance);
                     sqlProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.OracleDataProvider, connStr);
                 }
 
@@ -934,7 +916,7 @@ namespace HMQConfig
                     return false;
                 }
 
-                string sql = string.Format("select {0},{1},{2},{3},{4},{5},{6},{7},{8},{9} from {10};", 
+                string sql = string.Format("select {0},{1},{2},{3},{4},{5},{6},{7},{8},{9} from {10}", 
                     BaseDefine.DB_FIELD_BH,
                     BaseDefine.DB_FIELD_SBIP,
                     BaseDefine.DB_FIELD_DKH,

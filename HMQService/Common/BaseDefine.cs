@@ -142,7 +142,8 @@ namespace HMQService.Common
         public static readonly int CONFIG_VALUE_ZERO_SCORE = 0;  //零分
 
         //数据库
-        public static readonly string DB_CONN_FORMAT = @"Data Source={0};Initial Catalog = {1};User ID = {2};PWD = {3}";
+        public static readonly string DB_CONN_FORMAT_SQL = @"Data Source={0};Initial Catalog = {1};User ID = {2};PWD = {3}";
+        public static readonly string DB_CONN_FORMAT_ORACLE = @"user id = {0}; password={1};Data Source = (DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST ={2})(PORT=1521))(CONNECT_DATA=(SERVICE_NAME={3})));";
         public static readonly string DB_TABLE_TBKVIDEO = "TBKVideo";
         public static readonly string DB_TABLE_ERRORDATA = "ErrorData";
         public static readonly string DB_TABLE_STUDENTINFO = "StudentInfo";

@@ -7,6 +7,7 @@ using System.Reflection;
 using BekUtils.Util;
 using log4net;
 using System.Threading;
+using System.Windows.Forms;
 
 namespace HMQService
 {
@@ -28,7 +29,8 @@ namespace HMQService
             System.IO.Directory.SetCurrentDirectory(System.AppDomain.CurrentDomain.BaseDirectory);
 
             //Log.GetLogger().InfoFormat("HMQServiceDaemon Constructor");
-            BekUtils.Util.Log.GetLogger().InfoFormat("222");
+
+
 
             InitializeComponent();
         }
@@ -219,7 +221,16 @@ namespace HMQService
         {
             //logger.InfoFormat("DaemonThreadProc begin");
 
-            while(true)
+            try
+            {
+                BekUtils.Util.Log.GetLogger().InfoFormat("222");
+            }
+            catch (Exception e)
+            {
+                //MessageBox.Show("error : {0}", e.Message);
+            }
+
+            while (true)
             {
                 try
                 {
