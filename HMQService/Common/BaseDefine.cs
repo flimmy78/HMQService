@@ -11,6 +11,8 @@ namespace HMQService.Common
         public static readonly int LISTENING_PORT_TCP = 6708;   //TCP 监听端口号
         public static readonly int LISTENING_PORT_UDP = 6709;   //UDP 监听端口号
         public static readonly int VIDEO_FRAME_RATE = 1;    // BitMap 转成 视频码流的每秒帧数
+        public static readonly int VIDEO_WIDTH = 352;   //单画面宽度
+        public static readonly int VIDEO_HEIGHT = 288;  //单画面高度 
 
         public static readonly string STRING_KM2_PUBLIC_VIDEO = @"10086_1"; //科目二场地远景摄像头编号
         public static readonly string STRING_TIME_FORMAT = "HH:mm:ss";
@@ -130,6 +132,7 @@ namespace HMQService.Common
         public static readonly string CONFIG_KEY_PASSWORD = @"PASSWORD";
         public static readonly string CONFIG_KEY_DBADDRESS = @"DBADDRESS";
         public static readonly string CONFIG_KEY_INSTANCE = @"INSTANCE";
+        public static readonly string CONFIG_KEY_SLEEP_TIME = @"SLEEPTIME";
 
         public static readonly int CONFIG_VALUE_KSKM_2 = 2;     //考试科目为科目2
         public static readonly int CONFIG_VALUE_KSKM_3 = 3;     //考试科目为科目3
@@ -139,7 +142,8 @@ namespace HMQService.Common
         public static readonly int CONFIG_VALUE_ZERO_SCORE = 0;  //零分
 
         //数据库
-        public static readonly string DB_CONN_FORMAT = @"Data Source={0};Initial Catalog = {1};User ID = {2};PWD = {3}";
+        public static readonly string DB_CONN_FORMAT_SQL = @"Data Source={0};Initial Catalog = {1};User ID = {2};PWD = {3}";
+        public static readonly string DB_CONN_FORMAT_ORACLE = @"user id = {0}; password={1};Data Source = (DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST ={2})(PORT=1521))(CONNECT_DATA=(SERVICE_NAME={3})));";
         public static readonly string DB_TABLE_TBKVIDEO = "TBKVideo";
         public static readonly string DB_TABLE_ERRORDATA = "ErrorData";
         public static readonly string DB_TABLE_STUDENTINFO = "StudentInfo";
@@ -194,6 +198,8 @@ namespace HMQService.Common
         public static readonly string IMG_PATH_MARK = @".\res\mark.skin";
         public static readonly string IMG_PATH_TIME= @".\res\time.skin";
         public static readonly string IMG_PATH_XMP = @".\res\xmp.skin";
+        public static readonly string IMG_PATH_XMICON = @".\res\xmIcon.skin";
+        public static readonly string IMG_PATH_XMPMARK = @".\res\xmpMark.skin";
         public static readonly string IMG_PATH_MAPN = @".\res\MAPN.skin";
         public static readonly string IMG_PATH_SINGLE_CAR = @".\res\Car.skin";
         public static readonly string IMG_PATH_MULTI_CAR = @".\res\Car{0}.skin";

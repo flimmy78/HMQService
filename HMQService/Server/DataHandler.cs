@@ -454,7 +454,6 @@ namespace HMQService.Server
                     break;
             }
 
-
             return xmName;
         }
 
@@ -648,7 +647,7 @@ namespace HMQService.Server
 
             try
             {
-                string sql = string.Format("select {0},{1} from {2} where {3}='{4}';",
+                string sql = string.Format("select {0},{1} from {2} where {3}='{4}'",
                     BaseDefine.DB_FIELD_KSCS, BaseDefine.DB_FIELD_DRCS, BaseDefine.DB_TABLE_STUDENTINFO,
                     BaseDefine.DB_FIELD_ZKZMBH, zkzmbh);
                 DataSet ds = m_sqlDataProvider.RetriveDataSet(sql);
@@ -726,7 +725,7 @@ namespace HMQService.Server
             //获取考生照片
             Byte[] arrayZp = null;  //照片
             Byte[] arrayMjzp = null;    //门禁照片，现场采集
-            string sql = string.Format("select {0},{1} from {2} where {3}='{4}';",
+            string sql = string.Format("select {0},{1} from {2} where {3}='{4}'",
                 BaseDefine.DB_FIELD_ZP,
                 BaseDefine.DB_FIELD_MJZP,
                 BaseDefine.DB_TABLE_STUDENTPHOTO,
@@ -738,14 +737,23 @@ namespace HMQService.Server
                 DataSet ds = m_sqlDataProvider.RetriveDataSet(sql);
                 if (ds != null && ds.Tables[0] != null && ds.Tables[0].Rows != null)
                 {
-                    arrayZp = (Byte[])ds.Tables[0].Rows[0][0];
-                    arrayMjzp = (Byte[])ds.Tables[0].Rows[0][1];
+                    try
+                    {
+                        arrayZp = (Byte[])ds.Tables[0].Rows[0][0];
+                    }
+                    catch(Exception e)
+                    {
+                        Log.GetLogger().InfoFormat("照片获取失败，{0}", e.Message);
+                    }
 
-                    //if (null == arrayZp || null == arrayMjzp || 0==arrayZp.Length || 0==arrayMjzp.Length)
-                    //{
-                    //    Log.GetLogger().ErrorFormat("查询 StudentPhoto 表值为空，sql={0}", sql);
-                    //    return false;
-                    //}
+                    try
+                    {
+                        arrayMjzp = (Byte[])ds.Tables[0].Rows[0][1];
+                    }
+                    catch(Exception e)
+                    {
+                        Log.GetLogger().InfoFormat("门禁照片获取失败，{0}", e.Message);
+                    }
                 }
             }
             catch(Exception e)
@@ -770,8 +778,21 @@ namespace HMQService.Server
             string ksyyCode = string.Empty; //考试原因编号
             string ksyyDes = string.Empty;  //考试原因描述
             string drcs = string.Empty; //当日次数
+
+            string sqlFormat = string.Empty;
+            int dbType = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_SQLORACLE, 0);
+            if (1 == dbType)
+            {
+                sqlFormat = "select {0},{1}.{2},{3},{4},{5},(Select CONVERT(varchar(100), GETDATE(), 23)) as DATE, {6},{7},{8},{9},{10},{11},{12} from {13} left join {14} on {15}={16} left join {17} on {18}={19} where {20}='{21}'";
+            }
+            else
+            {
+                sqlFormat = "select {0},{1}.{2},{3},{4},{5},to_char(sysdate,'yyyy-mm-dd') as MYDATE, {6},{7},{8},{9},{10},{11},{12} from {13} left join {14} on {15}={16} left join {17} on {18}={19} where {20}='{21}'";
+            }
+
             sql = string.Format(
-                "select {0},{1}.{2},{3},{4},{5},(Select CONVERT(varchar(100), GETDATE(), 23)) as DATE, {6},{7},{8},{9},{10},{11},{12} from {13} left join {14} on {15}={16} left join {17} on {18}={19} where {20}='{21}';",
+                sqlFormat,
                 BaseDefine.DB_FIELD_KCH,
                 BaseDefine.DB_TABLE_SYSCFG,
                 BaseDefine.DB_FIELD_BZ,
@@ -839,6 +860,18 @@ namespace HMQService.Server
 
             Log.GetLogger().DebugFormat("GetStudentInfo success, zkzmbh={0}", zkzmbh);
             return true;
+        }
+
+        private string GetDBStringValue(DataColumn column)
+        {
+            string retStr = string.Empty;
+            if (null == column)
+            {
+                return retStr;
+            }
+
+
+            return retStr;
         }
 
         private string getKsyy(string code)

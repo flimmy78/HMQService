@@ -114,6 +114,10 @@ namespace BekUtils.Database
             {
                 if (oracleConnection == null)
                     return null;
+                if (System.Data.ConnectionState.Closed == oracleConnection.State)
+                {
+                    oracleConnection.Open();
+                }
                 using (OracleDataAdapter da = new OracleDataAdapter(sql, oracleConnection))
                 {
                     DataSet ds = new DataSet();

@@ -62,7 +62,8 @@ namespace HMQService.Decode
         private double m_mapX;
         private double m_mapY;
         private double m_zoomIn;
-        private int m_mapPy;    //地图飘移
+        private int m_mapPy;    //地图偏移  //不知道什么作用
+        private int m_sleepTime;
 
         public ExamProcedure()
         {
@@ -99,6 +100,7 @@ namespace HMQService.Decode
             m_mapPy = 0;
             m_carX = 0;
             m_carY = 0;
+            m_sleepTime = 1000;
         }
 
         ~ExamProcedure()
@@ -113,6 +115,9 @@ namespace HMQService.Decode
 
             m_kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, BaseDefine.CONFIG_VALUE_KSKM_2);
+
+            m_sleepTime = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_DISPLAY, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_SLEEP_TIME, 1000);
 
             //开启 ThirdPic 刷新线程
             InitThirdPic(); 
@@ -177,11 +182,11 @@ namespace HMQService.Decode
                 {
                     m_strCurrentState = xmlx;
 
-                    //科目三地图模式需要实时展示项目状态图片，这里将其它状态清空，仅保留当前项目状态
-                    if (m_bDrawMap && (BaseDefine.CONFIG_VALUE_KSKM_3 == m_kskm))  
-                    {
-                        m_CurrentXmFlag = 0;
-                    }
+                    ////科目三地图模式需要实时展示项目状态图片，这里将其它状态清空，仅保留当前项目状态
+                    //if (m_bDrawMap && (BaseDefine.CONFIG_VALUE_KSKM_3 == m_kskm))  
+                    //{
+                    //    m_CurrentXmFlag = 0;
+                    //}
 
                     uint xmFlag = GetXmFlag(xmCode, true);
                     m_CurrentXmFlag |= xmFlag;
@@ -245,12 +250,12 @@ namespace HMQService.Decode
 
                         if (1 == m_mapPy)
                         {
-                            tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) - 176;
-                            tempy = Math.Abs((int)((m_gpsData.Latitude - m_mapY) * m_zoomIn)) - 144;
+                            tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) - BaseDefine.VIDEO_WIDTH / 2 + 44;
+                            tempy = Math.Abs((int)((m_gpsData.Latitude - m_mapY) * m_zoomIn)) - BaseDefine.VIDEO_HEIGHT / 2;
                         }
                         else
                         {
-                            tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn));
+                            tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) + 44;
                             tempy = Math.Abs((int)((m_gpsData.Latitude - m_mapY) * m_zoomIn));
                         }
 
@@ -380,7 +385,7 @@ namespace HMQService.Decode
             lock(m_lockFourth)
             {
                 imgMap = Image.FromFile(BaseDefine.IMG_PATH_MAPN);
-                m_mapWidth = imgMap.Width;
+                m_mapWidth = imgMap.Width - 88;
                 m_mapHeight = imgMap.Height;
 
                 int xc = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_MAP, BaseDefine.CONFIG_SECTION_MAPCONFIG,
@@ -473,16 +478,30 @@ namespace HMQService.Decode
 
                             if (null != m_studentInfo.ArrayZp)
                             {
-                                Stream streamZp = new MemoryStream(m_studentInfo.ArrayZp);
-                                Image imgZp = Image.FromStream(streamZp);
-                                graphics.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
+                                try
+                                {
+                                    Stream streamZp = new MemoryStream(m_studentInfo.ArrayZp);
+                                    Image imgZp = Image.FromStream(streamZp);
+                                    graphics.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
+                                }
+                                catch(Exception e)
+                                {
+                                    Log.GetLogger().DebugFormat("考生照片存在问题, {0}", e.Message);
+                                }
                             }
                             
                             if (null != m_studentInfo.ArrayMjzp)
                             {
-                                Stream streamMjzp = new MemoryStream(m_studentInfo.ArrayMjzp);
-                                Image imgMjzp = Image.FromStream(streamMjzp);
-                                graphics.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
+                                try
+                                {
+                                    Stream streamMjzp = new MemoryStream(m_studentInfo.ArrayMjzp);
+                                    Image imgMjzp = Image.FromStream(streamMjzp);
+                                    graphics.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
+                                }
+                                catch (Exception e)
+                                {
+                                    Log.GetLogger().DebugFormat("考生门禁照片存在问题, {0}", e.Message);
+                                }
                             }
                         }
 
@@ -615,7 +634,7 @@ namespace HMQService.Decode
                     Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
                 }
 
-                System.Threading.Thread.Sleep(1000);
+                System.Threading.Thread.Sleep(m_sleepTime);
 
                 autoEventFourthInfo.Set();   //触发事件
             }
@@ -625,6 +644,9 @@ namespace HMQService.Decode
         private void FourthPicMapThread()
         {
             autoEventFourthMap = new AutoResetEvent(true);  //自动重置事件，默认为已触发
+            int maxWidth = BaseDefine.VIDEO_WIDTH;
+            int maxHeight = BaseDefine.VIDEO_HEIGHT;
+
             while (true)
             {
                 autoEventFourthMap.WaitOne(Timeout.Infinite);
@@ -636,24 +658,40 @@ namespace HMQService.Decode
                         Font font = new Font("宋体", 10, FontStyle.Regular);
 
                         //重新初始化画板
-                        //Bitmap bm = new Bitmap(352, 288);
-                        Bitmap bm = new Bitmap(imgMap, 352, 288);
+                        Bitmap bm = new Bitmap(imgMap, maxWidth, maxHeight);
                         Graphics graphics = Graphics.FromImage(bm);
-                        graphics.DrawImage(imgMap, new Rectangle(0, 0, 352, 288), m_carX, m_carY, 352, 288, GraphicsUnit.Pixel);
+                        graphics.DrawImage(imgMap, new Rectangle(0, 0, maxWidth - 88, maxHeight), 
+                            m_carX, m_carY, maxWidth - 88, maxHeight, GraphicsUnit.Pixel);
 
                         //绘制考车
                         if (m_bDrawCar)
                         {
-                            graphics.TranslateTransform(176, 144);
+                            graphics.TranslateTransform(maxWidth / 2, maxHeight / 2);
                             graphics.RotateTransform(m_gpsData.DirectionAngle);
-                            graphics.TranslateTransform(-176, -144);
+                            graphics.TranslateTransform(-(maxWidth / 2), -(maxHeight / 2));
 
-                            graphics.DrawImage(imgCar, new Rectangle(0, 0, 352, 288));  //车模型
+                            graphics.DrawImage(imgCar, new Rectangle(0, 0, maxWidth, maxHeight));  //车模型
 
                             graphics.ResetTransform();
                         }
 
-                        graphics.DrawImage(imgMark, new Rectangle(0, 0, 352, 288)); //遮罩
+                        graphics.DrawImage(imgMark, new Rectangle(0, 0, maxWidth, maxHeight)); //遮罩
+                        Image imgXmpMark = Image.FromFile(BaseDefine.IMG_PATH_XMPMARK);
+
+                        //绘制项目牌列表
+                        if (BaseDefine.CONFIG_VALUE_KSKM_2 == m_kskm)
+                        {
+                            graphics.DrawImage(imgXmpMark, new Rectangle(264, 30, 88, 208), 264, 36, 88, 208, GraphicsUnit.Pixel);
+                            graphics.DrawImage(imgXmp, new Rectangle(264, 30, 88, 208), 0, 0, 88, 252, GraphicsUnit.Pixel);
+                        }
+                        else
+                        {
+                            graphics.DrawImage(imgXmpMark, new Rectangle(264, 30, 88, 208), 264, 36, 88, 208, GraphicsUnit.Pixel);
+                            graphics.DrawImage(imgXmp, new Rectangle(264, 30, 88, 208), 0, 0, 88, 288, GraphicsUnit.Pixel);
+                        }
+
+                        //绘制项目状态
+                        DrawXmStateForMap(ref graphics);
 
                         //绘制实时状态信息
                         if (!string.IsNullOrEmpty(m_strCurrentState))
@@ -672,7 +710,6 @@ namespace HMQService.Decode
                             string mileage = string.Format("{0} m", m_gpsData.Mileage);
                             string score = string.Format("成绩:{0}", m_CurrentScore);
                             string time = string.Format("时长:{0}:{1}:{2}", ts.Hours, ts.Minutes, ts.Seconds);
-
                             
                             graphics.DrawString(speed, font, brush, new Rectangle(0, 240, 98, 262));
                             graphics.DrawString(mileage, font, brush, new Rectangle(0, 265, 98, 288));
@@ -680,21 +717,21 @@ namespace HMQService.Decode
                             graphics.DrawString(time, font, brush, new Rectangle(263, 265, 350, 288));
 
                             //绘制第四画面标题栏，如果是科目三，需要在左边预留一块用于展示项目图标
-                            if (BaseDefine.CONFIG_VALUE_KSKM_2 == m_kskm)
+                            //if (BaseDefine.CONFIG_VALUE_KSKM_2 == m_kskm)
                             {
                                 graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(0, 8, 348, 30));
                             }
-                            else
-                            {
-                                graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(72, 8, 348, 30));
-                            }
+                            //else
+                            //{
+                            //    graphics.DrawString(m_strCurrentState, font, brush, new Rectangle(72, 8, 348, 30));
+                            //}
                         }
 
-                        //绘制科目三考试项目牌
-                        if (BaseDefine.CONFIG_VALUE_KSKM_3 == m_kskm)
-                        {
-                            DrawXmStateMap(ref graphics);
-                        }
+                        ////绘制科目三考试项目牌图标
+                        //if (BaseDefine.CONFIG_VALUE_KSKM_3 == m_kskm)
+                        //{
+                        //    DrawXmStateMap(ref graphics);
+                        //}
 
                         //绘制扣分信息
                         foreach (int index in m_dicErrorInfo.Keys)
@@ -730,7 +767,7 @@ namespace HMQService.Decode
                     Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
                 }
 
-                System.Threading.Thread.Sleep(1000);
+                System.Threading.Thread.Sleep(m_sleepTime);
 
                 autoEventFourthMap.Set();   //触发事件
             }
@@ -962,89 +999,349 @@ namespace HMQService.Decode
         }
 
         /// <summary>
+        /// 地图模式下的项目牌切换
+        /// </summary>
+        /// <param name="g"></param>
+        private void DrawXmStateForMap(ref Graphics g)
+        {
+            #region 科目二
+            if (BaseDefine.CONFIG_VALUE_KSKM_2 == m_kskm)
+            {
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_DCRK) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30, 88, 30), 176, 0, 88, 36, GraphicsUnit.Pixel); //结束倒车入库
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_DCRK) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30, 88, 30), 88, 0, 88, 36, GraphicsUnit.Pixel); //进入倒车入库
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_CFTC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 60, 88, 30), 176, 36, 88, 36, GraphicsUnit.Pixel); //结束侧方停车
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_CFTC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 60, 88, 30), 88, 36, 88, 36, GraphicsUnit.Pixel); //进入侧方停车
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_DDPQ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 90, 88, 30), 176, 72, 88, 36, GraphicsUnit.Pixel); //结束定点坡起
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_DDPQ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 90, 88, 30), 88, 72, 88, 36, GraphicsUnit.Pixel); //开始定点坡起
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_QXXS) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 120, 88, 30), 176, 108, 88, 36, GraphicsUnit.Pixel); //结束曲线行驶
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_QXXS) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 120, 88, 30), 88, 108, 88, 36, GraphicsUnit.Pixel); //开始曲线行驶
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_ZJZW) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 150, 88, 30), 176, 144, 88, 36, GraphicsUnit.Pixel); //结束直角转弯
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZJZW) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 150, 88, 30), 88, 144, 88, 36, GraphicsUnit.Pixel); //开始直角转弯
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_YWSH) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 180, 88, 30), 176, 180, 88, 36, GraphicsUnit.Pixel); //结束雨雾湿滑
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_YWSH) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 180, 88, 30), 88, 180, 88, 36, GraphicsUnit.Pixel); //开始雨雾湿滑
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_MNSD) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 210, 88, 30), 176, 216, 88, 36, GraphicsUnit.Pixel); //结束雨雾湿滑
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_MNSD) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 210, 88, 30), 88, 216, 88, 36, GraphicsUnit.Pixel); //开始雨雾湿滑
+                }
+            }
+            #endregion
+
+            #region 科目三
+            int nDestIntervalHeight = 26;   //视频里体现的每个项目牌高度间隔
+            int nSourceIntervalHeight = 36;   //原图里的每个项目牌高度间隔
+            if (BaseDefine.CONFIG_VALUE_KSKM_3 == m_kskm)
+            {
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_SC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30, 44, nDestIntervalHeight),
+                        176, 0, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束上车准备
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_SC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30, 44, nDestIntervalHeight),
+                        88, 0, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始上车准备
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_QB) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30, 44, nDestIntervalHeight),
+                        220, 0, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束起步
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_QB) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30, 44, nDestIntervalHeight),
+                        132, 0, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始起步
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_ZHIXIAN) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30 + 1 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        176, 36, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束直线
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZHIXIAN) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30 + 1 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        88, 36, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始直线
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_JJ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30 + 1 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        220, 36, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束加减档
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_JJ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30 + 1 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        132, 36, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始加减档
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_BG) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30 + 2 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        176, 72, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束变更
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_BG) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30 + 2 * nDestIntervalHeight, 44, nDestIntervalHeight), 
+                        88, 72, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始变更
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_KB) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30 + 2 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        220, 72, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束靠边
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_KB) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30 + 2 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        132, 72, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始靠边
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_ZHIXING) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30 + 3 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        176, 108, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束直行
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZHIXING) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30 + 3 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        88, 108, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始直行
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_ZZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30 + 3 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        220, 108, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束左转
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30 + 3 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        132, 108, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始左转
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_YZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30 + 4 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        176, 144, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束右转
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_YZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30 + 4 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        88, 144, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始右转
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_RX) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30 + 4 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        220, 144, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束人行
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_RX) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30 + 4 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        132, 144, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始人行
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_XX) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30 + 5 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        176, 180, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束学校
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_XX) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30 + 5 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        88, 180, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始学校
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_CZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30 + 5 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        220, 180, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束车站
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_CZ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30 + 5 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        132, 180, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始车站
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_HC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30 + 6 * nDestIntervalHeight, 44, nDestIntervalHeight), 
+                        176, 216, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束会车
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_HC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30 + 6 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        88, 216, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始会车
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_CC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30 + 6 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        220, 216, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束超车
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_CC) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30 + 6 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        132, 216, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始超车
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_DT) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30 + 7 * nDestIntervalHeight, 44, nDestIntervalHeight), 
+                        176, 252, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束掉头
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_DT) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(264, 30 + 7 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        88, 252, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始掉头
+                }
+
+                if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_END_YJ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30 + 7 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        220, 252, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //结束夜间
+                }
+                else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_YJ) > 0)
+                {
+                    g.DrawImage(imgXmp, new Rectangle(308, 30 + 7 * nDestIntervalHeight, 44, nDestIntervalHeight),
+                        132, 252, 44, nSourceIntervalHeight, GraphicsUnit.Pixel); //开始夜间
+                }
+            }
+            #endregion
+        }
+
+        /// <summary>
         /// 绘制项目牌实时状态(地图模式)
         /// </summary>
         /// <param name="g"></param>
         private void DrawXmStateMap(ref Graphics g)
         {
+            Image imgXmIcon = Image.FromFile(BaseDefine.IMG_PATH_XMICON);
+
             if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_SC) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 72, 72, 72, GraphicsUnit.Pixel); //开始上车准备
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 72, 72, 72, GraphicsUnit.Pixel); //开始上车准备
             }
 
             else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_QB) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 144, 72, 72, GraphicsUnit.Pixel); //开始起步
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 144, 72, 72, GraphicsUnit.Pixel); //开始起步
             }
 
             else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZHIXIAN) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 216, 72, 72, GraphicsUnit.Pixel); //开始直线
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 216, 72, 72, GraphicsUnit.Pixel); //开始直线
             }
 
             else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_JJ) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 288, 72, 72, GraphicsUnit.Pixel); //开始加减
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 288, 72, 72, GraphicsUnit.Pixel); //开始加减
             }
 
             else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_BG) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 360, 72, 72, GraphicsUnit.Pixel); //开始变更
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 360, 72, 72, GraphicsUnit.Pixel); //开始变更
             }
 
             else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_KB) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 432, 72, 72, GraphicsUnit.Pixel); //开始靠边
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 432, 72, 72, GraphicsUnit.Pixel); //开始靠边
             }
 
             else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZHIXING) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 504, 72, 72, GraphicsUnit.Pixel); //开始直行
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 504, 72, 72, GraphicsUnit.Pixel); //开始直行
             }
 
             else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_ZZ) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 576, 72, 72, GraphicsUnit.Pixel); //开始左转
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 576, 72, 72, GraphicsUnit.Pixel); //开始左转
             }
 
             else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_YZ) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 648, 72, 72, GraphicsUnit.Pixel); //开始右转
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 648, 72, 72, GraphicsUnit.Pixel); //开始右转
             }
 
             else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_RX) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 720, 72, 72, GraphicsUnit.Pixel); //开始人行
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 720, 72, 72, GraphicsUnit.Pixel); //开始人行
             }
 
             else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_XX) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 792, 72, 72, GraphicsUnit.Pixel); //开始学校
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 792, 72, 72, GraphicsUnit.Pixel); //开始学校
             }
 
             else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_CZ) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 864, 72, 72, GraphicsUnit.Pixel); //开始车站
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 864, 72, 72, GraphicsUnit.Pixel); //开始车站
             }
 
             else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_HC) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 936, 72, 72, GraphicsUnit.Pixel); //开始会车
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 936, 72, 72, GraphicsUnit.Pixel); //开始会车
             }
 
             else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_CC) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 1008, 72, 72, GraphicsUnit.Pixel); //开始超车
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 1008, 72, 72, GraphicsUnit.Pixel); //开始超车
             }
 
             else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_DT) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 1080, 72, 72, GraphicsUnit.Pixel); //开始掉头
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 1080, 72, 72, GraphicsUnit.Pixel); //开始掉头
             }
 
             else if ((m_CurrentXmFlag & BaseDefine.EXAM_STATE_START_YJ) > 0)
             {
-                g.DrawImage(imgXmp, new Rectangle(0, 0, 72, 72), 0, 1152, 72, 72, GraphicsUnit.Pixel); //开始夜间
+                g.DrawImage(imgXmIcon, new Rectangle(0, 0, 72, 72), 0, 1152, 72, 72, GraphicsUnit.Pixel); //开始夜间
             }
         }
 
@@ -1159,7 +1456,7 @@ namespace HMQService.Decode
         {
             bool bRet = false;
 
-            for (int i = 0; i < 1; i++)
+            for (int i = 0; i < 3; i++)
             {
                 try
                 {

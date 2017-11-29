@@ -31,7 +31,6 @@ namespace HMQConfig
         private void InitializeComponent()
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.comboDBInstance = new System.Windows.Forms.ComboBox();
             this.textDBPassword = new System.Windows.Forms.TextBox();
             this.textDBUsername = new System.Windows.Forms.TextBox();
             this.textDBIP = new System.Windows.Forms.TextBox();
@@ -45,21 +44,25 @@ namespace HMQConfig
             this.labelState = new System.Windows.Forms.Label();
             this.btn_SelectFile = new System.Windows.Forms.Button();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.textBoxSleepTime = new System.Windows.Forms.TextBox();
+            this.comboBoxXmVideo = new System.Windows.Forms.ComboBox();
+            this.comboBoxCarVideo = new System.Windows.Forms.ComboBox();
+            this.comboBoxStudentInfo = new System.Windows.Forms.ComboBox();
+            this.comboBoxExamInfo = new System.Windows.Forms.ComboBox();
+            this.comboBoxAudio = new System.Windows.Forms.ComboBox();
             this.comboBoxWnd2 = new System.Windows.Forms.ComboBox();
             this.comboBoxEven = new System.Windows.Forms.ComboBox();
             this.btnSaveDisplayConf = new System.Windows.Forms.Button();
             this.label8 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
+            this.label13 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
             this.label9 = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
-            this.comboBoxCarVideo = new System.Windows.Forms.ComboBox();
-            this.comboBoxXmVideo = new System.Windows.Forms.ComboBox();
-            this.comboBoxStudentInfo = new System.Windows.Forms.ComboBox();
-            this.comboBoxExamInfo = new System.Windows.Forms.ComboBox();
-            this.comboBoxAudio = new System.Windows.Forms.ComboBox();
+            this.textDBInstance = new System.Windows.Forms.TextBox();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
@@ -67,7 +70,7 @@ namespace HMQConfig
             // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.comboDBInstance);
+            this.groupBox1.Controls.Add(this.textDBInstance);
             this.groupBox1.Controls.Add(this.textDBPassword);
             this.groupBox1.Controls.Add(this.textDBUsername);
             this.groupBox1.Controls.Add(this.textDBIP);
@@ -82,15 +85,6 @@ namespace HMQConfig
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "数据库配置";
-            // 
-            // comboDBInstance
-            // 
-            this.comboDBInstance.FormattingEnabled = true;
-            this.comboDBInstance.Location = new System.Drawing.Point(97, 156);
-            this.comboDBInstance.Name = "comboDBInstance";
-            this.comboDBInstance.Size = new System.Drawing.Size(285, 20);
-            this.comboDBInstance.TabIndex = 4;
-            this.comboDBInstance.SelectedIndexChanged += new System.EventHandler(this.comboDBInstance_SelectedIndexChanged);
             // 
             // textDBPassword
             // 
@@ -117,7 +111,7 @@ namespace HMQConfig
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(6, 159);
+            this.label4.Location = new System.Drawing.Point(4, 110);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(77, 12);
             this.label4.TabIndex = 1;
@@ -152,10 +146,10 @@ namespace HMQConfig
             // 
             // btnDBLogin
             // 
-            this.btnDBLogin.Location = new System.Drawing.Point(6, 116);
+            this.btnDBLogin.Location = new System.Drawing.Point(6, 145);
             this.btnDBLogin.Name = "btnDBLogin";
             this.btnDBLogin.Size = new System.Drawing.Size(89, 23);
-            this.btnDBLogin.TabIndex = 3;
+            this.btnDBLogin.TabIndex = 4;
             this.btnDBLogin.Text = "测试登录";
             this.btnDBLogin.UseVisualStyleBackColor = true;
             this.btnDBLogin.Click += new System.EventHandler(this.btnDBLogin_Click);
@@ -202,6 +196,7 @@ namespace HMQConfig
             // 
             // groupBox3
             // 
+            this.groupBox3.Controls.Add(this.textBoxSleepTime);
             this.groupBox3.Controls.Add(this.comboBoxXmVideo);
             this.groupBox3.Controls.Add(this.comboBoxCarVideo);
             this.groupBox3.Controls.Add(this.comboBoxStudentInfo);
@@ -212,6 +207,8 @@ namespace HMQConfig
             this.groupBox3.Controls.Add(this.btnSaveDisplayConf);
             this.groupBox3.Controls.Add(this.label8);
             this.groupBox3.Controls.Add(this.label10);
+            this.groupBox3.Controls.Add(this.label13);
+            this.groupBox3.Controls.Add(this.label12);
             this.groupBox3.Controls.Add(this.label11);
             this.groupBox3.Controls.Add(this.label9);
             this.groupBox3.Controls.Add(this.label6);
@@ -223,6 +220,53 @@ namespace HMQConfig
             this.groupBox3.TabIndex = 2;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "显示配置";
+            // 
+            // textBoxSleepTime
+            // 
+            this.textBoxSleepTime.Location = new System.Drawing.Point(311, 119);
+            this.textBoxSleepTime.Name = "textBoxSleepTime";
+            this.textBoxSleepTime.Size = new System.Drawing.Size(48, 21);
+            this.textBoxSleepTime.TabIndex = 14;
+            // 
+            // comboBoxXmVideo
+            // 
+            this.comboBoxXmVideo.FormattingEnabled = true;
+            this.comboBoxXmVideo.Location = new System.Drawing.Point(311, 24);
+            this.comboBoxXmVideo.Name = "comboBoxXmVideo";
+            this.comboBoxXmVideo.Size = new System.Drawing.Size(71, 20);
+            this.comboBoxXmVideo.TabIndex = 8;
+            // 
+            // comboBoxCarVideo
+            // 
+            this.comboBoxCarVideo.FormattingEnabled = true;
+            this.comboBoxCarVideo.Location = new System.Drawing.Point(106, 24);
+            this.comboBoxCarVideo.Name = "comboBoxCarVideo";
+            this.comboBoxCarVideo.Size = new System.Drawing.Size(71, 20);
+            this.comboBoxCarVideo.TabIndex = 7;
+            // 
+            // comboBoxStudentInfo
+            // 
+            this.comboBoxStudentInfo.FormattingEnabled = true;
+            this.comboBoxStudentInfo.Location = new System.Drawing.Point(106, 55);
+            this.comboBoxStudentInfo.Name = "comboBoxStudentInfo";
+            this.comboBoxStudentInfo.Size = new System.Drawing.Size(71, 20);
+            this.comboBoxStudentInfo.TabIndex = 9;
+            // 
+            // comboBoxExamInfo
+            // 
+            this.comboBoxExamInfo.FormattingEnabled = true;
+            this.comboBoxExamInfo.Location = new System.Drawing.Point(311, 55);
+            this.comboBoxExamInfo.Name = "comboBoxExamInfo";
+            this.comboBoxExamInfo.Size = new System.Drawing.Size(71, 20);
+            this.comboBoxExamInfo.TabIndex = 10;
+            // 
+            // comboBoxAudio
+            // 
+            this.comboBoxAudio.FormattingEnabled = true;
+            this.comboBoxAudio.Location = new System.Drawing.Point(106, 87);
+            this.comboBoxAudio.Name = "comboBoxAudio";
+            this.comboBoxAudio.Size = new System.Drawing.Size(71, 20);
+            this.comboBoxAudio.TabIndex = 11;
             // 
             // comboBoxWnd2
             // 
@@ -245,7 +289,7 @@ namespace HMQConfig
             this.btnSaveDisplayConf.Location = new System.Drawing.Point(8, 150);
             this.btnSaveDisplayConf.Name = "btnSaveDisplayConf";
             this.btnSaveDisplayConf.Size = new System.Drawing.Size(87, 23);
-            this.btnSaveDisplayConf.TabIndex = 14;
+            this.btnSaveDisplayConf.TabIndex = 15;
             this.btnSaveDisplayConf.Text = "保存配置";
             this.btnSaveDisplayConf.UseVisualStyleBackColor = true;
             this.btnSaveDisplayConf.Click += new System.EventHandler(this.btnSaveDisplayConf_Click);
@@ -267,6 +311,24 @@ namespace HMQConfig
             this.label10.Size = new System.Drawing.Size(89, 12);
             this.label10.TabIndex = 1;
             this.label10.Text = "是否隔行解码：";
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(365, 122);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(17, 12);
+            this.label13.TabIndex = 1;
+            this.label13.Text = "ms";
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(206, 122);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(89, 12);
+            this.label12.TabIndex = 1;
+            this.label12.Text = "画面刷新间隔：";
             // 
             // label11
             // 
@@ -313,45 +375,12 @@ namespace HMQConfig
             this.label5.TabIndex = 1;
             this.label5.Text = "车内视频位置：";
             // 
-            // comboBoxCarVideo
+            // textDBInstance
             // 
-            this.comboBoxCarVideo.FormattingEnabled = true;
-            this.comboBoxCarVideo.Location = new System.Drawing.Point(106, 24);
-            this.comboBoxCarVideo.Name = "comboBoxCarVideo";
-            this.comboBoxCarVideo.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxCarVideo.TabIndex = 7;
-            // 
-            // comboBoxXmVideo
-            // 
-            this.comboBoxXmVideo.FormattingEnabled = true;
-            this.comboBoxXmVideo.Location = new System.Drawing.Point(311, 24);
-            this.comboBoxXmVideo.Name = "comboBoxXmVideo";
-            this.comboBoxXmVideo.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxXmVideo.TabIndex = 8;
-            // 
-            // comboBoxStudentInfo
-            // 
-            this.comboBoxStudentInfo.FormattingEnabled = true;
-            this.comboBoxStudentInfo.Location = new System.Drawing.Point(106, 55);
-            this.comboBoxStudentInfo.Name = "comboBoxStudentInfo";
-            this.comboBoxStudentInfo.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxStudentInfo.TabIndex = 9;
-            // 
-            // comboBoxExamInfo
-            // 
-            this.comboBoxExamInfo.FormattingEnabled = true;
-            this.comboBoxExamInfo.Location = new System.Drawing.Point(311, 55);
-            this.comboBoxExamInfo.Name = "comboBoxExamInfo";
-            this.comboBoxExamInfo.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxExamInfo.TabIndex = 10;
-            // 
-            // comboBoxAudio
-            // 
-            this.comboBoxAudio.FormattingEnabled = true;
-            this.comboBoxAudio.Location = new System.Drawing.Point(106, 87);
-            this.comboBoxAudio.Name = "comboBoxAudio";
-            this.comboBoxAudio.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxAudio.TabIndex = 11;
+            this.textDBInstance.Location = new System.Drawing.Point(97, 107);
+            this.textDBInstance.Name = "textDBInstance";
+            this.textDBInstance.Size = new System.Drawing.Size(285, 21);
+            this.textDBInstance.TabIndex = 3;
             // 
             // Form1
             // 
@@ -385,7 +414,6 @@ namespace HMQConfig
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.ComboBox comboDBInstance;
         private GroupBox groupBox2;
         private Button btn_SelectFile;
         private Label labelState;
@@ -406,6 +434,10 @@ namespace HMQConfig
         private ComboBox comboBoxStudentInfo;
         private ComboBox comboBoxExamInfo;
         private ComboBox comboBoxAudio;
+        private TextBox textBoxSleepTime;
+        private Label label13;
+        private Label label12;
+        private TextBox textDBInstance;
     }
 }
 

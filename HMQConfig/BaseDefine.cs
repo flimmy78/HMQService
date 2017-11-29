@@ -7,7 +7,8 @@ namespace HMQConfig
 {
     public class BaseDefine
     {
-        public static readonly string DB_CONN_FORMAT = @"Data Source={0};Initial Catalog = {1};User ID = {2};PWD = {3}";
+        public static readonly string DB_CONN_FORMAT_SQL = @"Data Source={0};Initial Catalog = {1};User ID = {2};PWD = {3}";
+        public static readonly string DB_CONN_FORMAT_ORACLE = @"user id = {0}; password={1};Data Source = (DESCRIPTION = (ADDRESS = (PROTOCOL = TCP)(HOST ={2})(PORT=1521))(CONNECT_DATA=(SERVICE_NAME={3})));";
         public static readonly string DB_NAME_MASTER = @"master";
         public static readonly string DB_TABLE_TBKVIDEO = @"TBKVideo";
         public static readonly string DB_FIELD_BH = "编号";
@@ -21,10 +22,10 @@ namespace HMQConfig
         public static readonly string DB_FIELD_MEDIAIP = "MediaIP";
         public static readonly string DB_FIELD_NID = "Nid";
 
-        public static readonly string CONFIG_FILE_PATH_ENV = @".\conf\HS_CONF_ENV.ini";
-        public static readonly string CONFIG_FILE_PATH_DB = @".\conf\HS_CONF_DB.ini";
-        public static readonly string CONFIG_FILE_PATH_DISPLAY = @".\conf\HS_CONF_DISPLAY.ini";
-        public static readonly string CONFIG_FILE_PATH_CAR = @".\conf\HS_CONF_CAR.ini";
+        public static readonly string CONFIG_FILE_PATH_ENV = @"conf\HS_CONF_ENV.ini";
+        public static readonly string CONFIG_FILE_PATH_DB = @"conf\HS_CONF_DB.ini";
+        public static readonly string CONFIG_FILE_PATH_DISPLAY = @"conf\HS_CONF_DISPLAY.ini";
+        public static readonly string CONFIG_FILE_PATH_CAR = @"conf\HS_CONF_CAR.ini";
         public static readonly string CONFIG_SECTION_CONFIG = @"CONFIG";
         public static readonly string CONFIG_SECTION_JMQ = @"JMQ";
         public static readonly string CONFIG_KEY_SQLORACLE = @"SQLORACLE";
@@ -43,6 +44,7 @@ namespace HMQConfig
         public static readonly string CONFIG_KEY_VIDEOWND = "VIDEOWND";     //音频窗口
         public static readonly string CONFIG_KEY_WND2 = "WND2";
         public static readonly string CONFIG_KEY_HMQ = "HMQ";
+        public static readonly string CONFIG_KEY_SLEEP_TIME= "SLEEPTIME";
 
         public static readonly string EXCEL_SHEET_NAME_CONF_TRANS = @"通道配置";
         public static readonly string EXCEL_SHEET_NAME_CONF_CAMERA_CAR = @"车载摄像头";
