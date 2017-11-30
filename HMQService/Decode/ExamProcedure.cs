@@ -106,12 +106,13 @@ namespace HMQService.Decode
         ~ExamProcedure()
         { }
 
-        public bool Init(int userId, int kch, int thirdPH, int fourthPH)
+        public bool Init(int userId, int kch, int thirdPH, int fourthPH, Image img)
         {
             m_userId = userId;
             m_kch = kch;
             m_thirdPassiveHandle = thirdPH;
             m_fourthPassiveHandle = fourthPH;
+            imgMap = img;
 
             m_kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, BaseDefine.CONFIG_VALUE_KSKM_2);
@@ -123,7 +124,7 @@ namespace HMQService.Decode
             InitThirdPic();
 
             //开启 FourthPic 刷新线程
-            InitFourthPic();
+            InitFourthPic(img);
 
             return true;
         }
@@ -355,7 +356,7 @@ namespace HMQService.Decode
             return true;
         }
 
-        private bool InitFourthPic()
+        private bool InitFourthPic(Image img)
         {
             int nLoadMap = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_LOADMAP, 0);
@@ -366,6 +367,8 @@ namespace HMQService.Decode
 
             if (m_bDrawMap) //地图版本
             {
+                imgMap = img;
+
                 LoadMapConfig();
 
                 m_fourthPicThread = new Thread(new ThreadStart(FourthPicMapThread));
@@ -384,7 +387,7 @@ namespace HMQService.Decode
         {
             lock(m_lockFourth)
             {
-                imgMap = Image.FromFile(BaseDefine.IMG_PATH_MAPN);
+                //imgMap = Image.FromFile(BaseDefine.IMG_PATH_MAPN);
 
                 m_mapWidth = imgMap.Width - 88;
                 m_mapHeight = imgMap.Height;

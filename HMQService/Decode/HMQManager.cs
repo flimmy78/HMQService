@@ -9,6 +9,7 @@ using HMQService.Model;
 using HMQService.Server;
 using System.Runtime.InteropServices;
 using System.Data;
+using System.Drawing;
 
 namespace HMQService.Decode
 {
@@ -775,6 +776,22 @@ namespace HMQService.Decode
             string key = string.Empty;
             CameraConf cameraConf = new CameraConf();
 
+            //地图
+            Image imgMap = null;
+            int nLoadMap = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_LOADMAP, 0);
+            if (1 == nLoadMap)
+            {
+                try
+                {
+                    imgMap = Image.FromFile(BaseDefine.IMG_PATH_MAPN);
+                }
+                catch(Exception e)
+                {
+                    Log.GetLogger().ErrorFormat("Image.FromFile catch an error : {0}", e.Message);
+                }
+            }
+
             foreach (int iKch in dicCars.Keys)
             {
                 Thread.Sleep(10);
@@ -812,7 +829,7 @@ namespace HMQService.Decode
                     if (carManager.StartPassiveDecode(2, ref thirdPH) && carManager.StartPassiveDecode(3, ref fourthPH))
                     {
                         ExamProcedure examProcedure = new ExamProcedure();
-                        if (examProcedure.Init(m_userId, iKch, thirdPH, fourthPH))
+                        if (examProcedure.Init(m_userId, iKch, thirdPH, fourthPH, imgMap))
                         {
                             dicExamProcedures.Add(iKch, examProcedure);
                         }
