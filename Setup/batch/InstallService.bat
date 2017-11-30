@@ -1,1 +1,2 @@
-sc create "HMQService" binPath= "%~dp0HMQService.exe" start= auto 
+sc create "HMQService" binPath= "%~dp0HMQService.exe"
+sc create "HMQServiceDaemon" binPath= "%~dp0HMQServiceDaemon.exe" start= auto
