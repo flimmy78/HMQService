@@ -520,8 +520,6 @@ namespace HMQService.Decode
                 string sectionJMQ = string.Format("JMQ{0}", i);
                 for (int j  = 0; j < displayChanCount; j++)  //DVI、BNC 个数循环
                 {
-                    Log.TempDebugFormat("1");
-
                     if ((1 == nEven) && (j % 2 == 1))
                     {
                         continue;
@@ -535,13 +533,9 @@ namespace HMQService.Decode
                         continue; 
                     }
 
-                    Log.TempDebugFormat("2");
-
                     //检查通道配置及初始化
                     if (1 == nHMQ)
                     {
-                        Log.TempDebugFormat("3");
-
                         if (!CheckDVIChan(nKch, j)) //合码器
                         {
                             Log.GetLogger().ErrorFormat("通道检测及初始化错误，考车号={0}，DVI={1}", nKch, j);
@@ -549,8 +543,6 @@ namespace HMQService.Decode
                     }
                     else
                     {
-                        Log.TempDebugFormat("4");
-
                         if (!CheckBNCChan(nKch, j)) //解码器
                         {
                             Log.GetLogger().ErrorFormat("通道检测及初始化错误，考车号={0}，BNC={1}", nKch, j);

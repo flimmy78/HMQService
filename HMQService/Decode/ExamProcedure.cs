@@ -251,12 +251,14 @@ namespace HMQService.Decode
 
                         if (1 == m_mapPy)
                         {
-                            tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) - BaseDefine.VIDEO_WIDTH / 2 + 44;
+                            //tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) - BaseDefine.VIDEO_WIDTH / 2 + 44;
+                            tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) - BaseDefine.VIDEO_WIDTH / 2;
                             tempy = Math.Abs((int)((m_gpsData.Latitude - m_mapY) * m_zoomIn)) - BaseDefine.VIDEO_HEIGHT / 2;
                         }
                         else
                         {
-                            tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) + 44;
+                            //tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) + 44;
+                            tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn));
                             tempy = Math.Abs((int)((m_gpsData.Latitude - m_mapY) * m_zoomIn));
                         }
 
@@ -690,8 +692,8 @@ namespace HMQService.Decode
                         //重新初始化画板
                         Bitmap bm = new Bitmap(imgMap, maxWidth, maxHeight);
                         Graphics graphics = Graphics.FromImage(bm);
-                        graphics.DrawImage(imgMap, new Rectangle(0, 0, maxWidth - 88, maxHeight), 
-                            m_carX, m_carY, maxWidth - 88, maxHeight, GraphicsUnit.Pixel);
+                        graphics.DrawImage(imgMap, new Rectangle(0, 0, maxWidth, maxHeight), 
+                            m_carX, m_carY, maxWidth, maxHeight, GraphicsUnit.Pixel);
 
                         //绘制考车
                         if (m_bDrawCar)
