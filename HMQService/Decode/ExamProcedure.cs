@@ -579,9 +579,14 @@ namespace HMQService.Decode
         private void FourthPicInfoThread()
         {
             autoEventFourthInfo = new AutoResetEvent(true);  //自动重置事件，默认为已触发
+            DateTime threadBeginTime;
+            DateTime threadEndTime;
+
             while (true)
             {
                 autoEventFourthInfo.WaitOne(Timeout.Infinite);
+
+                threadBeginTime = DateTime.Now; //线程开始时间
 
                 try
                 {
@@ -667,7 +672,11 @@ namespace HMQService.Decode
                     Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
                 }
 
-                System.Threading.Thread.Sleep(m_sleepTime);
+                threadEndTime = DateTime.Now;
+                TimeSpan threadTs = threadEndTime - threadBeginTime;
+                int sleepTime = threadTs.Milliseconds > m_sleepTime ? 0 : (m_sleepTime - threadTs.Milliseconds);
+
+                System.Threading.Thread.Sleep(sleepTime);
 
                 autoEventFourthInfo.Set();   //触发事件
             }
@@ -680,10 +689,15 @@ namespace HMQService.Decode
             int maxWidth = BaseDefine.VIDEO_WIDTH;
             int maxHeight = BaseDefine.VIDEO_HEIGHT;
             Font font = new Font("宋体", 10, FontStyle.Regular);
+            DateTime threadBeginTime;
+            DateTime threadEndTime;
 
             while (true)
             {
                 autoEventFourthMap.WaitOne(Timeout.Infinite);
+
+                Log.GetLogger().DebugFormat("考车 {0} 地图刷新线程开始", m_kch);
+                threadBeginTime = DateTime.Now; //线程开始时间
 
                 try
                 {
@@ -803,7 +817,12 @@ namespace HMQService.Decode
                     Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
                 }
 
-                System.Threading.Thread.Sleep(m_sleepTime);
+
+                threadEndTime = DateTime.Now;
+                TimeSpan threadTs = threadEndTime - threadBeginTime;
+                int sleepTime = threadTs.Milliseconds > m_sleepTime ? 0 : (m_sleepTime - threadTs.Milliseconds);
+
+                System.Threading.Thread.Sleep(sleepTime);
 
                 autoEventFourthMap.Set();   //触发事件
             }
