@@ -593,9 +593,39 @@ namespace HMQService.Decode
                     typeof(CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41));
                 Log.GetLogger().InfoFormat("合码器ip={0}, DecN={1}, BncN={2}", ip, m_struDecAbility.byDecChanNums, 
                     m_struDecAbility.struBncInfo.byChanNums);
-                
-                ////设置设备自动重启
-                //if (!CHCNetSDK.NET_DVR_GetDVRConfig(m_userId, CHCNetSDK., ))
+
+                //设置设备自动重启
+                CHCNetSDK.NET_DVR_AUTO_REBOOT_CFG struRebootCfg = new CHCNetSDK.NET_DVR_AUTO_REBOOT_CFG();
+                nSize = Marshal.SizeOf(struRebootCfg);
+                IntPtr ptrRebootCfg = Marshal.AllocHGlobal(nSize);
+                Marshal.StructureToPtr(struRebootCfg, ptrRebootCfg, false);
+                uint lpBytesReturned = 0;
+                if (!CHCNetSDK.NET_DVR_GetDVRConfig(m_userId, CHCNetSDK.NET_DVR_GET_AUTO_REBOOT_CFG,
+                    0, ptrRebootCfg, (uint)nSize, ref lpBytesReturned))
+                {
+                    m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();
+                    Log.GetLogger().ErrorFormat("NET_DVR_GetDVRConfig 获取重启参数失败, error code = {0}", m_iErrorCode);
+                    return false;
+                }
+                struRebootCfg = (CHCNetSDK.NET_DVR_AUTO_REBOOT_CFG)Marshal.PtrToStructure(ptrRebootCfg,
+                    typeof(CHCNetSDK.NET_DVR_AUTO_REBOOT_CFG));
+                if (7 != struRebootCfg.struRebootTime.byDate)
+                {
+                    struRebootCfg.dwSize = (uint)nSize;
+                    struRebootCfg.struRebootTime.byDate = 7;
+                    struRebootCfg.struRebootTime.byHour = 5;
+                    struRebootCfg.struRebootTime.byMinute = 9;
+                    IntPtr ptrRebootCfgNew = Marshal.AllocHGlobal(nSize);
+                    Marshal.StructureToPtr(struRebootCfg, ptrRebootCfgNew, false);
+                    if (!CHCNetSDK.NET_DVR_SetDVRConfig(m_userId, CHCNetSDK.NET_DVR_SET_AUTO_REBOOT_CFG, 0, 
+                        ptrRebootCfgNew, (uint)nSize))
+                    {
+                        m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();
+                        Log.GetLogger().ErrorFormat("NET_DVR_SetDVRConfig 设置自动重启失败, errorCode = {0}", m_iErrorCode);
+                        return false;
+                    }
+                    Log.GetLogger().InfoFormat("NET_DVR_SetDVRConfig 设置自动重启成功");
+                }
             }
             catch (Exception e)
             {
