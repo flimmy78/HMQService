@@ -133,6 +133,8 @@ namespace HMQService.Server
                 }
                 ExamProcedure examProcedure = m_dicExamProcedures[kch];
 
+                Log.GetLogger().DebugFormat("考车 {0} 接收到 GPS 数据", kch);
+
                 //接下来的数据结构可以参考 GPSData 类
                 //8个字节存放double类型的经度
                 //8个字节存放double类型的纬度

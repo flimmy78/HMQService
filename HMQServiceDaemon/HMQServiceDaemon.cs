@@ -15,6 +15,7 @@ namespace HMQService
     {
         private System.ComponentModel.Container components = null;
         private Thread daemonThread = null;
+        private ILog logger = null;
 
         /// <summary>
         /// Public Constructor for WindowsService.
@@ -24,13 +25,12 @@ namespace HMQService
         {
             //初始化 log4net 配置信息
             log4net.Config.XmlConfigurator.Configure();
+            logger = log4net.LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
             //设置服务运行路径
             System.IO.Directory.SetCurrentDirectory(System.AppDomain.CurrentDomain.BaseDirectory);
 
-            //Log.GetLogger().InfoFormat("HMQServiceDaemon Constructor");
-
-
+            logger.InfoFormat("HMQServiceDaemon Constructor");
 
             InitializeComponent();
         }
@@ -40,10 +40,10 @@ namespace HMQService
         /// </summary>
         static void Main(string[] args)
         {
-                System.ServiceProcess.ServiceBase[] ServicesToRun;
+            System.ServiceProcess.ServiceBase[] ServicesToRun;
 
-                ServicesToRun = new System.ServiceProcess.ServiceBase[] { new HMQServiceDaemon() };
-                System.ServiceProcess.ServiceBase.Run(ServicesToRun);
+            ServicesToRun = new System.ServiceProcess.ServiceBase[] { new HMQServiceDaemon() };
+            System.ServiceProcess.ServiceBase.Run(ServicesToRun);
         }
 
         /// <summary> 
@@ -73,7 +73,7 @@ namespace HMQService
         ///    or not disposing is going on.</param>
         protected override void Dispose(bool disposing)
         {
-            //logger.InfoFormat("HMQServiceDaemon Dispose");
+            logger.InfoFormat("HMQServiceDaemon Dispose");
 
             if (disposing)
             {
@@ -92,7 +92,7 @@ namespace HMQService
         /// <param name="args"></param>
         protected override void OnStart(string[] args)
         {
-            //logger.InfoFormat("HMQServiceDaemon OnStart");
+            logger.InfoFormat("HMQServiceDaemon OnStart");
 
             StartService();
 
@@ -105,7 +105,7 @@ namespace HMQService
         /// </summary>
         protected override void OnStop()
         {
-            //logger.InfoFormat("HMQService OnStop");
+            logger.InfoFormat("HMQServiceDaemon OnStop");
 
             StopService();
 
@@ -118,7 +118,7 @@ namespace HMQService
         /// </summary>
         protected override void OnPause()
         {
-            //logger.InfoFormat("HMQServiceDaemon OnPause");
+            logger.InfoFormat("HMQServiceDaemon OnPause");
 
             base.OnPause();
         }
@@ -129,7 +129,7 @@ namespace HMQService
         /// </summary>
         protected override void OnContinue()
         {
-            //logger.InfoFormat("HMQServiceDaemon OnContinue");
+            logger.InfoFormat("HMQServiceDaemon OnContinue");
 
             base.OnContinue();
         }
@@ -142,7 +142,7 @@ namespace HMQService
         /// </summary>
         protected override void OnShutdown()
         {
-            //logger.InfoFormat("HMQServiceDaemon OnShutdown");
+            logger.InfoFormat("HMQServiceDaemon OnShutdown");
 
             base.OnShutdown();
         }
@@ -160,7 +160,7 @@ namespace HMQService
             //#  ServiceController sc = new ServiceController("NameOfService");
             //#  sc.ExecuteCommand(command);
 
-            //logger.InfoFormat("HMQServiceDaemon OnCustomCommand");
+            logger.InfoFormat("HMQServiceDaemon OnCustomCommand");
 
             base.OnCustomCommand(command);
         }
@@ -173,7 +173,7 @@ namespace HMQService
         /// (BatteryLow, Suspend, etc.)</param>
         protected override bool OnPowerEvent(PowerBroadcastStatus powerStatus)
         {
-            //logger.InfoFormat("HMQServiceDaemon OnPowerEvent");
+            logger.InfoFormat("HMQServiceDaemon OnPowerEvent");
 
             return base.OnPowerEvent(powerStatus);
         }
@@ -190,7 +190,7 @@ namespace HMQService
         protected override void OnSessionChange(
                   SessionChangeDescription changeDescription)
         {
-            //logger.InfoFormat("HMQServiceDaemon OnSessionChange");
+            logger.InfoFormat("HMQServiceDaemon OnSessionChange");
 
             base.OnSessionChange(changeDescription);
         }
@@ -219,16 +219,7 @@ namespace HMQService
 
         private void DaemonThreadProc()
         {
-            //logger.InfoFormat("DaemonThreadProc begin");
-
-            try
-            {
-                BekUtils.Util.Log.GetLogger().InfoFormat("222");
-            }
-            catch (Exception e)
-            {
-                //MessageBox.Show("error : {0}", e.Message);
-            }
+            logger.InfoFormat("DaemonThreadProc begin");
 
             while (true)
             {
@@ -244,7 +235,7 @@ namespace HMQService
 
                             if (ServiceControllerStatus.Stopped == service.Status)
                             {
-                                //logger.InfoFormat("HMQService 当前处于停止状态");
+                                logger.InfoFormat("HMQService 当前处于停止状态");
 
                                 service.Start();
                                 for (int i = 0; i < 5; i ++)
@@ -262,11 +253,11 @@ namespace HMQService
 
                                 if (ServiceControllerStatus.Stopped == service.Status)
                                 {
-                                    //logger.ErrorFormat("HMQService 启动失败");
+                                    logger.ErrorFormat("HMQService 启动失败");
                                 }
                                 else
                                 {
-                                    //logger.InfoFormat("HMQService 启动成功");
+                                    logger.InfoFormat("HMQService 启动成功");
                                 }
                             }
 
@@ -276,13 +267,13 @@ namespace HMQService
 
                     if (!bFind)
                     {
-                        //logger.ErrorFormat("找不到 HMQService 服务");
+                        logger.ErrorFormat("找不到 HMQService 服务");
                     }
 
                 }
                 catch(Exception e)
                 {
-                    //logger.ErrorFormat("catch an error : {0}", e.Message);
+                    logger.ErrorFormat("catch an error : {0}", e.Message);
                 }
 
                 int sleepTime = 60 * 1000;

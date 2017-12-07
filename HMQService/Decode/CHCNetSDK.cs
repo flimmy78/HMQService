@@ -13,7 +13,32 @@ namespace HMQService.Decode
             // TODO: 在此处添加构造函数逻辑
             //
         }
-        
+
+        //begin by huangqiwei
+        //一部分结构体、接口，海康只提供C++原型，这部分需要参考C++头文件自己进行定义
+
+        public const int NET_DVR_GET_AUTO_REBOOT_CFG = 1710;    //获取自动重启参数
+        public const int NET_DVR_SET_AUTO_REBOOT_CFG = 1711;    //设置自动重启参数
+
+        public struct NET_DVR_REBOOT_TIME
+        {
+            public byte byDate;   //星期几，1-7代表星期一到星期日
+            public byte byHour;   //时
+            public byte byMinute; //分    
+            public byte byRes1;
+            public byte byRebootMode; //0-按周重启，1-按月重启（此参数只能获取，不能设置）
+            [MarshalAsAttribute(UnmanagedType.ByValArray, SizeConst = 11, ArraySubType = UnmanagedType.I1)]
+            public byte[] byRes; //保留
+        }
+
+        public struct NET_DVR_AUTO_REBOOT_CFG
+        {
+            public uint dwSize;
+            public NET_DVR_REBOOT_TIME struRebootTime;
+        }
+        //end by huangqiwei
+
+
         //SDK类型
         public const int SDK_PLAYMPEG4 = 1;//播放库
         public const int SDK_HCNETSDK = 2;//网络库

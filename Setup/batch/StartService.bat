@@ -1,1 +1,1 @@
-sc start "HMQService"
+sc start "HMQServiceDaemon"

@@ -9,6 +9,7 @@ using HMQService.Model;
 using HMQService.Server;
 using System.Runtime.InteropServices;
 using System.Data;
+using System.Drawing;
 
 namespace HMQService.Decode
 {
@@ -519,8 +520,6 @@ namespace HMQService.Decode
                 string sectionJMQ = string.Format("JMQ{0}", i);
                 for (int j  = 0; j < displayChanCount; j++)  //DVI、BNC 个数循环
                 {
-                    Log.TempDebugFormat("1");
-
                     if ((1 == nEven) && (j % 2 == 1))
                     {
                         continue;
@@ -534,13 +533,9 @@ namespace HMQService.Decode
                         continue; 
                     }
 
-                    Log.TempDebugFormat("2");
-
                     //检查通道配置及初始化
                     if (1 == nHMQ)
                     {
-                        Log.TempDebugFormat("3");
-
                         if (!CheckDVIChan(nKch, j)) //合码器
                         {
                             Log.GetLogger().ErrorFormat("通道检测及初始化错误，考车号={0}，DVI={1}", nKch, j);
@@ -548,8 +543,6 @@ namespace HMQService.Decode
                     }
                     else
                     {
-                        Log.TempDebugFormat("4");
-
                         if (!CheckBNCChan(nKch, j)) //解码器
                         {
                             Log.GetLogger().ErrorFormat("通道检测及初始化错误，考车号={0}，BNC={1}", nKch, j);
@@ -592,9 +585,39 @@ namespace HMQService.Decode
                     typeof(CHCNetSDK.NET_DVR_MATRIX_ABILITY_V41));
                 Log.GetLogger().InfoFormat("合码器ip={0}, DecN={1}, BncN={2}", ip, m_struDecAbility.byDecChanNums, 
                     m_struDecAbility.struBncInfo.byChanNums);
-                
-                ////设置设备自动重启
-                //if (!CHCNetSDK.NET_DVR_GetDVRConfig(m_userId, CHCNetSDK., ))
+
+                //设置设备自动重启
+                CHCNetSDK.NET_DVR_AUTO_REBOOT_CFG struRebootCfg = new CHCNetSDK.NET_DVR_AUTO_REBOOT_CFG();
+                nSize = Marshal.SizeOf(struRebootCfg);
+                IntPtr ptrRebootCfg = Marshal.AllocHGlobal(nSize);
+                Marshal.StructureToPtr(struRebootCfg, ptrRebootCfg, false);
+                uint lpBytesReturned = 0;
+                if (!CHCNetSDK.NET_DVR_GetDVRConfig(m_userId, CHCNetSDK.NET_DVR_GET_AUTO_REBOOT_CFG,
+                    0, ptrRebootCfg, (uint)nSize, ref lpBytesReturned))
+                {
+                    m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();
+                    Log.GetLogger().ErrorFormat("NET_DVR_GetDVRConfig 获取重启参数失败, error code = {0}", m_iErrorCode);
+                    return false;
+                }
+                struRebootCfg = (CHCNetSDK.NET_DVR_AUTO_REBOOT_CFG)Marshal.PtrToStructure(ptrRebootCfg,
+                    typeof(CHCNetSDK.NET_DVR_AUTO_REBOOT_CFG));
+                if (7 != struRebootCfg.struRebootTime.byDate)
+                {
+                    struRebootCfg.dwSize = (uint)nSize;
+                    struRebootCfg.struRebootTime.byDate = 7;
+                    struRebootCfg.struRebootTime.byHour = 5;
+                    struRebootCfg.struRebootTime.byMinute = 9;
+                    IntPtr ptrRebootCfgNew = Marshal.AllocHGlobal(nSize);
+                    Marshal.StructureToPtr(struRebootCfg, ptrRebootCfgNew, false);
+                    if (!CHCNetSDK.NET_DVR_SetDVRConfig(m_userId, CHCNetSDK.NET_DVR_SET_AUTO_REBOOT_CFG, 0, 
+                        ptrRebootCfgNew, (uint)nSize))
+                    {
+                        m_iErrorCode = CHCNetSDK.NET_DVR_GetLastError();
+                        Log.GetLogger().ErrorFormat("NET_DVR_SetDVRConfig 设置自动重启失败, errorCode = {0}", m_iErrorCode);
+                        return false;
+                    }
+                    Log.GetLogger().InfoFormat("NET_DVR_SetDVRConfig 设置自动重启成功");
+                }
             }
             catch (Exception e)
             {
@@ -775,6 +798,22 @@ namespace HMQService.Decode
             string key = string.Empty;
             CameraConf cameraConf = new CameraConf();
 
+            //地图
+            Image imgMap = null;
+            int nLoadMap = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
+                BaseDefine.CONFIG_KEY_LOADMAP, 0);
+            if (1 == nLoadMap)
+            {
+                try
+                {
+                    imgMap = Image.FromFile(BaseDefine.IMG_PATH_MAPN);
+                }
+                catch(Exception e)
+                {
+                    Log.GetLogger().ErrorFormat("Image.FromFile catch an error : {0}", e.Message);
+                }
+            }
+
             foreach (int iKch in dicCars.Keys)
             {
                 Thread.Sleep(10);
@@ -812,7 +851,7 @@ namespace HMQService.Decode
                     if (carManager.StartPassiveDecode(2, ref thirdPH) && carManager.StartPassiveDecode(3, ref fourthPH))
                     {
                         ExamProcedure examProcedure = new ExamProcedure();
-                        if (examProcedure.Init(m_userId, iKch, thirdPH, fourthPH))
+                        if (examProcedure.Init(m_userId, iKch, thirdPH, fourthPH, imgMap))
                         {
                             dicExamProcedures.Add(iKch, examProcedure);
                         }

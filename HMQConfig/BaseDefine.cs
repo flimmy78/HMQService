@@ -26,6 +26,7 @@ namespace HMQConfig
         public static readonly string CONFIG_FILE_PATH_DB = @"conf\HS_CONF_DB.ini";
         public static readonly string CONFIG_FILE_PATH_DISPLAY = @"conf\HS_CONF_DISPLAY.ini";
         public static readonly string CONFIG_FILE_PATH_CAR = @"conf\HS_CONF_CAR.ini";
+        public static readonly string CONFIG_FILE_PATH_MAP = @"conf\HS_CONF_MAP.ini";
         public static readonly string CONFIG_SECTION_CONFIG = @"CONFIG";
         public static readonly string CONFIG_SECTION_JMQ = @"JMQ";
         public static readonly string CONFIG_KEY_SQLORACLE = @"SQLORACLE";
@@ -45,6 +46,11 @@ namespace HMQConfig
         public static readonly string CONFIG_KEY_WND2 = "WND2";
         public static readonly string CONFIG_KEY_HMQ = "HMQ";
         public static readonly string CONFIG_KEY_SLEEP_TIME= "SLEEPTIME";
+        public static readonly string CONFIG_KEY_MAXX = "MAXX";
+        public static readonly string CONFIG_KEY_MINX = "MINX";
+        public static readonly string CONFIG_KEY_MAXY = "MAXY";
+        public static readonly string CONFIG_KEY_MINY= "MINY";
+        public static readonly string CONFIG_KEY_ZOOMIN = "ZOOMIN";
 
         public static readonly string EXCEL_SHEET_NAME_CONF_TRANS = @"通道配置";
         public static readonly string EXCEL_SHEET_NAME_CONF_CAMERA_CAR = @"车载摄像头";
@@ -61,5 +67,12 @@ namespace HMQConfig
         public static readonly string STRING_WND_RIGHT_TOP = @"右上角";
         public static readonly string STRING_WND_LEFT_BOTTOM = @"左下角";
         public static readonly string STRING_WND_RIGHT_BOTTOM = @"右下角";
+
+        public static readonly int MAP_DEFAULT_ZOOMIN = 20; //默认地图放大倍数
+        //public static readonly int MAP_SPLIT_WIDTH = 500; //地图分割尺寸
+        //public static readonly int MAP_SPLIT_HEIGHT = 410; //地图分割尺寸
+        public static readonly int MAP_SPLIT_WIDTH = 1024; //地图分割尺寸
+        public static readonly int MAP_SPLIT_HEIGHT = 838; //地图分割尺寸
+        public static readonly string MAP_IMAGE_PATH = @".\res\map";   //地图图片路径
     }
 }

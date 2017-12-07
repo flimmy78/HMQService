@@ -2,7 +2,7 @@
 ; 有关创建 Inno Setup 脚本文件的详细资料请查阅帮助文档！
 
 #define MyAppName "HMQService"
-#define MyAppVersion "2.0.2"
+#define MyAppVersion "2.0.4"
 #define MyAppPublisher "福州北科大舟宇电子有限公司"
 #define MyAppBuildID GetDateTimeString('yyyymmdd','','');
 #define MyAppURL "http://www.bekzoyo.com.cn/"
@@ -324,11 +324,14 @@ begin
   if RegQueryStringValue(HKLM, 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{473CDD01-B0B6-43AF-8534-74E1F1DFFFF4}_is1', 'UninstallString', uicmd) then
   begin
     //停止服务
-    Exec(ExpandConstant('{sys}\sc.exe'), 'stop "{#MyAppName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Exec(ExpandConstant('{sys}\sc.exe'), 'stop "HMQServiceDaemon"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Exec(ExpandConstant('{sys}\sc.exe'), 'stop "HMQService"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     //杀进程
-    Exec(ExpandConstant('{sys}\taskkill.exe'), '/im {#MyAppName}.exe /f /t', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Exec(ExpandConstant('{sys}\taskkill.exe'), '/im HMQServiceDaemon.exe /f /t', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Exec(ExpandConstant('{sys}\taskkill.exe'), '/im HMQService.exe /f /t', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
     //卸载服务
-    Exec(ExpandConstant('{sys}\sc.exe'), 'delete "{#MyAppName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Exec(ExpandConstant('{sys}\sc.exe'), 'delete "HMQServiceDaemon"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Exec(ExpandConstant('{sys}\sc.exe'), 'delete "HMQService"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   end;
 
   Result:= True

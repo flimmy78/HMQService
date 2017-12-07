@@ -229,7 +229,7 @@ namespace HMQConfig
                 else
                 {
                     Log.GetLogger().InfoFormat("数据库类型为：Oracle");
-                    string connStr = string.Format(BaseDefine.DB_CONN_FORMAT_ORACLE, 
+                    string connStr = string.Format(BaseDefine.DB_CONN_FORMAT_ORACLE,
                          m_dbUsername, m_dbPassword, m_dbAddress, m_dbInstance);
                     m_dbProvider = DataProvider.CreateDataProvider(DataProvider.DataProviderType.OracleDataProvider, connStr);
                 }
@@ -279,7 +279,7 @@ namespace HMQConfig
                 MessageBox.Show("数据库登录成功");
             }
 
-            END:
+        END:
             {
                 //恢复控件
                 textDBIP.Enabled = true;
@@ -291,7 +291,7 @@ namespace HMQConfig
 
         private void btnSelectFile_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrEmpty(m_dbAddress) || string.IsNullOrEmpty(m_dbUsername) || 
+            if (string.IsNullOrEmpty(m_dbAddress) || string.IsNullOrEmpty(m_dbUsername) ||
                 string.IsNullOrEmpty(m_dbPassword) || string.IsNullOrEmpty(m_dbInstance))
             {
                 MessageBox.Show("请先配置数据库连接。");
@@ -348,7 +348,7 @@ namespace HMQConfig
             MessageBox.Show("导入Excel配置成功");
         }
 
-        private bool ReadFromExcel(string filePath, ref Dictionary<string, HMQConf> dicHmq, 
+        private bool ReadFromExcel(string filePath, ref Dictionary<string, HMQConf> dicHmq,
             ref Dictionary<string, CameraConf> dicCamera, out string errorMsg)
         {
             errorMsg = string.Empty;
@@ -583,7 +583,7 @@ namespace HMQConfig
                 goto END;
             }
 
-            END:
+        END:
             {
                 if (!string.IsNullOrEmpty(errorMsg))
                 {
@@ -612,7 +612,7 @@ namespace HMQConfig
 
                 retStr = cell.StringCellValue;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
             }
 
@@ -664,7 +664,7 @@ namespace HMQConfig
             }
 
             int nIndex = 1;
-            foreach(HMQConf hmq in dicHmq.Values)
+            foreach (HMQConf hmq in dicHmq.Values)
             {
                 string key = nIndex.ToString();
                 string value = string.Format("{0},{1},{2},{3}", hmq.Ip, hmq.Username, hmq.Password, hmq.Port);
@@ -676,7 +676,7 @@ namespace HMQConfig
                 }
 
                 string section = string.Format("{0}{1}", BaseDefine.CONFIG_SECTION_JMQ, nIndex);    //JMQ1、JMQ2
-                foreach(int tranNo in hmq.DicTran2Car.Keys)
+                foreach (int tranNo in hmq.DicTran2Car.Keys)
                 {
                     int CarNo = hmq.DicTran2Car[tranNo];
 
@@ -700,7 +700,7 @@ namespace HMQConfig
             errorMsg = string.Empty;
             string connStr = string.Empty;
             IDataProvider sqlProvider = null;
-            
+
             try
             {
                 if (1 == m_dbType)
@@ -722,7 +722,7 @@ namespace HMQConfig
                     return false;
                 }
 
-                foreach(string key in dicCamera.Keys)
+                foreach (string key in dicCamera.Keys)
                 {
                     try
                     {
@@ -777,11 +777,11 @@ namespace HMQConfig
 
                         //System.Threading.Thread.Sleep(1000);
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         Log.GetLogger().DebugFormat("execute sql catch an error, {0}", e.Message);
                     }
-                    
+
                 }
 
                 sqlProvider.Dispose();
@@ -894,7 +894,7 @@ namespace HMQConfig
             errorMsg = string.Empty;
 
             IDataProvider sqlProvider = null;
-            string connStr = string.Empty; 
+            string connStr = string.Empty;
             try
             {
                 if (1 == m_dbType)
@@ -916,7 +916,7 @@ namespace HMQConfig
                     return false;
                 }
 
-                string sql = string.Format("select {0},{1},{2},{3},{4},{5},{6},{7},{8},{9} from {10}", 
+                string sql = string.Format("select {0},{1},{2},{3},{4},{5},{6},{7},{8},{9} from {10}",
                     BaseDefine.DB_FIELD_BH,
                     BaseDefine.DB_FIELD_SBIP,
                     BaseDefine.DB_FIELD_DKH,
@@ -946,7 +946,7 @@ namespace HMQConfig
                         string mediaIp = GetDataColumnStringValue(row, 8);
                         int transmode = GetDataColumnIntValue(row, 9);
                         if (string.IsNullOrEmpty(bh) || string.IsNullOrEmpty(sbip) || string.IsNullOrEmpty(yhm) || string.IsNullOrEmpty(mm)
-                            || string.IsNullOrEmpty(nid) || 0==dkh || 0==tdh)
+                            || string.IsNullOrEmpty(nid) || 0 == dkh || 0 == tdh)
                         {
                             Log.GetLogger().InfoFormat("数据库存在错误数据，bh={0}, nid={1}", bh, nid);
                             continue;
@@ -963,7 +963,7 @@ namespace HMQConfig
                 }
 
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
                 return false;
@@ -984,7 +984,7 @@ namespace HMQConfig
             {
                 retStr = row[index].ToString();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
             }
 
@@ -1000,7 +1000,7 @@ namespace HMQConfig
             {
                 nRet = string.IsNullOrEmpty(strRet) ? 0 : int.Parse(strRet);
             }
-            catch(Exception e)
+            catch (Exception e)
             { }
 
             return nRet;
@@ -1115,7 +1115,7 @@ namespace HMQConfig
             {
                 MessageBox.Show("导出excel模板成功");
             }
-          
+
         }
 
         private bool ExportExcelTemplate(string filePath, Dictionary<string, HMQConf> dicHmq, Dictionary<string, CameraConf> dicCamera)
@@ -1143,7 +1143,7 @@ namespace HMQConfig
                     errorMsg = string.Format("读取名为 {0} 的 sheet 页失败，filePath={1}", sheetName, filePath);
                     goto END;
                 }
-                foreach(string key in dicHmq.Keys)
+                foreach (string key in dicHmq.Keys)
                 {
                     HMQConf hmqConf = dicHmq[key];
 
@@ -1153,7 +1153,7 @@ namespace HMQConfig
                     string password = hmqConf.Password;
                     Dictionary<int, int> dicTrans = hmqConf.DicTran2Car;
 
-                    foreach(int tranNo in dicTrans.Keys)
+                    foreach (int tranNo in dicTrans.Keys)
                     {
                         int kch = dicTrans[tranNo];
 
@@ -1244,7 +1244,7 @@ namespace HMQConfig
 
 
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                     }
                 }
@@ -1261,7 +1261,7 @@ namespace HMQConfig
                 errorMsg = string.Format("catch an error : {0}", e.Message);
             }
 
-            END:
+        END:
             {
                 if (!string.IsNullOrEmpty(errorMsg))
                 {
@@ -1328,7 +1328,7 @@ namespace HMQConfig
                     CreateStringCell(row, 8, "流媒体IP（可为空）");
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return false;
             }
@@ -1347,7 +1347,7 @@ namespace HMQConfig
                 ICell cell = row.CreateCell(cellIndex);
                 cell.SetCellValue(value);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return false;
             }
@@ -1375,5 +1375,435 @@ namespace HMQConfig
             return true;
         }
 
+        private void btnImportMap_Click(object sender, EventArgs e)
+        {
+            string mapFilePath = SelectMapFile();
+            if (string.IsNullOrEmpty(mapFilePath))
+            {
+                return;
+            }
+
+            string fileMapConf = BaseDefine.CONFIG_FILE_PATH_MAP;
+            string sectionConfig = BaseDefine.CONFIG_SECTION_CONFIG;
+            string keyZoomIn = BaseDefine.CONFIG_KEY_ZOOMIN;
+            int nZoomIn = BaseMethod.INIGetIntValue(fileMapConf, sectionConfig, keyZoomIn, BaseDefine.MAP_DEFAULT_ZOOMIN);
+
+            List<PointF[]> listRegions = new List<PointF[]>();
+            double maxX = 0;
+            double maxY = 0;
+            double minX = 0;
+            double minY = 0;
+            if (!ReadMapPoints(mapFilePath, ref maxX, ref minX, ref maxY, ref minY))
+            {
+                MessageBox.Show("从原始地图文件读取坐标范围失败");
+                return;
+            }
+
+            maxX += 60;
+            maxY += 60;
+            minX -= 60;
+            minY -= 60;
+            if (!ReadRelativePoints(mapFilePath, maxX, minX, maxY, minY, nZoomIn, ref listRegions))
+            {
+                MessageBox.Show("从原始地图文件读取点坐标失败");
+                return;
+            }
+
+            int width = (int)((maxX - minX) * nZoomIn);
+            int height = (int)((maxY - minY) * nZoomIn);
+            int splitWidth = BaseDefine.MAP_SPLIT_WIDTH;
+            int splitHeight = BaseDefine.MAP_SPLIT_HEIGHT;
+            if (!MakeSplitImage(width, height, splitWidth, splitHeight, listRegions))
+            {
+                MessageBox.Show("生成底图失败");
+                return;
+            }
+
+            if (!WriteMapConfig(maxX, minX, maxY, minY, nZoomIn))
+            {
+                MessageBox.Show("写配置文件失败");
+                return;
+            }
+
+            MessageBox.Show("导入地图成功");
+        }
+
+        private string SelectMapFile()
+        {
+            string retStr = string.Empty;
+            OpenFileDialog fd = new OpenFileDialog();
+            fd.Filter = @"Map Files (*.cfg)|*.cfg";
+            if (DialogResult.OK == fd.ShowDialog())
+            {
+                retStr = fd.FileName;
+            }
+
+            return retStr;
+        }
+
+        private bool ReadMapPoints(string mapFilePath, ref List<PointF[]> regions, ref float maxX, ref float maxY, ref float minX, ref float minY)
+        {
+            string line = string.Empty;
+            string errorMsg = string.Empty;
+            List<PointF> points = new List<PointF>();
+            PointF firstPoint = new PointF();
+
+            try
+            {
+                StreamReader file = new StreamReader(mapFilePath);
+                while ((line = file.ReadLine()) != null)
+                {
+                    string[] strArray = BaseMethod.SplitString(line, ',', out errorMsg);
+                    if (null == strArray)
+                    {
+                        continue;
+                    }
+
+                    if (3 == strArray.Length)
+                    {
+                        float x = 0;
+                        float y = 0;
+                        float.TryParse(strArray[1], out x);
+                        float.TryParse(strArray[2], out y);
+                        if (x <= 0.000001 || y <= 0.000001)
+                        {
+                            Log.GetLogger().ErrorFormat("地图文件中存在错误数据，line={0}", line);
+                            continue;
+                        }
+
+                        if (maxX <= 0.000001)
+                        {
+                            maxX = x;
+                        }
+                        if (maxY <= 0.000001)
+                        {
+                            maxY = y;
+                        }
+                        if (minX <= 0.000001)
+                        {
+                            minX = x;
+                        }
+                        if (minY <= 0.000001)
+                        {
+                            minY = y;
+                        }
+
+                        if (x > maxX)
+                        {
+                            maxX = x;
+                        }
+                        if (y > maxY)
+                        {
+                            maxY = y;
+                        }
+                        if (x < minX)
+                        {
+                            minX = x;
+                        }
+                        if (y < minY)
+                        {
+                            minY = y;
+                        }
+
+                        PointF point = new PointF((float)x, (float)y);
+                        if (0 == points.Count)
+                        {
+                            firstPoint = point;
+                        }
+                        points.Add(point);
+                    }
+                    else if (2 == strArray.Length)
+                    {
+                        if (points.Count > 0)
+                        {
+                            points.Add(firstPoint);
+                            regions.Add(points.ToArray());
+
+                            points.Clear();
+                        }
+                    }
+                }
+
+                if (null != points && points.Count > 0)
+                {
+                    points.Add(firstPoint);
+                    regions.Add(points.ToArray());
+                }
+
+                file.Dispose();
+                file.Close();
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+            }
+
+            return true;
+        }
+
+        //读取地图源文件里面最大最小坐标位置
+        private bool ReadMapPoints(string mapFilePath, ref double maxX, ref double minX, ref double maxY, ref double minY)
+        {
+            string line = string.Empty;
+            string errorMsg = string.Empty;
+
+            try
+            {
+                StreamReader file = new StreamReader(mapFilePath);
+                while ((line = file.ReadLine()) != null)
+                {
+                    string[] strArray = BaseMethod.SplitString(line, ',', out errorMsg);
+                    if (null == strArray)
+                    {
+                        continue;
+                    }
+
+                    if (3 == strArray.Length)
+                    {
+                        double x = 0;
+                        double y = 0;
+                        double.TryParse(strArray[1], out x);
+                        double.TryParse(strArray[2], out y);
+                        if (x <= 0.000001 || y <= 0.000001)
+                        {
+                            Log.GetLogger().ErrorFormat("地图文件中存在错误数据，line={0}", line);
+                            continue;
+                        }
+
+                        if (maxX <= 0.000001)
+                        {
+                            maxX = x;
+                        }
+                        if (maxY <= 0.000001)
+                        {
+                            maxY = y;
+                        }
+                        if (minX <= 0.000001)
+                        {
+                            minX = x;
+                        }
+                        if (minY <= 0.000001)
+                        {
+                            minY = y;
+                        }
+
+                        if (x > maxX)
+                        {
+                            maxX = x;
+                        }
+                        if (y > maxY)
+                        {
+                            maxY = y;
+                        }
+                        if (x < minX)
+                        {
+                            minX = x;
+                        }
+                        if (y < minY)
+                        {
+                            minY = y;
+                        }
+                    }
+                }
+
+                file.Dispose();
+                file.Close();
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+                return false;
+            }
+
+            if (maxX <= 0.000001 || minX <= 0.000001 || maxY <= 0.000001 || minY <= 0.000001)
+            {
+                Log.GetLogger().ErrorFormat("读取地图边界失败，file = {0}", mapFilePath);
+                return false;
+            }
+
+            return true;
+        }
+
+        //读取相对坐标集合
+        private bool ReadRelativePoints(string mapFilePath, double maxX, double minX, double maxY, double minY, int nZoomIn,
+            ref List<PointF[]> regions)
+        {
+            string line = string.Empty;
+            string errorMsg = string.Empty;
+            List<PointF> points = new List<PointF>();
+            PointF firstPoint = new PointF();
+
+            try
+            {
+                StreamReader file = new StreamReader(mapFilePath);
+                while ((line = file.ReadLine()) != null)
+                {
+                    string[] strArray = BaseMethod.SplitString(line, ',', out errorMsg);
+                    if (null == strArray)
+                    {
+                        continue;
+                    }
+
+                    if (3 == strArray.Length)
+                    {
+                        double x = 0;
+                        double y = 0;
+                        double.TryParse(strArray[1], out x);
+                        double.TryParse(strArray[2], out y);
+                        if (x <= 0.000001 || y <= 0.000001)
+                        {
+                            Log.GetLogger().ErrorFormat("地图文件中存在错误数据，line={0}", line);
+                            continue;
+                        }
+
+                        float pointX = (float)((x - minX) * nZoomIn);
+                        float pointY = (float)((maxY - y) * nZoomIn);
+                        PointF point = new PointF(pointX, pointY);
+                        if (0 == points.Count)
+                        {
+                            firstPoint = point;
+                        }
+                        points.Add(point);
+                    }
+                    else if (2 == strArray.Length)
+                    {
+                        if (points.Count > 0)
+                        {
+                            points.Add(firstPoint);
+                            regions.Add(points.ToArray());
+
+                            points.Clear();
+                        }
+                    }
+                }
+
+                if (null != points && points.Count > 0)
+                {
+                    points.Add(firstPoint);
+                    regions.Add(points.ToArray());
+                }
+
+                file.Dispose();
+                file.Close();
+            }
+            catch (Exception e)
+            {
+                Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
+            }
+
+            return true;
+        }
+
+        private bool MakeSplitImage(int width, int height, int splitWidth, int splitHeight, List<PointF[]> regions)
+        {
+            int rowCount = height / splitHeight + 1;
+            int columnCount = width / splitWidth + 1;
+
+            string path = BaseDefine.MAP_IMAGE_PATH;
+            if (!ReCreateDirectory(path))
+            {
+                return false;
+            }
+
+            for (int i = 0; i < rowCount; i ++)
+            {
+                for (int j = 0; j < columnCount; j ++)
+                {
+                    string fileName = path + @"\" + i + @"_" + j + @".png";
+
+                    try
+                    {
+                        Bitmap bm = new Bitmap(splitWidth, splitHeight);
+                        Graphics graphics = Graphics.FromImage(bm);
+                        Pen pen = new Pen(Color.Red, 2);
+                        graphics.Clear(Color.White);
+
+                        Rectangle rect = new Rectangle(j * splitWidth, i * splitHeight, splitWidth, splitHeight);
+                        foreach (PointF[] region in regions)
+                        {
+                            bool bFirstPoint = true;
+                            PointF firstPoint = new PointF();
+                            PointF prePoint = new PointF();
+                            foreach (PointF point in region)
+                            {
+                                float relativeX = point.X - j * splitWidth;   //相对X坐标
+                                float relativeY = point.Y - i * splitHeight;   //相对Y坐标
+                                if (bFirstPoint)
+                                {
+                                    firstPoint = new PointF(relativeX, relativeY);
+                                    prePoint = firstPoint;
+                                    bFirstPoint = false;
+                                }
+                                else
+                                {
+                                    PointF currentPoint = new PointF(relativeX, relativeY);
+                                    graphics.DrawLine(pen, prePoint, currentPoint);
+                                    prePoint = currentPoint;
+                                }
+                            }
+
+                            if (!bFirstPoint)
+                            {
+                                graphics.DrawLine(pen, prePoint, firstPoint);
+                            }
+                        }
+
+                        bm.Save(fileName);
+
+                        graphics.Dispose();
+                        bm.Dispose();
+                        pen.Dispose();
+                    }
+                    catch(Exception e)
+                    {
+                        Log.GetLogger().ErrorFormat("生成地图背景时错误，file={0}, error={1}", fileName, e.Message);
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        private bool ReCreateDirectory(string path)
+        {
+            try
+            {
+                if (Directory.Exists(path))
+                {
+                    Directory.Delete(path, true);
+                }
+                if (Directory.Exists(path))
+                {
+                    Log.GetLogger().ErrorFormat("删除路径 {0} 失败，可能文件正在被使用", path);
+                    return false;
+                }
+                Directory.CreateDirectory(path);
+            }
+            catch(Exception e)
+            {
+                Log.GetLogger().ErrorFormat("ReCreateDirectory catch an error : {0}", e.Message);
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool WriteMapConfig(double maxX, double minX, double maxY, double minY, int zoomIn)
+        {
+            string fileMapConf = BaseDefine.CONFIG_FILE_PATH_MAP;
+            string sectionConfig = BaseDefine.CONFIG_SECTION_CONFIG;
+            string keyMaxX = BaseDefine.CONFIG_KEY_MAXX;
+            string keyMinX = BaseDefine.CONFIG_KEY_MINX;
+            string keyMaxY = BaseDefine.CONFIG_KEY_MAXY;
+            string keyMinY = BaseDefine.CONFIG_KEY_MINY;
+            string keyZoomIn = BaseDefine.CONFIG_KEY_ZOOMIN;
+            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyMaxX, maxX.ToString());
+            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyMinX, minX.ToString());
+            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyMaxY, maxY.ToString());
+            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyMinY, minY.ToString());
+            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyZoomIn, zoomIn.ToString());
+
+            return true;
+        }
     }
 }

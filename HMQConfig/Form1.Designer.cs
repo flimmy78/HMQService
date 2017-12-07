@@ -31,6 +31,7 @@ namespace HMQConfig
         private void InitializeComponent()
         {
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.textDBInstance = new System.Windows.Forms.TextBox();
             this.textDBPassword = new System.Windows.Forms.TextBox();
             this.textDBUsername = new System.Windows.Forms.TextBox();
             this.textDBIP = new System.Windows.Forms.TextBox();
@@ -62,10 +63,12 @@ namespace HMQConfig
             this.label6 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
-            this.textDBInstance = new System.Windows.Forms.TextBox();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.btnImportMap = new System.Windows.Forms.Button();
             this.groupBox1.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox3.SuspendLayout();
+            this.groupBox4.SuspendLayout();
             this.SuspendLayout();
             // 
             // groupBox1
@@ -85,6 +88,13 @@ namespace HMQConfig
             this.groupBox1.TabIndex = 0;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "数据库配置";
+            // 
+            // textDBInstance
+            // 
+            this.textDBInstance.Location = new System.Drawing.Point(97, 107);
+            this.textDBInstance.Name = "textDBInstance";
+            this.textDBInstance.Size = new System.Drawing.Size(285, 21);
+            this.textDBInstance.TabIndex = 3;
             // 
             // textDBPassword
             // 
@@ -161,7 +171,7 @@ namespace HMQConfig
             this.groupBox2.Controls.Add(this.btn_SelectFile);
             this.groupBox2.Location = new System.Drawing.Point(12, 433);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(388, 96);
+            this.groupBox2.Size = new System.Drawing.Size(388, 71);
             this.groupBox2.TabIndex = 1;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "考车配置";
@@ -226,7 +236,7 @@ namespace HMQConfig
             this.textBoxSleepTime.Location = new System.Drawing.Point(311, 119);
             this.textBoxSleepTime.Name = "textBoxSleepTime";
             this.textBoxSleepTime.Size = new System.Drawing.Size(48, 21);
-            this.textBoxSleepTime.TabIndex = 14;
+            this.textBoxSleepTime.TabIndex = 15;
             // 
             // comboBoxXmVideo
             // 
@@ -234,7 +244,7 @@ namespace HMQConfig
             this.comboBoxXmVideo.Location = new System.Drawing.Point(311, 24);
             this.comboBoxXmVideo.Name = "comboBoxXmVideo";
             this.comboBoxXmVideo.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxXmVideo.TabIndex = 8;
+            this.comboBoxXmVideo.TabIndex = 9;
             // 
             // comboBoxCarVideo
             // 
@@ -242,7 +252,7 @@ namespace HMQConfig
             this.comboBoxCarVideo.Location = new System.Drawing.Point(106, 24);
             this.comboBoxCarVideo.Name = "comboBoxCarVideo";
             this.comboBoxCarVideo.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxCarVideo.TabIndex = 7;
+            this.comboBoxCarVideo.TabIndex = 8;
             // 
             // comboBoxStudentInfo
             // 
@@ -250,7 +260,7 @@ namespace HMQConfig
             this.comboBoxStudentInfo.Location = new System.Drawing.Point(106, 55);
             this.comboBoxStudentInfo.Name = "comboBoxStudentInfo";
             this.comboBoxStudentInfo.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxStudentInfo.TabIndex = 9;
+            this.comboBoxStudentInfo.TabIndex = 10;
             // 
             // comboBoxExamInfo
             // 
@@ -258,7 +268,7 @@ namespace HMQConfig
             this.comboBoxExamInfo.Location = new System.Drawing.Point(311, 55);
             this.comboBoxExamInfo.Name = "comboBoxExamInfo";
             this.comboBoxExamInfo.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxExamInfo.TabIndex = 10;
+            this.comboBoxExamInfo.TabIndex = 11;
             // 
             // comboBoxAudio
             // 
@@ -266,7 +276,7 @@ namespace HMQConfig
             this.comboBoxAudio.Location = new System.Drawing.Point(106, 87);
             this.comboBoxAudio.Name = "comboBoxAudio";
             this.comboBoxAudio.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxAudio.TabIndex = 11;
+            this.comboBoxAudio.TabIndex = 12;
             // 
             // comboBoxWnd2
             // 
@@ -274,7 +284,7 @@ namespace HMQConfig
             this.comboBoxWnd2.Location = new System.Drawing.Point(106, 119);
             this.comboBoxWnd2.Name = "comboBoxWnd2";
             this.comboBoxWnd2.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxWnd2.TabIndex = 13;
+            this.comboBoxWnd2.TabIndex = 14;
             // 
             // comboBoxEven
             // 
@@ -282,14 +292,14 @@ namespace HMQConfig
             this.comboBoxEven.Location = new System.Drawing.Point(311, 87);
             this.comboBoxEven.Name = "comboBoxEven";
             this.comboBoxEven.Size = new System.Drawing.Size(71, 20);
-            this.comboBoxEven.TabIndex = 12;
+            this.comboBoxEven.TabIndex = 13;
             // 
             // btnSaveDisplayConf
             // 
             this.btnSaveDisplayConf.Location = new System.Drawing.Point(8, 150);
             this.btnSaveDisplayConf.Name = "btnSaveDisplayConf";
             this.btnSaveDisplayConf.Size = new System.Drawing.Size(87, 23);
-            this.btnSaveDisplayConf.TabIndex = 15;
+            this.btnSaveDisplayConf.TabIndex = 16;
             this.btnSaveDisplayConf.Text = "保存配置";
             this.btnSaveDisplayConf.UseVisualStyleBackColor = true;
             this.btnSaveDisplayConf.Click += new System.EventHandler(this.btnSaveDisplayConf_Click);
@@ -375,18 +385,32 @@ namespace HMQConfig
             this.label5.TabIndex = 1;
             this.label5.Text = "车内视频位置：";
             // 
-            // textDBInstance
+            // groupBox4
             // 
-            this.textDBInstance.Location = new System.Drawing.Point(97, 107);
-            this.textDBInstance.Name = "textDBInstance";
-            this.textDBInstance.Size = new System.Drawing.Size(285, 21);
-            this.textDBInstance.TabIndex = 3;
+            this.groupBox4.Controls.Add(this.btnImportMap);
+            this.groupBox4.Location = new System.Drawing.Point(12, 515);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(388, 63);
+            this.groupBox4.TabIndex = 3;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "地图配置";
+            // 
+            // btnImportMap
+            // 
+            this.btnImportMap.Location = new System.Drawing.Point(8, 23);
+            this.btnImportMap.Name = "btnImportMap";
+            this.btnImportMap.Size = new System.Drawing.Size(87, 23);
+            this.btnImportMap.TabIndex = 7;
+            this.btnImportMap.Text = "导入地图";
+            this.btnImportMap.UseVisualStyleBackColor = true;
+            this.btnImportMap.Click += new System.EventHandler(this.btnImportMap_Click);
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(412, 534);
+            this.ClientSize = new System.Drawing.Size(412, 590);
+            this.Controls.Add(this.groupBox4);
             this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.groupBox2);
             this.Controls.Add(this.groupBox1);
@@ -399,6 +423,7 @@ namespace HMQConfig
             this.groupBox2.PerformLayout();
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
+            this.groupBox4.ResumeLayout(false);
             this.ResumeLayout(false);
 
         }
@@ -438,6 +463,8 @@ namespace HMQConfig
         private Label label13;
         private Label label12;
         private TextBox textDBInstance;
+        private GroupBox groupBox4;
+        private Button btnImportMap;
     }
 }
 

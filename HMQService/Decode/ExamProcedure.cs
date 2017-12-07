@@ -106,12 +106,13 @@ namespace HMQService.Decode
         ~ExamProcedure()
         { }
 
-        public bool Init(int userId, int kch, int thirdPH, int fourthPH)
+        public bool Init(int userId, int kch, int thirdPH, int fourthPH, Image img)
         {
             m_userId = userId;
             m_kch = kch;
             m_thirdPassiveHandle = thirdPH;
             m_fourthPassiveHandle = fourthPH;
+            imgMap = img;
 
             m_kskm = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_KSKM, BaseDefine.CONFIG_VALUE_KSKM_2);
@@ -120,10 +121,10 @@ namespace HMQService.Decode
                 BaseDefine.CONFIG_KEY_SLEEP_TIME, 1000);
 
             //开启 ThirdPic 刷新线程
-            InitThirdPic(); 
+            InitThirdPic();
 
             //开启 FourthPic 刷新线程
-            InitFourthPic();
+            InitFourthPic(img);
 
             return true;
         }
@@ -250,12 +251,14 @@ namespace HMQService.Decode
 
                         if (1 == m_mapPy)
                         {
-                            tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) - BaseDefine.VIDEO_WIDTH / 2 + 44;
+                            //tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) - BaseDefine.VIDEO_WIDTH / 2 + 44;
+                            tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) - BaseDefine.VIDEO_WIDTH / 2;
                             tempy = Math.Abs((int)((m_gpsData.Latitude - m_mapY) * m_zoomIn)) - BaseDefine.VIDEO_HEIGHT / 2;
                         }
                         else
                         {
-                            tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) + 44;
+                            //tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn)) + 44;
+                            tempx = Math.Abs((int)((m_gpsData.Longitude - m_mapX) * m_zoomIn));
                             tempy = Math.Abs((int)((m_gpsData.Latitude - m_mapY) * m_zoomIn));
                         }
 
@@ -355,7 +358,7 @@ namespace HMQService.Decode
             return true;
         }
 
-        private bool InitFourthPic()
+        private bool InitFourthPic(Image img)
         {
             int nLoadMap = BaseMethod.INIGetIntValue(BaseDefine.CONFIG_FILE_PATH_ENV, BaseDefine.CONFIG_SECTION_CONFIG,
                 BaseDefine.CONFIG_KEY_LOADMAP, 0);
@@ -366,6 +369,8 @@ namespace HMQService.Decode
 
             if (m_bDrawMap) //地图版本
             {
+                imgMap = img;
+
                 LoadMapConfig();
 
                 m_fourthPicThread = new Thread(new ThreadStart(FourthPicMapThread));
@@ -384,7 +389,8 @@ namespace HMQService.Decode
         {
             lock(m_lockFourth)
             {
-                imgMap = Image.FromFile(BaseDefine.IMG_PATH_MAPN);
+                //imgMap = Image.FromFile(BaseDefine.IMG_PATH_MAPN);
+
                 m_mapWidth = imgMap.Width - 88;
                 m_mapHeight = imgMap.Height;
 
@@ -449,6 +455,10 @@ namespace HMQService.Decode
         private void ThirdPicKeepThread()
         {
             autoEventThird = new AutoResetEvent(true);  //自动重置事件，默认为已触发
+
+            //Bitmap bm = new Bitmap(imgTbk);
+            //Graphics graphics;
+
             while (true)
             {
                 autoEventThird.WaitOne(Timeout.Infinite);
@@ -483,13 +493,16 @@ namespace HMQService.Decode
                                     Stream streamZp = new MemoryStream(m_studentInfo.ArrayZp);
                                     Image imgZp = Image.FromStream(streamZp);
                                     graphics.DrawImage(imgZp, new Rectangle(242, 10, 100, 126));
+
+                                    streamZp.Dispose();
+                                    imgZp.Dispose();
                                 }
-                                catch(Exception e)
+                                catch (Exception e)
                                 {
                                     Log.GetLogger().DebugFormat("考生照片存在问题, {0}", e.Message);
                                 }
                             }
-                            
+
                             if (null != m_studentInfo.ArrayMjzp)
                             {
                                 try
@@ -497,6 +510,9 @@ namespace HMQService.Decode
                                     Stream streamMjzp = new MemoryStream(m_studentInfo.ArrayMjzp);
                                     Image imgMjzp = Image.FromStream(streamMjzp);
                                     graphics.DrawImage(imgMjzp, new Rectangle(272, 140, 80, 100));
+
+                                    streamMjzp.Dispose();
+                                    imgMjzp.Dispose();
                                 }
                                 catch (Exception e)
                                 {
@@ -507,31 +523,45 @@ namespace HMQService.Decode
 
                         if (m_bFinish)
                         {
-                            //合格标识和不合格标识放在同一张图片里，这里需要对图片进行切割
-                            Image imgResult = null;
-                            Rectangle rect;
-                            Bitmap originBitmap = new Bitmap(Image.FromFile(BaseDefine.IMG_PATH_HGORBHG));
+                            ////合格标识和不合格标识放在同一张图片里，这里需要对图片进行切割
+                            //Image imgResult = null;
+                            //Rectangle rect;
+                            //Bitmap originBitmap = new Bitmap(Image.FromFile(BaseDefine.IMG_PATH_HGORBHG));
+                            //if (m_bPass)
+                            //{
+                            //    rect = new Rectangle(0, 0, originBitmap.Width / 2, originBitmap.Height);
+                            //}
+                            //else
+                            //{
+                            //    rect = new Rectangle(originBitmap.Width / 2, 0, originBitmap.Width / 2, originBitmap.Height);
+                            //}
+                            //Bitmap bmp = new Bitmap(rect.Width, rect.Height);
+                            //using (Graphics gph = Graphics.FromImage(bmp))
+                            //{
+                            //    gph.DrawImage(originBitmap, new Rectangle(0, 0, bmp.Width, bmp.Height), rect, GraphicsUnit.Pixel);
+                            //}
+                            //imgResult = (Image)bmp;
+
+                            ////绘制合格/不合格标识
+                            //graphics.DrawImage(imgResult, new Rectangle(100, 50, 135, 100));
+
+                            Image imgPass = Image.FromFile(BaseDefine.IMG_PATH_HGORBHG);
                             if (m_bPass)
                             {
-                                rect = new Rectangle(0, 0, originBitmap.Width / 2, originBitmap.Height);
+                                graphics.DrawImage(imgPass, new Rectangle(100, 50, 135, 100), 0, 0, imgPass.Width / 2, imgPass.Height, GraphicsUnit.Pixel);
                             }
                             else
                             {
-                                rect = new Rectangle(originBitmap.Width / 2, 0, originBitmap.Width / 2, originBitmap.Height);
+                                graphics.DrawImage(imgPass, new Rectangle(100, 50, 135, 100), imgPass.Width / 2, 0, imgPass.Width / 2, imgPass.Height, GraphicsUnit.Pixel);
                             }
-                            Bitmap bmp = new Bitmap(rect.Width, rect.Height);
-                            using (Graphics gph = Graphics.FromImage(bmp))
-                            {
-                                gph.DrawImage(originBitmap, new Rectangle(0, 0, bmp.Width, bmp.Height), rect, GraphicsUnit.Pixel);
-                            }
-                            imgResult = (Image)bmp;
-
-                            //绘制合格/不合格标识
-                            graphics.DrawImage(imgResult, new Rectangle(100, 50, 135, 100));
+                            imgPass.Dispose();
                         }
 
                         //发送画面到合码器
                         SendBitMapToHMQ(bm, m_kch, m_thirdPassiveHandle);
+
+                        graphics.Dispose();
+                        bm.Dispose();
 
                     }
                 }
@@ -549,9 +579,14 @@ namespace HMQService.Decode
         private void FourthPicInfoThread()
         {
             autoEventFourthInfo = new AutoResetEvent(true);  //自动重置事件，默认为已触发
+            DateTime threadBeginTime;
+            DateTime threadEndTime;
+
             while (true)
             {
                 autoEventFourthInfo.WaitOne(Timeout.Infinite);
+
+                threadBeginTime = DateTime.Now; //线程开始时间
 
                 try
                 {
@@ -626,6 +661,9 @@ namespace HMQService.Decode
                         //发送画面到合码器
                         SendBitMapToHMQ(bm, m_kch, m_fourthPassiveHandle);
 
+                        graphics.Dispose();
+                        bm.Dispose();
+
                     }
                     
                 }
@@ -634,7 +672,11 @@ namespace HMQService.Decode
                     Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
                 }
 
-                System.Threading.Thread.Sleep(m_sleepTime);
+                threadEndTime = DateTime.Now;
+                TimeSpan threadTs = threadEndTime - threadBeginTime;
+                int sleepTime = threadTs.Milliseconds > m_sleepTime ? 0 : (m_sleepTime - threadTs.Milliseconds);
+
+                System.Threading.Thread.Sleep(sleepTime);
 
                 autoEventFourthInfo.Set();   //触发事件
             }
@@ -646,22 +688,26 @@ namespace HMQService.Decode
             autoEventFourthMap = new AutoResetEvent(true);  //自动重置事件，默认为已触发
             int maxWidth = BaseDefine.VIDEO_WIDTH;
             int maxHeight = BaseDefine.VIDEO_HEIGHT;
+            Font font = new Font("宋体", 10, FontStyle.Regular);
+            DateTime threadBeginTime;
+            DateTime threadEndTime;
 
             while (true)
             {
                 autoEventFourthMap.WaitOne(Timeout.Infinite);
 
+                Log.GetLogger().DebugFormat("考车 {0} 地图刷新线程开始", m_kch);
+                threadBeginTime = DateTime.Now; //线程开始时间
+
                 try
                 {
                     lock(m_lockFourth)
                     {
-                        Font font = new Font("宋体", 10, FontStyle.Regular);
-
                         //重新初始化画板
                         Bitmap bm = new Bitmap(imgMap, maxWidth, maxHeight);
                         Graphics graphics = Graphics.FromImage(bm);
-                        graphics.DrawImage(imgMap, new Rectangle(0, 0, maxWidth - 88, maxHeight), 
-                            m_carX, m_carY, maxWidth - 88, maxHeight, GraphicsUnit.Pixel);
+                        graphics.DrawImage(imgMap, new Rectangle(0, 0, maxWidth, maxHeight), 
+                            m_carX, m_carY, maxWidth, maxHeight, GraphicsUnit.Pixel);
 
                         //绘制考车
                         if (m_bDrawCar)
@@ -760,6 +806,10 @@ namespace HMQService.Decode
 
                         //发送画面到合码器
                         SendBitMapToHMQ(bm, m_kch, m_fourthPassiveHandle);
+
+                        graphics.Dispose();
+                        bm.Dispose();
+                        imgXmpMark.Dispose();
                     }
                 }
                 catch (Exception e)
@@ -767,7 +817,12 @@ namespace HMQService.Decode
                     Log.GetLogger().ErrorFormat("catch an error : {0}", e.Message);
                 }
 
-                System.Threading.Thread.Sleep(m_sleepTime);
+
+                threadEndTime = DateTime.Now;
+                TimeSpan threadTs = threadEndTime - threadBeginTime;
+                int sleepTime = threadTs.Milliseconds > m_sleepTime ? 0 : (m_sleepTime - threadTs.Milliseconds);
+
+                System.Threading.Thread.Sleep(sleepTime);
 
                 autoEventFourthMap.Set();   //触发事件
             }
