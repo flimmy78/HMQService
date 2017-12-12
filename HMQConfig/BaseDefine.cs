@@ -51,6 +51,10 @@ namespace HMQConfig
         public static readonly string CONFIG_KEY_MAXY = "MAXY";
         public static readonly string CONFIG_KEY_MINY= "MINY";
         public static readonly string CONFIG_KEY_ZOOMIN = "ZOOMIN";
+        public static readonly string CONFIG_KEY_SPLITWIDTH = "SPLITWIDTH";
+        public static readonly string CONFIG_KEY_SPLITHEIGHT = "SPLITHEIGHT";
+        public static readonly string CONFIG_KEY_XC = "XC";
+        public static readonly string CONFIG_KEY_YC = "YC";
 
         public static readonly string EXCEL_SHEET_NAME_CONF_TRANS = @"通道配置";
         public static readonly string EXCEL_SHEET_NAME_CONF_CAMERA_CAR = @"车载摄像头";
@@ -69,10 +73,9 @@ namespace HMQConfig
         public static readonly string STRING_WND_RIGHT_BOTTOM = @"右下角";
 
         public static readonly int MAP_DEFAULT_ZOOMIN = 20; //默认地图放大倍数
-        //public static readonly int MAP_SPLIT_WIDTH = 500; //地图分割尺寸
-        //public static readonly int MAP_SPLIT_HEIGHT = 410; //地图分割尺寸
-        public static readonly int MAP_SPLIT_WIDTH = 1024; //地图分割尺寸
-        public static readonly int MAP_SPLIT_HEIGHT = 838; //地图分割尺寸
+        //public static readonly int MAP_SPLIT_WIDTH = 117; //地图分割尺寸
+        //public static readonly int MAP_SPLIT_HEIGHT = 96; //地图分割尺寸
+        public static readonly int MAP_SPLIT_WIDTH = 512; //地图分割尺寸
         public static readonly string MAP_IMAGE_PATH = @".\res\map";   //地图图片路径
     }
 }

@@ -1411,15 +1411,19 @@ namespace HMQConfig
 
             int width = (int)((maxX - minX) * nZoomIn);
             int height = (int)((maxY - minY) * nZoomIn);
-            int splitWidth = BaseDefine.MAP_SPLIT_WIDTH;
-            int splitHeight = BaseDefine.MAP_SPLIT_HEIGHT;
-            if (!MakeSplitImage(width, height, splitWidth, splitHeight, listRegions))
+            string keySplitWidth = BaseDefine.CONFIG_KEY_SPLITWIDTH;
+            int splitWidth = BaseMethod.INIGetIntValue(fileMapConf, sectionConfig, keySplitWidth, BaseDefine.MAP_SPLIT_WIDTH);
+            if (splitWidth <= 0)
+            {
+                splitWidth = BaseDefine.MAP_SPLIT_WIDTH;
+            }
+            if (!MakeSplitImage(width, height, splitWidth, splitWidth, listRegions))
             {
                 MessageBox.Show("生成底图失败");
                 return;
             }
 
-            if (!WriteMapConfig(maxX, minX, maxY, minY, nZoomIn))
+            if (!WriteMapConfig(maxX, minX, maxY, minY, nZoomIn, splitWidth))
             {
                 MessageBox.Show("写配置文件失败");
                 return;
@@ -1715,7 +1719,7 @@ namespace HMQConfig
                     {
                         Bitmap bm = new Bitmap(splitWidth, splitHeight);
                         Graphics graphics = Graphics.FromImage(bm);
-                        Pen pen = new Pen(Color.Red, 2);
+                        Pen pen = new Pen(Color.Gray, 1);
                         graphics.Clear(Color.White);
 
                         Rectangle rect = new Rectangle(j * splitWidth, i * splitHeight, splitWidth, splitHeight);
@@ -1788,7 +1792,7 @@ namespace HMQConfig
             return true;
         }
 
-        private bool WriteMapConfig(double maxX, double minX, double maxY, double minY, int zoomIn)
+        private bool WriteMapConfig(double maxX, double minX, double maxY, double minY, int zoomIn, int splitWidth)
         {
             string fileMapConf = BaseDefine.CONFIG_FILE_PATH_MAP;
             string sectionConfig = BaseDefine.CONFIG_SECTION_CONFIG;
@@ -1797,11 +1801,19 @@ namespace HMQConfig
             string keyMaxY = BaseDefine.CONFIG_KEY_MAXY;
             string keyMinY = BaseDefine.CONFIG_KEY_MINY;
             string keyZoomIn = BaseDefine.CONFIG_KEY_ZOOMIN;
-            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyMaxX, maxX.ToString());
-            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyMinX, minX.ToString());
-            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyMaxY, maxY.ToString());
-            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyMinY, minY.ToString());
+            string keySplitWidth = BaseDefine.CONFIG_KEY_SPLITWIDTH;
+            string keySplitHeight = BaseDefine.CONFIG_KEY_SPLITHEIGHT;
+            string keyXC = BaseDefine.CONFIG_KEY_XC;
+            string keyYC = BaseDefine.CONFIG_KEY_YC;
+
+            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyMaxX, ((int)maxX).ToString());
+            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyMinX, ((int)minX).ToString());
+            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyMaxY, ((int)maxY).ToString());
+            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyMinY, ((int)minY).ToString());
             INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyZoomIn, zoomIn.ToString());
+            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keySplitWidth, splitWidth.ToString());
+            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyXC, "1");
+            INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyYC, "0");
 
             return true;
         }
