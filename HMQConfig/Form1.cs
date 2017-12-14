@@ -1399,10 +1399,10 @@ namespace HMQConfig
                 return;
             }
 
-            maxX += 60;
-            maxY += 60;
-            minX -= 60;
-            minY -= 60;
+            maxX += 30;
+            maxY += 30;
+            minX -= 30;
+            minY -= 30;
             if (!ReadRelativePoints(mapFilePath, maxX, minX, maxY, minY, nZoomIn, ref listRegions))
             {
                 MessageBox.Show("从原始地图文件读取点坐标失败");
@@ -1805,6 +1805,11 @@ namespace HMQConfig
             string keySplitHeight = BaseDefine.CONFIG_KEY_SPLITHEIGHT;
             string keyXC = BaseDefine.CONFIG_KEY_XC;
             string keyYC = BaseDefine.CONFIG_KEY_YC;
+
+            maxX = Math.Round(maxX);
+            minX = Math.Round(minX);
+            maxY = Math.Round(maxY);
+            minY = Math.Round(minY);
 
             INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyMaxX, ((int)maxX).ToString());
             INIOperator.INIWriteValue(fileMapConf, sectionConfig, keyMinX, ((int)minX).ToString());
